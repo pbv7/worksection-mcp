@@ -1,0 +1,36 @@
+# Docker Compose for local development
+# Usage: docker compose up --build
+
+services:
+  worksection-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: worksection-mcp-dev
+    ports:
+      - "${MCP_SERVER_PORT:-8000}:8000"
+      - "${OAUTH_CALLBACK_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+    volumes:
+      # Persist tokens and cached files
+      - ./data:/app/data
+      # Mount source for development (optional - remove for production-like testing)
+      # - ./src:/app/src:ro
+    restart: unless-stopped
+    # For OAuth browser flow, you may need to use host network on Linux:
+    # network_mode: host
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Named volumes for production-like persistence
+volumes:
+  mcp_data:
+    driver: local

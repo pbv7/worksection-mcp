@@ -1,0 +1,684 @@
+"""Worksection API client."""
+
+import logging
+from typing import Any
+
+import httpx
+
+from worksection_mcp.config import Settings
+from worksection_mcp.auth import OAuth2Manager
+from worksection_mcp.client.rate_limiter import AdaptiveRateLimiter
+from worksection_mcp.utils.date_utils import format_date_for_api
+
+logger = logging.getLogger(__name__)
+
+
+class WorksectionAPIError(Exception):
+    """Worksection API error."""
+
+    def __init__(self, message: str, status_code: int | None = None, response: dict | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.response = response
+
+
+class WorksectionClient:
+    """Async client for Worksection API with rate limiting."""
+
+    def __init__(self, oauth: OAuth2Manager, settings: Settings):
+        """Initialize Worksection client.
+
+        Args:
+            oauth: OAuth2 manager for authentication
+            settings: Application settings
+        """
+        self.oauth = oauth
+        self.settings = settings
+        self.rate_limiter = AdaptiveRateLimiter(requests_per_second=1.0)
+        self._http_client: httpx.AsyncClient | None = None
+
+    async def _get_http_client(self) -> httpx.AsyncClient:
+        """Get or create HTTP client."""
+        if self._http_client is None or self._http_client.is_closed:
+            self._http_client = httpx.AsyncClient(
+                timeout=30.0,
+                follow_redirects=True,
+            )
+        return self._http_client
+
+    async def close(self) -> None:
+        """Close HTTP client and OAuth manager."""
+        if self._http_client and not self._http_client.is_closed:
+            await self._http_client.aclose()
+            self._http_client = None
+        await self.oauth.close()
+
+    async def _make_request(
+        self,
+        action: str,
+        params: dict[str, Any] | None = None,
+        method: str = "GET",
+    ) -> dict[str, Any]:
+        """Make an API request to Worksection.
+
+        Args:
+            action: API action name (e.g., 'get_projects')
+            params: Additional query parameters
+            method: HTTP method
+
+        Returns:
+            API response data
+
+        Raises:
+            WorksectionAPIError: If request fails
+        """
+        # Ensure we have a valid token
+        token = await self.oauth.get_valid_token()
+
+        # Build request
+        client = await self._get_http_client()
+        url = self.settings.api_base_url
+
+        # Build parameters
+        request_params = {"action": action}
+        if params:
+            request_params.update(params)
+
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Rate limiting
+        async with self.rate_limiter:
+            logger.debug(f"API request: {action} with params {params}")
+
+            try:
+                if method == "GET":
+                    response = await client.get(url, params=request_params, headers=headers)
+                else:
+                    response = await client.post(url, params=request_params, headers=headers)
+
+                # Handle rate limiting
+                if response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+                    self.rate_limiter.record_rate_limit(
+                        float(retry_after) if retry_after else None
+                    )
+                    raise WorksectionAPIError(
+                        "Rate limit exceeded",
+                        status_code=429,
+                    )
+
+                # Record success for adaptive rate limiting
+                self.rate_limiter.record_success()
+
+                # Parse response
+                if response.status_code != 200:
+                    raise WorksectionAPIError(
+                        f"API request failed: {response.text}",
+                        status_code=response.status_code,
+                    )
+
+                data = response.json()
+
+                # Check for API-level errors
+                if "error" in data:
+                    raise WorksectionAPIError(
+                        data.get("error_description", data["error"]),
+                        response=data,
+                    )
+
+                return data
+
+            except httpx.RequestError as e:
+                logger.error(f"HTTP request failed: {e}")
+                raise WorksectionAPIError(f"Request failed: {e}")
+
+    # ==========================================================================
+    # Projects API
+    # ==========================================================================
+
+    async def get_projects(
+        self,
+        filter: str | None = None,
+        extra: str | None = None,
+    ) -> dict:
+        """Get all projects.
+
+        Args:
+            filter: Filter by status (active, archive)
+            extra: Additional data (text, options, users)
+
+        Returns:
+            Projects data with consistent structure
+        """
+        params = {}
+        if filter:
+            params["filter"] = filter
+        if extra:
+            params["extra"] = extra
+
+        result = await self._make_request("get_projects", params)
+
+        # Normalize response: ensure 'data' key exists
+        if "data" not in result and result.get("status") == "ok":
+            result["data"] = []
+
+        return result
+
+    async def get_project(
+        self,
+        project_id: str,
+        extra: str | None = None,
+    ) -> dict:
+        """Get single project details.
+
+        Args:
+            project_id: Project ID
+            extra: Additional data
+
+        Returns:
+            Project data
+        """
+        params = {"id_project": project_id}
+        if extra:
+            params["extra"] = extra
+        return await self._make_request("get_project", params)
+
+    async def get_project_groups(self) -> dict:
+        """Get project folders/groups.
+
+        Returns:
+            Project groups data
+        """
+        return await self._make_request("get_project_groups")
+
+    # ==========================================================================
+    # Tasks API
+    # ==========================================================================
+
+    async def get_all_tasks(
+        self,
+        filter: str | None = None,
+        extra: str | None = None,
+    ) -> dict:
+        """Get all tasks.
+
+        Args:
+            filter: Filter by status
+            extra: Additional data (text, files, comments, relations, subtasks, subscribers)
+
+        Returns:
+            Tasks data with consistent structure:
+            - status: "ok" or "error"
+            - data: List of tasks (empty list if no tasks)
+        """
+        params = {}
+        if filter:
+            params["filter"] = filter
+        if extra:
+            params["extra"] = extra
+
+        result = await self._make_request("get_all_tasks", params)
+
+        # Normalize response: ensure 'data' key exists
+        # API returns different structure when no data available
+        if "data" not in result and result.get("status") == "ok":
+            result["data"] = []
+
+        return result
+
+    async def get_tasks(
+        self,
+        project_id: str,
+        filter: str | None = None,
+        extra: str | None = None,
+    ) -> dict:
+        """Get tasks for a project.
+
+        Args:
+            project_id: Project ID
+            filter: Filter by status
+            extra: Additional data
+
+        Returns:
+            Tasks data with consistent structure
+        """
+        params = {"id_project": project_id}
+        if filter:
+            params["filter"] = filter
+        if extra:
+            params["extra"] = extra
+
+        result = await self._make_request("get_tasks", params)
+
+        # Normalize response: ensure 'data' key exists
+        if "data" not in result and result.get("status") == "ok":
+            result["data"] = []
+
+        return result
+
+    async def get_task(
+        self,
+        task_id: str,
+        extra: str | None = None,
+    ) -> dict:
+        """Get single task details.
+
+        Args:
+            task_id: Task ID
+            extra: Additional data
+
+        Returns:
+            Task data
+        """
+        params = {"id_task": task_id}
+        if extra:
+            params["extra"] = extra
+        return await self._make_request("get_task", params)
+
+    async def search_tasks(
+        self,
+        filter: str,
+        project_id: str | None = None,
+        task_id: str | None = None,
+        email_user_from: str | None = None,
+        email_user_to: str | None = None,
+        status: str | None = None,
+        extra: str | None = None,
+    ) -> dict:
+        """Search tasks using Worksection query syntax.
+
+        Args:
+            filter: Search query using Worksection syntax (e.g., "name has 'Report'")
+                   Supports: name, dateadd, datestart, dateend, dateclose fields
+                   Operators: =, has, >, <, >=, <=, !=, in, and, or
+            project_id: Project ID to scope the search (at least one scope param required)
+            task_id: Task ID to scope the search
+            email_user_from: Filter by task author email
+            email_user_to: Filter by assignee email
+            status: Task state filter (active/done)
+            extra: Additional data (text, html, files)
+
+        Returns:
+            Search results
+        """
+        params = {"filter": filter}
+        if project_id:
+            params["id_project"] = project_id
+        if task_id:
+            params["id_task"] = task_id
+        if email_user_from:
+            params["email_user_from"] = email_user_from
+        if email_user_to:
+            params["email_user_to"] = email_user_to
+        if status:
+            params["status"] = status
+        if extra:
+            params["extra"] = extra
+        return await self._make_request("search_tasks", params)
+
+    # ==========================================================================
+    # Comments API
+    # ==========================================================================
+
+    async def get_comments(
+        self,
+        task_id: str,
+        extra: str | None = None,
+    ) -> dict:
+        """Get comments for a task.
+
+        Args:
+            task_id: Task ID
+            extra: Additional data (files)
+
+        Returns:
+            Comments data
+        """
+        params = {"id_task": task_id}
+        if extra:
+            params["extra"] = extra
+        return await self._make_request("get_comments", params)
+
+    # ==========================================================================
+    # Files API
+    # ==========================================================================
+
+    async def download_file(self, file_id: str) -> bytes:
+        """Download a file.
+
+        Args:
+            file_id: File ID
+
+        Returns:
+            File content as bytes
+        """
+        token = await self.oauth.get_valid_token()
+        client = await self._get_http_client()
+
+        params = {
+            "action": "download",
+            "id_file": file_id,
+        }
+        headers = {"Authorization": f"Bearer {token}"}
+
+        async with self.rate_limiter:
+            response = await client.get(
+                self.settings.api_base_url,
+                params=params,
+                headers=headers,
+            )
+
+            if response.status_code != 200:
+                raise WorksectionAPIError(
+                    f"File download failed: {response.status_code}",
+                    status_code=response.status_code,
+                )
+
+            self.rate_limiter.record_success()
+            return response.content
+
+    # ==========================================================================
+    # Time Tracking API
+    # ==========================================================================
+
+    async def get_timers(
+        self,
+        project_id: str | None = None,
+        task_id: str | None = None,
+    ) -> dict:
+        """Get active timers.
+
+        Args:
+            project_id: Filter by project
+            task_id: Filter by task
+
+        Returns:
+            Timers data
+        """
+        params = {}
+        if project_id:
+            params["id_project"] = project_id
+        if task_id:
+            params["id_task"] = task_id
+        return await self._make_request("get_timers", params)
+
+    async def get_my_timer(self) -> dict:
+        """Get current user's active timer.
+
+        Returns:
+            Timer data
+        """
+        return await self._make_request("get_my_timer")
+
+    async def get_costs(
+        self,
+        project_id: str | None = None,
+        task_id: str | None = None,
+        user_id: str | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
+        is_timer: bool | None = None,
+    ) -> dict:
+        """Get cost/time records.
+
+        Args:
+            project_id: Filter by project
+            task_id: Filter by task
+            user_id: Filter by user
+            date_start: Start date (YYYY-MM-DD or DD.MM.YYYY)
+            date_end: End date (YYYY-MM-DD or DD.MM.YYYY)
+            is_timer: Filter by timer status
+
+        Returns:
+            Costs data
+        """
+        params = {}
+        if project_id:
+            params["id_project"] = project_id
+        if task_id:
+            params["id_task"] = task_id
+        if user_id:
+            params["id_user"] = user_id
+        if date_start:
+            params["datestart"] = format_date_for_api(date_start)
+        if date_end:
+            params["dateend"] = format_date_for_api(date_end)
+        if is_timer is not None:
+            params["is_timer"] = "1" if is_timer else "0"
+        return await self._make_request("get_costs", params)
+
+    async def get_costs_total(
+        self,
+        project_id: str | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
+    ) -> dict:
+        """Get aggregated cost totals.
+
+        Args:
+            project_id: Filter by project
+            date_start: Start date (YYYY-MM-DD or DD.MM.YYYY)
+            date_end: End date (YYYY-MM-DD or DD.MM.YYYY)
+
+        Returns:
+            Aggregated costs
+        """
+        params = {}
+        if project_id:
+            params["id_project"] = project_id
+        if date_start:
+            params["datestart"] = format_date_for_api(date_start)
+        if date_end:
+            params["dateend"] = format_date_for_api(date_end)
+        return await self._make_request("get_costs_total", params)
+
+    # ==========================================================================
+    # Users API
+    # ==========================================================================
+
+    async def get_users(self, filter: str | None = None) -> dict:
+        """Get all users.
+
+        Args:
+            filter: Filter by status
+
+        Returns:
+            Users data with consistent structure
+        """
+        params = {}
+        if filter:
+            params["filter"] = filter
+
+        result = await self._make_request("get_users", params)
+
+        # Normalize response: ensure 'data' key exists
+        if "data" not in result and result.get("status") == "ok":
+            result["data"] = []
+
+        return result
+
+    async def get_user(self, user_id: str) -> dict:
+        """Get single user details.
+
+        Note: Worksection API doesn't have a get_user action.
+        This method gets all users and filters to the requested one.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            User data
+        """
+        # Get all users and find the specific one
+        result = await self.get_users()
+
+        if isinstance(result, dict) and "data" in result:
+            for user in result["data"]:
+                if str(user.get("id")) == str(user_id):
+                    return {"status": "ok", "data": user}
+
+        # User not found
+        return {
+            "status": "error",
+            "message": f"User with id {user_id} not found",
+        }
+
+    async def me(self) -> dict:
+        """Get current authenticated user.
+
+        Returns:
+            Current user data
+        """
+        return await self._make_request("me")
+
+    async def get_user_groups(self) -> dict:
+        """Get user teams/departments.
+
+        Returns:
+            User groups data
+        """
+        return await self._make_request("get_user_groups")
+
+    async def get_contacts(self) -> dict:
+        """Get contact database.
+
+        Returns:
+            Contacts data
+        """
+        return await self._make_request("get_contacts")
+
+    # ==========================================================================
+    # Tags API (Read-only)
+    # ==========================================================================
+
+    async def get_task_tags(
+        self,
+        group: str | None = None,
+        tag_type: str | None = None,
+        access: str | None = None,
+    ) -> dict:
+        """Get task tags from all or selected group.
+
+        Args:
+            group: Filter by tag group (name or ID)
+            tag_type: Filter by group type ('status' or 'label')
+            access: Filter by visibility ('public' or 'private')
+
+        Returns:
+            Tags data
+        """
+        params = {}
+        if group:
+            params["group"] = group
+        if tag_type:
+            params["type"] = tag_type
+        if access:
+            params["access"] = access
+        return await self._make_request("get_task_tags", params)
+
+    async def get_task_tag_groups(
+        self,
+        tag_type: str | None = None,
+        access: str | None = None,
+    ) -> dict:
+        """Get task tag groups.
+
+        Args:
+            tag_type: Filter by group type ('status' or 'label')
+            access: Filter by visibility ('public' or 'private')
+
+        Returns:
+            Tag groups data
+        """
+        params = {}
+        if tag_type:
+            params["type"] = tag_type
+        if access:
+            params["access"] = access
+        return await self._make_request("get_task_tag_groups", params if params else None)
+
+    async def get_project_tags(
+        self,
+        group: str | None = None,
+        tag_type: str | None = None,
+        access: str | None = None,
+    ) -> dict:
+        """Get project tags from all or selected group.
+
+        Args:
+            group: Filter by tag group (name or ID)
+            tag_type: Filter by group type ('status' or 'label')
+            access: Filter by visibility ('public' or 'private')
+
+        Returns:
+            Project tags data
+        """
+        params = {}
+        if group:
+            params["group"] = group
+        if tag_type:
+            params["type"] = tag_type
+        if access:
+            params["access"] = access
+        return await self._make_request("get_project_tags", params if params else None)
+
+    async def get_project_tag_groups(
+        self,
+        tag_type: str | None = None,
+        access: str | None = None,
+    ) -> dict:
+        """Get project tag groups.
+
+        Args:
+            tag_type: Filter by group type ('status' or 'label')
+            access: Filter by visibility ('public' or 'private')
+
+        Returns:
+            Project tag groups data
+        """
+        params = {}
+        if tag_type:
+            params["type"] = tag_type
+        if access:
+            params["access"] = access
+        return await self._make_request("get_project_tag_groups", params if params else None)
+
+    # ==========================================================================
+    # Activity API
+    # ==========================================================================
+
+    async def get_events(
+        self,
+        project_id: str | None = None,
+        period: str | None = None,
+        filter: str | None = None,
+    ) -> dict:
+        """Get activity/event log.
+
+        Args:
+            project_id: Filter by project
+            period: Time period for events. Format:
+                - Minutes: 1m to 360m (e.g., "120m" for 2 hours)
+                - Hours: 1h to 72h (e.g., "24h" for 1 day)
+                - Days: 1d to 30d (e.g., "7d" for 1 week)
+            filter: Filter by event type
+
+        Returns:
+            Events data
+        """
+        params = {}
+        if project_id:
+            params["id_project"] = project_id
+        if period:
+            params["period"] = period
+        if filter:
+            params["filter"] = filter
+        return await self._make_request("get_events", params)
+
+    # ==========================================================================
+    # System API
+    # ==========================================================================
+
+    # Note: get_account API action is not available in Worksection API
+    # Account information can be obtained from the 'me' endpoint which includes
+    # user role, department, and account URL in the response.
