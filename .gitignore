@@ -8,6 +8,7 @@ data/
 
 # Claude Code (AI assistant project data)
 .claude/
+!.claude/hooks.json
 
 # IDE - JetBrains
 .idea/
