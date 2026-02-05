@@ -13,7 +13,8 @@ def register_task_tools(mcp: FastMCP, client: WorksectionClient) -> None:
     @mcp.tool()
     async def get_all_tasks(
         filter: Literal["active", "done", "all"] | None = None,
-        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"] | None = None,
+        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
+        | None = None,
     ) -> dict:
         """Get all tasks across all projects.
 
@@ -43,7 +44,8 @@ def register_task_tools(mcp: FastMCP, client: WorksectionClient) -> None:
     async def get_tasks(
         project_id: str,
         filter: Literal["active", "done", "all"] | None = None,
-        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"] | None = None,
+        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
+        | None = None,
     ) -> dict:
         """Get tasks for a specific project.
 
@@ -60,7 +62,8 @@ def register_task_tools(mcp: FastMCP, client: WorksectionClient) -> None:
     @mcp.tool()
     async def get_task(
         task_id: str,
-        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"] | None = None,
+        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
+        | None = None,
     ) -> dict:
         """Get detailed information about a specific task.
 

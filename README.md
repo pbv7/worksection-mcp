@@ -2,7 +2,8 @@
 
 A multi-tenant MCP (Model Context Protocol) server for [Worksection](https://worksection.com) project management platform, built with FastMCP 2.0.
 
-Provides **comprehensive read-only tools** for data access, enabling AI assistants like Claude to generate reports, analyze project data, and process image attachments.
+Provides **comprehensive read-only tools** for data access, enabling AI assistants like Claude to generate reports,
+analyze project data, and process image attachments.
 
 ## Features
 
@@ -66,6 +67,7 @@ uv run worksection-mcp
 ```
 
 On first run, the server will:
+
 1. Open your browser for OAuth2 authorization
 2. After you authorize, it will save encrypted tokens
 3. Start the MCP server on port 8000
@@ -104,12 +106,14 @@ docker compose up -d
 Worksection requires HTTPS for OAuth2 redirect URIs. This server automatically generates a self-signed SSL certificate on first run.
 
 **What to expect:**
+
 - Certificates are auto-generated and stored in `./data/certs/`
 - Your browser will show "Your connection is not private" warning
 - Click "Advanced" → "Proceed to localhost (unsafe)" to continue
 - This is expected for self-signed certificates in local development
 
 **Using custom certificates:**
+
 ```bash
 # Set paths to your certificates in .env
 OAUTH_SSL_CERT_PATH=/path/to/your/cert.crt
@@ -117,6 +121,7 @@ OAUTH_SSL_KEY_PATH=/path/to/your/key.key
 ```
 
 **Disable SSL (not recommended):**
+
 ```bash
 # Only if you have an alternative HTTPS solution (e.g., ngrok)
 OAUTH_CALLBACK_USE_SSL=false
@@ -124,7 +129,7 @@ OAUTH_CALLBACK_USE_SSL=false
 
 ### Authentication Flow
 
-```
+```text
 First Run (no tokens):
 1. Server starts callback listener on port 8080
 2. Opens browser → Worksection authorization page
@@ -146,7 +151,7 @@ Subsequent Runs:
 ### Projects
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_projects` | List all projects with optional filtering |
 | `get_project` | Get single project details |
 | `get_project_groups` | Get project folders/groups |
@@ -155,7 +160,7 @@ Subsequent Runs:
 ### Tasks
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_all_tasks` | Get all tasks across projects |
 | `get_tasks` | Get tasks for a specific project |
 | `get_task` | Get single task details |
@@ -168,7 +173,7 @@ Subsequent Runs:
 ### Comments
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_comments` | Get comments for a task |
 | `get_task_discussion` | Get full discussion thread |
 | `get_comments_with_images` | Get comments with image attachments |
@@ -176,7 +181,7 @@ Subsequent Runs:
 ### Files
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_task_files` | Get files attached to task |
 | `get_all_task_attachments` | Get all attachments from task and comments |
 | `download_file` | Download and cache a file |
@@ -187,18 +192,20 @@ Subsequent Runs:
 ### Time Tracking
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_costs` | Get time/cost records |
 | `get_costs_total` | Get aggregated costs |
 | `get_user_workload` | Get user's time entries |
 | `get_project_time_report` | Get project time report |
 
-> **Note:** Timer-specific tools (`get_timers`, `get_my_timer`) are not available because the Worksection API doesn't provide a `timers_read` scope. Use cost-tracking tools instead, which access the same time data via the `costs_read` scope.
+> **Note:** Timer-specific tools (`get_timers`, `get_my_timer`) are not available because the Worksection API
+> doesn't provide a `timers_read` scope. Use cost-tracking tools instead, which access the same time data via the
+> `costs_read` scope.
 
 ### Users & Teams
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_users` | Get all account users |
 | `get_user` | Get single user details |
 | `me` | Get current authenticated user |
@@ -209,7 +216,7 @@ Subsequent Runs:
 ### Tags
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_task_tags` | Get available task tags (labels/statuses) |
 | `get_task_tag_groups` | Get task tag groups |
 | `get_project_tags` | Get available project tags |
@@ -220,7 +227,7 @@ Subsequent Runs:
 ### Analytics
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_project_stats` | Get project statistics |
 | `get_overdue_tasks` | Get overdue tasks |
 | `get_tasks_by_status` | Filter tasks by status |
@@ -230,7 +237,7 @@ Subsequent Runs:
 ### Activity
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_activity_log` | Get activity/event log |
 | `get_recent_activity` | Get recent activity |
 | `get_project_activity` | Get project activity |
@@ -239,7 +246,7 @@ Subsequent Runs:
 ### System
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `get_account_info` | Get account information |
 | `health_check` | Check server health |
 | `get_current_user_info` | Get detailed user info |
@@ -250,7 +257,7 @@ Subsequent Runs:
 Resources allow Claude to directly access and analyze files:
 
 | Resource URI | Description |
-|--------------|-------------|
+| -------------- | ------------- |
 | `worksection://file/{file_id}` | Access any file for vision analysis |
 | `worksection://task/{task_id}/context` | Get full task context with attachments |
 | `worksection://cache/stats` | Get file cache statistics |
@@ -271,7 +278,7 @@ for file in task["images"]:
 ## Configuration Reference
 
 | Variable | Description | Default |
-|----------|-------------|---------|
+| ---------- | ------------- | --------- |
 | `WORKSECTION_CLIENT_ID` | OAuth2 client ID | Required |
 | `WORKSECTION_CLIENT_SECRET` | OAuth2 client secret | Required |
 | `WORKSECTION_ACCOUNT_URL` | Your Worksection URL | Required |
@@ -310,6 +317,7 @@ uv run python tests/test_all_mcp_tools.py --project "My Project"
 ```
 
 This comprehensive test script:
+
 - ✅ Tests all registered MCP tools
 - ✅ Configurable project selection (via CLI argument or environment variable)
 - ✅ Automatically extracts test IDs from your project data
@@ -353,7 +361,7 @@ uv run mypy src/
 
 ### Project Structure
 
-```
+```text
 worksection-mcp/
 ├── src/
 │   └── worksection_mcp/
@@ -439,32 +447,38 @@ docker run -v ./data:/app/data worksection-mcp
 
 ### OAuth2 Issues
 
-**"Invalid redirect URI"**
+#### "Invalid redirect URI"
+
 - Ensure your registered redirect URI in Worksection matches exactly
 - Default: `https://localhost:8080/oauth/callback`
 - Worksection requires HTTPS - do not use `http://`
 
-**"Your connection is not private" browser warning**
+#### "Your connection is not private" browser warning
+
 - This is expected with self-signed certificates
 - Click "Advanced" → "Proceed to localhost (unsafe)" to continue
 - The warning only appears during OAuth authorization
 
-**"Refresh token expired"**
+#### "Refresh token expired"
+
 - Delete `./data/tokens/tokens.enc` and re-authenticate
 
-**SSL certificate issues**
+#### SSL certificate issues
+
 - Delete `./data/certs/` directory to regenerate certificates
 - Ensure you have write permissions to the data directory
 
 ### Rate Limiting
 
-**"429 Too Many Requests"**
+#### "429 Too Many Requests"
+
 - The server automatically backs off and retries
 - Worksection API limit: 1 request/second
 
 ### File Cache
 
-**"File too large"**
+#### "File too large"
+
 - Increase `MAX_FILE_SIZE_MB` environment variable
 - Default limit: 10MB
 

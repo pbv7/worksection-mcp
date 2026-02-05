@@ -65,7 +65,6 @@ class MCPToolTester:
         "get_api_status": {"required_fields": ["api_base_url", "account_url"]},
         "get_account_info": {"required_fields": ["account_url", "user"]},
         "get_current_user_info": {"required_fields": ["oauth_info", "api_info"]},
-
         # List tools - expect data array
         "get_projects": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_tasks": {"required_fields": ["status", "data"], "data_is_list": True},
@@ -80,59 +79,64 @@ class MCPToolTester:
         "get_user_groups": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_project_groups": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_activity_log": {"required_fields": ["status", "data"], "data_is_list": True},
-
         # Single item tools - expect data object
         "get_project": {"required_fields": ["status", "data"], "data_is_dict": True},
         "get_task": {"required_fields": ["status", "data"], "data_is_dict": True},
         "get_user": {"required_fields": ["status", "data"], "data_is_dict": True},
         "me": {"required_fields": ["status", "data"], "data_is_dict": True},
         "get_project_team": {"required_fields": ["status", "data"]},
-
         # Task detail tools
         "get_task_subtasks": {"required_fields": ["status"]},
         "get_task_relations": {"required_fields": ["status"]},
         "get_task_subscribers": {"required_fields": ["status"]},
         "get_task_with_comments_and_files": {"required_fields": ["status", "data"]},
         "get_task_discussion": {"required_fields": ["task_id", "comments"]},
-
         # Task with tags - special response format
         "get_task_with_tags": {"required_fields": ["status", "task_id", "tags", "tag_names"]},
-
         # User tools
         "get_user_assignments": {"required_fields": ["user_id", "tasks"]},
-
         # File tools - expect specific fields
         "download_file": {"required_fields": ["file_id", "size_bytes"], "min_size": 1},
-        "get_file_as_base64": {"required_fields": ["file_id", "base64_content", "size_bytes", "mime_type", "is_image"], "min_size": 1},
-        "get_file_content": {"required_fields": ["file_id", "mime_type", "content_type", "text_content", "is_readable"]},
+        "get_file_as_base64": {
+            "required_fields": ["file_id", "base64_content", "size_bytes", "mime_type", "is_image"],
+            "min_size": 1,
+        },
+        "get_file_content": {
+            "required_fields": [
+                "file_id",
+                "mime_type",
+                "content_type",
+                "text_content",
+                "is_readable",
+            ]
+        },
         "get_task_files": {"required_fields": ["status"]},
         "get_all_task_attachments": {"required_fields": ["task_id", "total_files"]},
         "list_image_attachments": {"required_fields": ["task_id", "image_count"]},
-
         # Analytics tools - expect computed fields
         "get_project_stats": {"required_fields": ["project_id"]},
-        "get_team_workload_summary": {"required_fields": ["project_id", "members", "total_members"]},
+        "get_team_workload_summary": {
+            "required_fields": ["project_id", "members", "total_members"]
+        },
         "get_overdue_tasks": {"required_fields": ["tasks", "count"]},
         "get_recent_activity": {"required_fields": ["status", "data"]},
         "get_tasks_by_status": {"required_fields": ["project_id", "status", "tasks", "count"]},
         "get_tasks_by_priority": {"required_fields": ["project_id", "priority", "tasks", "count"]},
-
         # Time tracking tools
         "get_costs_total": {"required_fields": ["project_id"]},
         "get_user_workload": {"required_fields": ["user_id"]},
         "get_project_time_report": {"required_fields": ["project_id"]},
-
         # Search tools
         "search_tasks": {"required_fields": ["status", "data"], "data_is_list": True},
         "search_tasks_by_tag": {"required_fields": ["tag", "tasks", "count"]},
-
         # Tools that return status on success or error
         "get_all_tasks": {"required_fields": ["status", "data"], "data_is_list": True},
-
         # Activity tools - need to check for error in nested response
-        "get_project_activity": {"required_fields": ["project_id", "events"], "events_status_ok": True},
+        "get_project_activity": {
+            "required_fields": ["project_id", "events"],
+            "events_status_ok": True,
+        },
         "get_user_activity": {"required_fields": ["user_id", "events"], "events_has_data": True},
-
         # Comments with images
         "get_comments_with_images": {"required_fields": ["task_id", "comments_with_images"]},
     }
@@ -230,7 +234,9 @@ class MCPToolTester:
                     for project in projects["data"]:
                         if self.project_name.lower() in project.get("name", "").lower():
                             self.test_ids["project_id"] = project["id"]
-                            print(f"✓ project_id: {self.test_ids['project_id']} ({project['name']})")
+                            print(
+                                f"✓ project_id: {self.test_ids['project_id']} ({project['name']})"
+                            )
                             break
 
                     if not self.test_ids["project_id"]:
@@ -256,7 +262,9 @@ class MCPToolTester:
                 task_files = task_data.get("files", [])
                 if task_files:
                     self.test_ids["file_id"] = task_files[0]["id"]
-                    print(f"✓ file_id: {self.test_ids['file_id']} (from rich task, {len(task_files)} files total)")
+                    print(
+                        f"✓ file_id: {self.test_ids['file_id']} (from rich task, {len(task_files)} files total)"
+                    )
                 else:
                     print(f"⚠️  Rich task {self.rich_task} has no file attachments")
             except Exception as e:
@@ -273,7 +281,9 @@ class MCPToolTester:
                     print(f"✓ task_id: {self.test_ids['task_id']}")
 
                     # Try to get file_id from task
-                    task_detail = await self.client.get_task(self.test_ids["task_id"], extra="files")
+                    task_detail = await self.client.get_task(
+                        self.test_ids["task_id"], extra="files"
+                    )
                     task_data = task_detail.get("data", task_detail)
                     task_files = task_data.get("files", [])
                     if task_files:
@@ -347,7 +357,9 @@ class MCPToolTester:
                     if len(data) >= rules["min_items"]:
                         passed.append(f"has {len(data)} items (min: {rules['min_items']})")
                     else:
-                        failed.append(f"only {len(data)} items, expected at least {rules['min_items']}")
+                        failed.append(
+                            f"only {len(data)} items, expected at least {rules['min_items']}"
+                        )
             else:
                 failed.append(f"data is not list: {type(data).__name__}")
 
@@ -502,10 +514,16 @@ class MCPToolTester:
 
         # Task tools
         if "task" in tool_name:
-            if tool_name in ["get_task", "get_task_files", "get_task_subtasks",
-                            "get_task_relations", "get_task_subscribers",
-                            "get_task_with_comments_and_files", "get_task_discussion",
-                            "get_task_with_tags"]:
+            if tool_name in [
+                "get_task",
+                "get_task_files",
+                "get_task_subtasks",
+                "get_task_relations",
+                "get_task_subscribers",
+                "get_task_with_comments_and_files",
+                "get_task_discussion",
+                "get_task_with_tags",
+            ]:
                 if self.test_ids["task_id"]:
                     params["task_id"] = self.test_ids["task_id"]
             elif tool_name == "search_tasks":
@@ -603,12 +621,14 @@ class MCPToolTester:
             # Skip if params is None (means we can't test this tool)
             if params is None:
                 print(f"[{idx}/{total_tools}] ⊘ {tool_name} (skipped - no test data)")
-                self.results.append({
-                    "tool": tool_name,
-                    "status": "skipped",
-                    "reason": "No test data available",
-                    "validation": {"passed": [], "failed": []},
-                })
+                self.results.append(
+                    {
+                        "tool": tool_name,
+                        "status": "skipped",
+                        "reason": "No test data available",
+                        "validation": {"passed": [], "failed": []},
+                    }
+                )
                 continue
 
             # Call the tool
@@ -658,14 +678,11 @@ class MCPToolTester:
 
         # Count total validation checks
         total_checks = sum(
-            len(r.get("validation", {}).get("passed", [])) +
-            len(r.get("validation", {}).get("failed", []))
-            for r in self.results
-        )
-        passed_checks = sum(
             len(r.get("validation", {}).get("passed", []))
+            + len(r.get("validation", {}).get("failed", []))
             for r in self.results
         )
+        passed_checks = sum(len(r.get("validation", {}).get("passed", [])) for r in self.results)
 
         print(f"Total tools: {total}")
         print(f"✅ Passed: {success}")
@@ -686,7 +703,7 @@ class MCPToolTester:
                 if result["status"] == "error":
                     print(f"  • {result['tool']}")
                     print(f"    Args: {result.get('args', {})}")
-                    error_msg = result.get('error', 'Unknown')
+                    error_msg = result.get("error", "Unknown")
                     print(f"    Error: {error_msg[:200]}")
                     print()
 
@@ -751,20 +768,23 @@ Examples:
 
   # Full example with all options
   uv run python tests/test_all_mcp_tools.py --project "My Project" --rich-task "12345678" -v
-        """
+        """,
     )
     parser.add_argument(
-        "-p", "--project",
+        "-p",
+        "--project",
         help="Project name to use for testing (default: first available project)",
         default=os.getenv("TEST_PROJECT_NAME"),
     )
     parser.add_argument(
-        "-r", "--rich-task",
+        "-r",
+        "--rich-task",
         help="Task ID with comments, files, and images for comprehensive testing",
         default=os.getenv("TEST_RICH_TASK"),
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Verbose output: show args, response previews, and validation details",
     )

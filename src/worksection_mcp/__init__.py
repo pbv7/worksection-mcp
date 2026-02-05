@@ -11,12 +11,14 @@ __version__ = "0.1.0"
 def main():
     """Main entry point for the MCP server."""
     from worksection_mcp.server import main as _main
+
     return _main()
 
 
 def get_mcp():
     """Get the MCP server instance (lazy loading)."""
     from worksection_mcp.server import mcp
+
     return mcp
 
 

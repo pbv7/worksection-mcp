@@ -35,13 +35,15 @@ def generate_self_signed_cert(
     )
 
     # Create certificate subject
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Local"),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, "Local"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Worksection MCP"),
-        x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-    ])
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Local"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Local"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Worksection MCP"),
+            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+        ]
+    )
 
     # Build certificate
     now = datetime.now(timezone.utc)
@@ -54,10 +56,12 @@ def generate_self_signed_cert(
         .not_valid_before(now)
         .not_valid_after(now + timedelta(days=days))
         .add_extension(
-            x509.SubjectAlternativeName([
-                x509.DNSName(hostname),
-                x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-            ]),
+            x509.SubjectAlternativeName(
+                [
+                    x509.DNSName(hostname),
+                    x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+                ]
+            ),
             critical=False,
         )
         .add_extension(
@@ -109,9 +113,7 @@ def is_cert_valid(cert_path: Path, min_days_remaining: int = 30) -> bool:
         days_remaining = (expires_at - now).days
 
         if days_remaining < min_days_remaining:
-            logger.info(
-                f"Certificate expires in {days_remaining} days, needs renewal"
-            )
+            logger.info(f"Certificate expires in {days_remaining} days, needs renewal")
             return False
 
         return True

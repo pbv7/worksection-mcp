@@ -11,7 +11,9 @@ from worksection_mcp.client import WorksectionClient
 from worksection_mcp.cache import FileCache
 
 
-def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: FileCache | None = None) -> None:
+def register_file_tools(
+    mcp: FastMCP, client: WorksectionClient, file_cache: FileCache | None = None
+) -> None:
     """Register file-related tools with the MCP server."""
 
     async def _get_all_task_attachments_internal(task_id: str) -> dict:
@@ -33,12 +35,14 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         if isinstance(comments_data, dict) and "data" in comments_data:
             for comment in comments_data["data"]:
                 for file in comment.get("files", []):
-                    comment_files.append({
-                        **file,
-                        "comment_id": comment.get("id"),
-                        "comment_text": comment.get("text", "")[:100],  # Preview
-                        "comment_author": comment.get("user_from", {}).get("name"),
-                    })
+                    comment_files.append(
+                        {
+                            **file,
+                            "comment_id": comment.get("id"),
+                            "comment_text": comment.get("text", "")[:100],  # Preview
+                            "comment_author": comment.get("user_from", {}).get("name"),
+                        }
+                    )
 
         return {
             "task_id": task_id,
@@ -123,36 +127,36 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         """Detect MIME type from file content magic bytes."""
         # Common file signatures
         signatures = {
-            b'\x89PNG\r\n\x1a\n': 'image/png',
-            b'\xff\xd8\xff': 'image/jpeg',
-            b'GIF87a': 'image/gif',
-            b'GIF89a': 'image/gif',
-            b'RIFF': 'image/webp',  # WebP starts with RIFF....WEBP
-            b'BM': 'image/bmp',
-            b'PK\x03\x04': 'application/vnd.openxmlformats-officedocument',  # DOCX, XLSX, PPTX
-            b'%PDF': 'application/pdf',
+            b"\x89PNG\r\n\x1a\n": "image/png",
+            b"\xff\xd8\xff": "image/jpeg",
+            b"GIF87a": "image/gif",
+            b"GIF89a": "image/gif",
+            b"RIFF": "image/webp",  # WebP starts with RIFF....WEBP
+            b"BM": "image/bmp",
+            b"PK\x03\x04": "application/vnd.openxmlformats-officedocument",  # DOCX, XLSX, PPTX
+            b"%PDF": "application/pdf",
         }
 
         for sig, mime in signatures.items():
             if content.startswith(sig):
                 # Special handling for Office formats
-                if mime == 'application/vnd.openxmlformats-officedocument':
+                if mime == "application/vnd.openxmlformats-officedocument":
                     # Check for specific Office format markers in the ZIP
-                    if b'word/' in content[:2000]:
-                        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                    elif b'xl/' in content[:2000]:
-                        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                    elif b'ppt/' in content[:2000]:
-                        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+                    if b"word/" in content[:2000]:
+                        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    elif b"xl/" in content[:2000]:
+                        return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    elif b"ppt/" in content[:2000]:
+                        return "application/vnd.openxmlformats-officedocument.presentationml.presentation"
                     return mime
                 # WebP needs additional check
-                if sig == b'RIFF' and b'WEBP' in content[:12]:
-                    return 'image/webp'
-                elif sig == b'RIFF':
+                if sig == b"RIFF" and b"WEBP" in content[:12]:
+                    return "image/webp"
+                elif sig == b"RIFF":
                     continue  # Not WebP, skip
                 return mime
 
-        return 'application/octet-stream'
+        return "application/octet-stream"
 
     @mcp.tool()
     async def get_file_as_base64(file_id: str) -> dict:
@@ -183,7 +187,7 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         base64_content = base64.b64encode(content).decode("utf-8")
 
         # Check if it's an image
-        is_image = mime_type.startswith('image/')
+        is_image = mime_type.startswith("image/")
 
         result = {
             "file_id": file_id,
@@ -224,24 +228,28 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         for file in all_attachments.get("task_files", []):
             name = file.get("name", "")
             if any(name.lower().endswith(ext) for ext in image_extensions):
-                images.append({
-                    "id": file.get("id"),
-                    "name": name,
-                    "resource_uri": f"worksection://file/{file.get('id')}",
-                    "source": "task",
-                })
+                images.append(
+                    {
+                        "id": file.get("id"),
+                        "name": name,
+                        "resource_uri": f"worksection://file/{file.get('id')}",
+                        "source": "task",
+                    }
+                )
 
         # Check comment files
         for file in all_attachments.get("comment_files", []):
             name = file.get("name", "")
             if any(name.lower().endswith(ext) for ext in image_extensions):
-                images.append({
-                    "id": file.get("id"),
-                    "name": name,
-                    "resource_uri": f"worksection://file/{file.get('id')}",
-                    "source": "comment",
-                    "comment_preview": file.get("comment_text"),
-                })
+                images.append(
+                    {
+                        "id": file.get("id"),
+                        "name": name,
+                        "resource_uri": f"worksection://file/{file.get('id')}",
+                        "source": "comment",
+                        "comment_preview": file.get("comment_text"),
+                    }
+                )
 
         return {
             "task_id": task_id,
@@ -253,6 +261,7 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         """Extract text from DOCX file."""
         try:
             from docx import Document
+
             doc = Document(io.BytesIO(content))
             paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
             return "\n\n".join(paragraphs)
@@ -263,6 +272,7 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         """Extract text from XLSX file."""
         try:
             from openpyxl import load_workbook
+
             wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
             result = []
             for sheet_name in wb.sheetnames:
@@ -281,6 +291,7 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         """Extract text from PPTX file."""
         try:
             from pptx import Presentation
+
             prs = Presentation(io.BytesIO(content))
             result = []
             for slide_num, slide in enumerate(prs.slides, 1):
@@ -296,6 +307,7 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         """Extract text from PDF file."""
         try:
             from pypdf import PdfReader
+
             reader = PdfReader(io.BytesIO(content))
             result = []
             for page_num, page in enumerate(reader.pages, 1):
@@ -315,38 +327,40 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
             content_type is one of: text, document, spreadsheet, presentation, image, binary
         """
         # Text files
-        if mime_type.startswith('text/') or mime_type in [
-            'application/json', 'application/xml', 'application/javascript'
+        if mime_type.startswith("text/") or mime_type in [
+            "application/json",
+            "application/xml",
+            "application/javascript",
         ]:
             try:
-                return content.decode('utf-8'), 'text'
+                return content.decode("utf-8"), "text"
             except UnicodeDecodeError:
                 try:
-                    return content.decode('latin-1'), 'text'
+                    return content.decode("latin-1"), "text"
                 except Exception:
-                    return "[Unable to decode text content]", 'binary'
+                    return "[Unable to decode text content]", "binary"
 
         # Word documents
-        if mime_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-            return _extract_text_from_docx(content), 'document'
+        if mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            return _extract_text_from_docx(content), "document"
 
         # Excel spreadsheets
-        if mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-            return _extract_text_from_xlsx(content), 'spreadsheet'
+        if mime_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            return _extract_text_from_xlsx(content), "spreadsheet"
 
         # PowerPoint presentations
-        if mime_type == 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-            return _extract_text_from_pptx(content), 'presentation'
+        if mime_type == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+            return _extract_text_from_pptx(content), "presentation"
 
         # PDF
-        if mime_type == 'application/pdf':
-            return _extract_text_from_pdf(content), 'document'
+        if mime_type == "application/pdf":
+            return _extract_text_from_pdf(content), "document"
 
         # Images - can't extract text, but note they can be viewed
-        if mime_type.startswith('image/'):
-            return "[Image file - use get_file_as_base64 to view]", 'image'
+        if mime_type.startswith("image/"):
+            return "[Image file - use get_file_as_base64 to view]", "image"
 
-        return "[Binary file - cannot extract text]", 'binary'
+        return "[Binary file - cannot extract text]", "binary"
 
     @mcp.tool()
     async def get_file_content(file_id: str) -> dict:
@@ -381,7 +395,7 @@ def register_file_tools(mcp: FastMCP, client: WorksectionClient, file_cache: Fil
         # Extract text content
         text_content, content_type = _extract_text_content(content, mime_type)
 
-        is_readable = content_type not in ('image', 'binary')
+        is_readable = content_type not in ("image", "binary")
 
         return {
             "file_id": file_id,

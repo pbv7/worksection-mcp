@@ -53,7 +53,9 @@ def register_comment_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             "task_id": task_id,
             "task": task_data,
             "comments": comments_data.get("data", []) if isinstance(comments_data, dict) else [],
-            "comment_count": len(comments_data.get("data", [])) if isinstance(comments_data, dict) else 0,
+            "comment_count": len(comments_data.get("data", []))
+            if isinstance(comments_data, dict)
+            else 0,
         }
 
     @mcp.tool()
@@ -81,15 +83,18 @@ def register_comment_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             for comment in comments_data["data"]:
                 files = comment.get("files", [])
                 image_files = [
-                    f for f in files
+                    f
+                    for f in files
                     if any(f.get("name", "").lower().endswith(ext) for ext in image_extensions)
                 ]
                 if image_files:
-                    comments_with_images.append({
-                        **comment,
-                        "files": image_files,
-                        "image_count": len(image_files),
-                    })
+                    comments_with_images.append(
+                        {
+                            **comment,
+                            "files": image_files,
+                            "image_count": len(image_files),
+                        }
+                    )
 
         return {
             "task_id": task_id,

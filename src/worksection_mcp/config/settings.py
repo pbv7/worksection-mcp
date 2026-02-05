@@ -127,7 +127,10 @@ class Settings(BaseSettings):
         return v.rstrip("/")
 
     @field_validator(
-        "token_storage_path", "file_cache_path", "oauth_ssl_cert_path", "oauth_ssl_key_path",
+        "token_storage_path",
+        "file_cache_path",
+        "oauth_ssl_cert_path",
+        "oauth_ssl_key_path",
         mode="before",
     )
     @classmethod

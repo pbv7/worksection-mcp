@@ -112,10 +112,12 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
                     try:
                         deadline = datetime.strptime(date_end, "%Y-%m-%d")
                         if deadline < now:
-                            overdue_tasks.append({
-                                **task,
-                                "days_overdue": (now - deadline).days,
-                            })
+                            overdue_tasks.append(
+                                {
+                                    **task,
+                                    "days_overdue": (now - deadline).days,
+                                }
+                            )
 
                             # Count by project
                             proj = task.get("project", {})

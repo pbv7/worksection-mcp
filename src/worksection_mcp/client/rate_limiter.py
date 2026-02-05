@@ -87,7 +87,7 @@ class AdaptiveRateLimiter(RateLimiter):
                     self.base_interval,
                     self.min_interval / self.backoff_factor,
                 )
-                logger.info(f"Rate limit recovered to {1/self.min_interval:.2f} req/s")
+                logger.info(f"Rate limit recovered to {1 / self.min_interval:.2f} req/s")
                 self._consecutive_successes = 0
 
     def record_rate_limit(self, retry_after: float | None = None) -> None:
@@ -106,6 +106,4 @@ class AdaptiveRateLimiter(RateLimiter):
                 self.min_interval * self.backoff_factor,
             )
 
-        logger.warning(
-            f"Rate limited, backing off to {1/self.min_interval:.2f} req/s"
-        )
+        logger.warning(f"Rate limited, backing off to {1 / self.min_interval:.2f} req/s")

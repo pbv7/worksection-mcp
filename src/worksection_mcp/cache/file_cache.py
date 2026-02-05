@@ -103,8 +103,7 @@ class FileCache:
         """
         if len(content) > self.max_file_size_bytes:
             raise ValueError(
-                f"File size ({len(content)} bytes) exceeds limit "
-                f"({self.max_file_size_bytes} bytes)"
+                f"File size ({len(content)} bytes) exceeds limit ({self.max_file_size_bytes} bytes)"
             )
 
         async with self._lock:
@@ -121,6 +120,7 @@ class FileCache:
                 try:
                     # Verify it's a valid image
                     import io
+
                     img = Image.open(io.BytesIO(content))
                     img.verify()
                 except Exception as e:
@@ -215,9 +215,7 @@ class FileCache:
             db = await self._get_db()
 
             # Get path first
-            async with db.execute(
-                "SELECT path FROM files WHERE file_id = ?", (file_id,)
-            ) as cursor:
+            async with db.execute("SELECT path FROM files WHERE file_id = ?", (file_id,)) as cursor:
                 row = await cursor.fetchone()
 
             if row:
@@ -274,9 +272,7 @@ class FileCache:
             Cache statistics including file count, total size, etc.
         """
         db = await self._get_db()
-        async with db.execute(
-            "SELECT COUNT(*), SUM(size_bytes) FROM files"
-        ) as cursor:
+        async with db.execute("SELECT COUNT(*), SUM(size_bytes) FROM files") as cursor:
             row = await cursor.fetchone()
 
         file_count = row[0] or 0

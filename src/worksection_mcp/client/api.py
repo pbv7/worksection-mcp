@@ -99,9 +99,7 @@ class WorksectionClient:
                 # Handle rate limiting
                 if response.status_code == 429:
                     retry_after = response.headers.get("Retry-After")
-                    self.rate_limiter.record_rate_limit(
-                        float(retry_after) if retry_after else None
-                    )
+                    self.rate_limiter.record_rate_limit(float(retry_after) if retry_after else None)
                     raise WorksectionAPIError(
                         "Rate limit exceeded",
                         status_code=429,

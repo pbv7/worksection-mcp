@@ -38,11 +38,13 @@ The test script:
 The script supports multiple ways to specify which project to use for testing:
 
 1. **Command-line argument** (highest priority):
+
    ```bash
    uv run python tests/test_all_mcp_tools.py --project "My Project"
    ```
 
 2. **Environment variable**:
+
    ```bash
    export TEST_PROJECT_NAME="My Project"
    uv run python tests/test_all_mcp_tools.py
@@ -63,22 +65,26 @@ A "rich task" is a task that contains meaningful test data for comprehensive tes
 - ✅ **DOCX/PDF files** - for testing content extraction (`get_file_content`)
 
 When you specify a rich task, the script:
+
 1. Uses it as the primary `task_id` for all task-related tools
 2. Extracts `file_id` from its attachments for file tools
 3. Applies stricter validation (expects non-empty results from comment and file tools)
 
 **Command-line argument**:
+
 ```bash
 uv run python tests/test_all_mcp_tools.py --rich-task "12345678"
 ```
 
 **Environment variable**:
+
 ```bash
 export TEST_RICH_TASK="12345678"
 uv run python tests/test_all_mcp_tools.py
 ```
 
-If no rich task is specified, the script will use the first task from the selected project. Without a rich task, some tools may return empty results (which still pass basic validation but don't prove the tool works correctly).
+If no rich task is specified, the script will use the first task from the selected project. Without a rich task,
+some tools may return empty results (which still pass basic validation but don't prove the tool works correctly).
 
 ## Prerequisites
 
@@ -89,6 +95,7 @@ If no rich task is specified, the script will use the first task from the select
 ## Test Data
 
 The script automatically extracts:
+
 - **Project**: Specified project name or first available project
 - **Task**: Rich task (if specified) or first task from the selected project
 - **User**: Current authenticated user
@@ -96,7 +103,7 @@ The script automatically extracts:
 
 ## Output Example
 
-```
+```text
 ================================================================================
 WORKSECTION MCP - COMPREHENSIVE TOOL TEST
 ================================================================================
@@ -160,32 +167,42 @@ The test covers all tool categories:
 ## Troubleshooting
 
 ### Authentication Failed
-```
+
+```text
 Error: Authentication failed
 ```
+
 **Solution**: Check your `.env` file has correct OAuth2 credentials
 
 ### No Test Data
-```
+
+```text
 ⊘ Skipped: 2 tools - No test data available
 ```
+
 **Solution**:
+
 - Use `--rich-task` to specify a task with files, comments, and images
 - Some tools require files in tasks (upload a file to a task)
 - Ensure your test project has tasks with data
 
 ### API Rate Limit
-```
+
+```text
 Error: Rate limit exceeded
 ```
+
 **Solution**: Script automatically waits 1.1 seconds between calls. If you still hit limits, check for other API clients.
 
 ### Tool Failed
-```
+
+```text
 ❌ get_something
     Error: API request failed
 ```
+
 **Solution**: Check the error details in output. Common causes:
+
 - Missing permissions
 - Invalid test data
 - API changes
@@ -226,7 +243,7 @@ print(result)
 Common test parameters used:
 
 | Tool Type | Parameter | Example Value | Source |
-|-----------|-----------|---------------|--------|
+| ----------- | ----------- | --------------- | -------- |
 | Project tools | `project_id` | `"123456"` | Specified or first available project |
 | Task tools | `task_id` | `"789012"` | Rich task or first task in project |
 | User tools | `user_id` | `"555235"` | Current authenticated user |
@@ -274,6 +291,6 @@ After testing:
 
 ## Support
 
-- **Issues**: https://github.com/yourusername/worksection-mcp/issues
+- **Issues**: <https://github.com/yourusername/worksection-mcp/issues>
 - **Documentation**: See README.md
-- **API Docs**: https://worksection.com/en/faq/api-documentations.html
+- **API Docs**: <https://worksection.com/en/faq/api-documentations.html>

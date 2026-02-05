@@ -6,7 +6,9 @@ from worksection_mcp.client import WorksectionClient
 from worksection_mcp.auth import OAuth2Manager
 
 
-def register_system_tools(mcp: FastMCP, client: WorksectionClient, oauth: OAuth2Manager | None = None) -> None:
+def register_system_tools(
+    mcp: FastMCP, client: WorksectionClient, oauth: OAuth2Manager | None = None
+) -> None:
     """Register system and account tools with the MCP server."""
 
     @mcp.tool()
