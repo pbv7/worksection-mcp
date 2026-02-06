@@ -2,7 +2,7 @@
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
 
@@ -26,7 +26,7 @@ class TokenData(TypedDict):
 class TokenStorage:
     """Secure token storage with Fernet encryption."""
 
-    TOKEN_FILE = "tokens.enc"
+    TOKEN_FILE = Path("tokens.enc")
 
     def __init__(self, storage_path: Path, encryption_key: str = ""):
         """Initialize token storage.
@@ -72,7 +72,7 @@ class TokenStorage:
         Args:
             token_response: Token response from OAuth2 token endpoint
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_in = token_response.get("expires_in", 86400)
 
         token_data: TokenData = {
@@ -82,9 +82,7 @@ class TokenStorage:
             "expires_in": expires_in,
             "account_url": token_response.get("account_url", ""),
             "created_at": now.isoformat(),
-            "expires_at": datetime.fromtimestamp(
-                now.timestamp() + expires_in, tz=timezone.utc
-            ).isoformat(),
+            "expires_at": datetime.fromtimestamp(now.timestamp() + expires_in, tz=UTC).isoformat(),
         }
 
         encrypted = self._fernet.encrypt(json.dumps(token_data).encode())
@@ -136,7 +134,7 @@ class TokenStorage:
             return False
 
         expires_at = datetime.fromisoformat(token_data["expires_at"])
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Consider token invalid 5 minutes before expiry
         buffer_seconds = 300

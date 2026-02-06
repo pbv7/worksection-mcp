@@ -2,12 +2,11 @@
 
 import base64
 import logging
-import mimetypes
 
 from fastmcp import FastMCP
 
-from worksection_mcp.client import WorksectionClient
 from worksection_mcp.cache import FileCache
+from worksection_mcp.client import WorksectionClient
 
 logger = logging.getLogger(__name__)
 

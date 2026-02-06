@@ -22,4 +22,4 @@ def get_mcp():
     return mcp
 
 
-__all__ = ["main", "get_mcp", "__version__"]
+__all__ = ["__version__", "get_mcp", "main"]

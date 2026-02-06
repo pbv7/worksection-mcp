@@ -12,7 +12,7 @@ def register_activity_tools(mcp: FastMCP, client: WorksectionClient) -> None:
     async def get_activity_log(
         project_id: str | None = None,
         period: str | None = None,
-        filter: str | None = None,
+        event_filter: str | None = None,
     ) -> dict:
         """Get activity/event log with flexible filtering.
 
@@ -22,7 +22,7 @@ def register_activity_tools(mcp: FastMCP, client: WorksectionClient) -> None:
                 - Minutes: 1m to 360m (e.g., "120m" for 2 hours)
                 - Hours: 1h to 72h (e.g., "24h" for 1 day)
                 - Days: 1d to 30d (e.g., "7d" for 1 week)
-            filter: Filter by event type (optional)
+            event_filter: Filter by event type (optional)
 
         Returns:
             Activity log entries:
@@ -32,7 +32,7 @@ def register_activity_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         return await client.get_events(
             project_id=project_id,
             period=period,
-            filter=filter,
+            event_filter=event_filter,
         )
 
     @mcp.tool()

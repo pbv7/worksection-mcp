@@ -75,11 +75,6 @@ def validate_period(period: str) -> bool:
     value = int(match.group(1))
     unit = match.group(2)
 
-    if unit == "m":
-        return 1 <= value <= 360
-    elif unit == "h":
-        return 1 <= value <= 72
-    elif unit == "d":
-        return 1 <= value <= 30
-
-    return False
+    max_values = {"m": 360, "h": 72, "d": 30}
+    max_val = max_values.get(unit)
+    return max_val is not None and 1 <= value <= max_val

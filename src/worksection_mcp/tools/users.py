@@ -12,12 +12,12 @@ def register_user_tools(mcp: FastMCP, client: WorksectionClient) -> None:
 
     @mcp.tool()
     async def get_users(
-        filter: Literal["active", "all"] | None = None,
+        status_filter: Literal["active", "all"] | None = None,
     ) -> dict:
         """Get all users in the Worksection account.
 
         Args:
-            filter: Filter by status:
+            status_filter: Filter by status:
                 - active: Only active users (default)
                 - all: All users including deactivated
 
@@ -29,7 +29,7 @@ def register_user_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             - status: active/inactive
             - role: User role in the account
         """
-        return await client.get_users(filter=filter)
+        return await client.get_users(status_filter=status_filter)
 
     @mcp.tool()
     async def get_user(user_id: str) -> dict:
@@ -107,7 +107,7 @@ def register_user_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         user_data = await client.get_user(user_id=user_id)
 
         # Get all tasks and filter by assignee
-        all_tasks = await client.get_all_tasks(filter="active")
+        all_tasks = await client.get_all_tasks(status_filter="active")
 
         assigned_tasks = []
         if isinstance(all_tasks, dict) and "data" in all_tasks:

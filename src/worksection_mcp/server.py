@@ -1,18 +1,17 @@
 """Worksection MCP Server - Main entry point."""
 
-import asyncio
 import logging
 import sys
 from contextlib import asynccontextmanager
 
 from fastmcp import FastMCP
 
-from worksection_mcp.config import get_settings, Settings
 from worksection_mcp.auth import OAuth2Manager
-from worksection_mcp.client import WorksectionClient
 from worksection_mcp.cache import FileCache
-from worksection_mcp.tools import register_all_tools
+from worksection_mcp.client import WorksectionClient
+from worksection_mcp.config import Settings, get_settings
 from worksection_mcp.resources import register_file_resources
+from worksection_mcp.tools import register_all_tools
 
 # Configure logging
 logging.basicConfig(
@@ -78,7 +77,7 @@ def create_server(settings: Settings | None = None) -> FastMCP:
 
     # Define lifespan context manager for FastMCP 2.0
     @asynccontextmanager
-    async def lifespan(mcp: FastMCP):
+    async def lifespan(_mcp: FastMCP):
         """Handle server startup and shutdown."""
         # Startup
         logger.info("Worksection MCP server starting...")
@@ -171,7 +170,7 @@ def main():
         # Run with SSE transport (for HTTP access)
         server.run(
             transport="sse",
-            host="0.0.0.0",
+            host=settings.mcp_server_host,
             port=settings.mcp_server_port,
         )
 

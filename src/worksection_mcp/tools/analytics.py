@@ -1,7 +1,6 @@
 """Analytics and reporting MCP tools."""
 
-from datetime import datetime, timedelta
-from typing import Literal
+from datetime import UTC, datetime
 
 from fastmcp import FastMCP
 
@@ -29,7 +28,7 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             - by_status: Task count by status
         """
         # Get all tasks for the project
-        tasks_data = await client.get_tasks(project_id=project_id, filter="all")
+        tasks_data = await client.get_tasks(project_id=project_id, status_filter="all")
 
         total = 0
         completed = 0
@@ -38,7 +37,7 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         by_priority = {}
         by_status = {}
 
-        now = datetime.now()
+        now = datetime.now(UTC)
 
         if isinstance(tasks_data, dict) and "data" in tasks_data:
             tasks = tasks_data["data"]
@@ -59,7 +58,7 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
                     date_end = task.get("date_end")
                     if date_end:
                         try:
-                            deadline = datetime.strptime(date_end, "%Y-%m-%d")
+                            deadline = datetime.strptime(date_end, "%Y-%m-%d").replace(tzinfo=UTC)
                             if deadline < now:
                                 overdue += 1
                         except ValueError:
@@ -97,20 +96,20 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             - by_project: Count per project (if no project filter)
         """
         if project_id:
-            tasks_data = await client.get_tasks(project_id=project_id, filter="active")
+            tasks_data = await client.get_tasks(project_id=project_id, status_filter="active")
         else:
-            tasks_data = await client.get_all_tasks(filter="active")
+            tasks_data = await client.get_all_tasks(status_filter="active")
 
         overdue_tasks = []
         by_project = {}
-        now = datetime.now()
+        now = datetime.now(UTC)
 
         if isinstance(tasks_data, dict) and "data" in tasks_data:
             for task in tasks_data["data"]:
                 date_end = task.get("date_end")
                 if date_end:
                     try:
-                        deadline = datetime.strptime(date_end, "%Y-%m-%d")
+                        deadline = datetime.strptime(date_end, "%Y-%m-%d").replace(tzinfo=UTC)
                         if deadline < now:
                             overdue_tasks.append(
                                 {
@@ -152,13 +151,17 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         Returns:
             Tasks with the specified status
         """
-        tasks_data = await client.get_tasks(project_id=project_id, filter="all")
+        tasks_data = await client.get_tasks(project_id=project_id, status_filter="all")
 
-        filtered_tasks = []
-        if isinstance(tasks_data, dict) and "data" in tasks_data:
-            for task in tasks_data["data"]:
-                if task.get("status", "").lower() == status.lower():
-                    filtered_tasks.append(task)
+        filtered_tasks = [
+            task
+            for task in (
+                tasks_data.get("data", [])
+                if isinstance(tasks_data, dict) and "data" in tasks_data
+                else []
+            )
+            if task.get("status", "").lower() == status.lower()
+        ]
 
         return {
             "project_id": project_id,
@@ -181,15 +184,17 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         Returns:
             Tasks with the specified priority
         """
-        tasks_data = await client.get_tasks(project_id=project_id, filter="active")
+        tasks_data = await client.get_tasks(project_id=project_id, status_filter="active")
 
-        filtered_tasks = []
-        if isinstance(tasks_data, dict) and "data" in tasks_data:
-            for task in tasks_data["data"]:
-                # API returns priority as string, convert for comparison
-                task_priority = task.get("priority")
-                if task_priority is not None and str(task_priority) == str(priority):
-                    filtered_tasks.append(task)
+        filtered_tasks = [
+            task
+            for task in (
+                tasks_data.get("data", [])
+                if isinstance(tasks_data, dict) and "data" in tasks_data
+                else []
+            )
+            if task.get("priority") is not None and str(task.get("priority")) == str(priority)
+        ]
 
         return {
             "project_id": project_id,
@@ -217,13 +222,13 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             - Each member has: tasks_assigned, tasks_completed, time_logged
         """
         # Get users
-        users_data = await client.get_users(filter="active")
+        users_data = await client.get_users(status_filter="active")
 
         # Get tasks
         if project_id:
-            tasks_data = await client.get_tasks(project_id=project_id, filter="all")
+            tasks_data = await client.get_tasks(project_id=project_id, status_filter="all")
         else:
-            tasks_data = await client.get_all_tasks(filter="all")
+            tasks_data = await client.get_all_tasks(status_filter="all")
 
         # Get time data
         costs_data = await client.get_costs(

@@ -1,9 +1,13 @@
 """System and account MCP tools."""
 
+import logging
+
 from fastmcp import FastMCP
 
-from worksection_mcp.client import WorksectionClient
 from worksection_mcp.auth import OAuth2Manager
+from worksection_mcp.client import WorksectionClient
+
+logger = logging.getLogger(__name__)
 
 
 def register_system_tools(
@@ -30,7 +34,7 @@ def register_system_tools(
         return {
             "account_url": client.settings.worksection_account_url,
             "user": user_info,
-            "authenticated": True if user_info else False,
+            "authenticated": bool(user_info),
         }
 
     @mcp.tool()
@@ -123,7 +127,7 @@ def register_system_tools(
             await client.me()
             api_reachable = True
         except Exception:
-            pass
+            logger.debug("API unreachable during status check", exc_info=True)
 
         return {
             "api_base_url": client.settings.api_base_url,

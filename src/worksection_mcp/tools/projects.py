@@ -12,13 +12,13 @@ def register_project_tools(mcp: FastMCP, client: WorksectionClient) -> None:
 
     @mcp.tool()
     async def get_projects(
-        filter: Literal["active", "archive", "all"] | None = None,
+        status_filter: Literal["active", "archive", "all"] | None = None,
         extra: Literal["text", "options", "users"] | None = None,
     ) -> dict:
         """Get all projects from Worksection.
 
         Args:
-            filter: Filter projects by status:
+            status_filter: Filter projects by status:
                 - active: Only active projects (default)
                 - archive: Only archived projects
                 - all: All projects
@@ -35,7 +35,7 @@ def register_project_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             - page: Project URL path
             - date_start, date_end: Project dates
         """
-        return await client.get_projects(filter=filter, extra=extra)
+        return await client.get_projects(status_filter=status_filter, extra=extra)
 
     @mcp.tool()
     async def get_project(

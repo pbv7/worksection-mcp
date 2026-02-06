@@ -3,7 +3,7 @@
 import ipaddress
 import logging
 import ssl
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from cryptography import x509
@@ -46,7 +46,7 @@ def generate_self_signed_cert(
     )
 
     # Build certificate
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -108,7 +108,7 @@ def is_cert_valid(cert_path: Path, min_days_remaining: int = 30) -> bool:
         cert = x509.load_pem_x509_certificate(cert_data)
 
         # Check expiration
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_at = cert.not_valid_after_utc
         days_remaining = (expires_at - now).days
 

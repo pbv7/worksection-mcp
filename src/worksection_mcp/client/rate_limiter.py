@@ -81,14 +81,16 @@ class AdaptiveRateLimiter(RateLimiter):
         """Record a successful request."""
         self._consecutive_successes += 1
         # Gradually recover rate after sustained success
-        if self._consecutive_successes >= self._recovery_threshold:
-            if self.min_interval > self.base_interval:
-                self.min_interval = max(
-                    self.base_interval,
-                    self.min_interval / self.backoff_factor,
-                )
-                logger.info(f"Rate limit recovered to {1 / self.min_interval:.2f} req/s")
-                self._consecutive_successes = 0
+        if (
+            self._consecutive_successes >= self._recovery_threshold
+            and self.min_interval > self.base_interval
+        ):
+            self.min_interval = max(
+                self.base_interval,
+                self.min_interval / self.backoff_factor,
+            )
+            logger.info(f"Rate limit recovered to {1 / self.min_interval:.2f} req/s")
+            self._consecutive_successes = 0
 
     def record_rate_limit(self, retry_after: float | None = None) -> None:
         """Record a rate limit response.
