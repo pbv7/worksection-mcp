@@ -21,7 +21,8 @@ OAuth2 endpoints for authorization and token management.
 
 **Description:** Allows to get authorization code needed for token creation
 
-_\*after login to your Worksection account and approval page confirmation, you will be forwarded to specified Redirect URI with authorization code parameter (code is valid for 10 minutes)_
+_\*after login to your Worksection account and approval page confirmation, you will be forwarded to specified Redirect URI with authorization code parameter_
+_(code is valid for 10 minutes)_
 
 **Parameters:**
 
@@ -29,10 +30,12 @@ _\*after login to your Worksection account and approval page confirmation, you w
 
 - `redirect_uri` (Required) - Redirect URI Must meet the requirements of the OAuth2 standard and use the HTTPS protocol
 
-- `state` (Required) - Random text string Will be included in the response to your application at the end of the OAuth stream The main purpose is to prevent CSRF requests from being spoofed
+- `state` (Required) - Random text string. It will be included in the response to your application at the end of the OAuth stream.
+  The main purpose is to prevent CSRF requests from being spoofed.
 
-- `scope` (Required) - OAuth permissions, available values (can be specified with commas): projects_read|projects_write| tasks_read|tasks_write|costs_read|costs_write|tags_read|tags_write|comments_read|comments_write|files_read| files_write|users_read|users_write|contacts_read|contacts_write|administrative Defines which data in the Worksection your application will have access to
-  - Possible values: `projects_read, projects_write, tasks_read, tasks_write, costs_read, costs_write, tags_read, tags_write, comments_read, comments_write, files_read, files_write, users_read, users_write, contacts_read, contacts_write, administrative`
+- `scope` (Required) - OAuth permissions. Defines which data in the Worksection your application will have access to.
+  Available values (can be specified with commas):
+  `projects_read|projects_write|tasks_read|tasks_write|costs_read|costs_write|tags_read|tags_write|comments_read|comments_write|files_read|files_write|users_read|users_write|contacts_read|contacts_write|administrative`
 
 - `response_type` (Required) - Response type, possible value: code _code_ - returns the authorization code
 
@@ -63,6 +66,7 @@ _\*access_token is valid for 24 hours, refresh_token – 1 month_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "token_type": "Bearer",
@@ -74,6 +78,7 @@ _\*access_token is valid for 24 hours, refresh_token – 1 month_
   ```
 
 - **invalid_request** (OK - 200)
+
   ```json
   {
     "error": "invalid_request",
@@ -82,6 +87,7 @@ _\*access_token is valid for 24 hours, refresh_token – 1 month_
   ```
 
 - **invalid_client** (OK - 200)
+
   ```json
   {
     "error": "invalid_client",
@@ -115,6 +121,7 @@ _\*access_token is valid for 24 hours, refresh_token – 1 month_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "token_type": "Bearer",
@@ -125,6 +132,7 @@ _\*access_token is valid for 24 hours, refresh_token – 1 month_
   ```
 
 - **invalid_request** (OK - 200)
+
   ```json
   {
     "error": "invalid_request",
@@ -153,6 +161,7 @@ _\*access_token is valid for 24 hours, refresh_token – 1 month_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "id": "3993",
@@ -164,6 +173,7 @@ _\*access_token is valid for 24 hours, refresh_token – 1 month_
   ```
 
 - **not_authorized** (OK - 200)
+
   ```json
   {
     "error": "not_authorized",
@@ -196,6 +206,7 @@ Include your authentication token (admin token or OAuth2 access token) with each
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -249,6 +260,7 @@ Include your authentication token (admin token or OAuth2 access token) with each
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -267,7 +279,7 @@ Include your authentication token (admin token or OAuth2 access token) with each
 
 **Description:** Creates comment in selected task
 
-_\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/api-files.html#q1691)_)_
+_\*allows files attaching (see_ [details](https://worksection.com/en/faq/api-files.html#q1691)_)_
 
 **Parameters:**
 
@@ -278,6 +290,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -296,6 +309,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -319,6 +333,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "raw": "{\n    \"status\": \"ok\",\n    \"data\": [\n        {\n            \"id\": \"3610\",\n            \"comment\": \"Developed new workflow scheme for dev team\",\n            \"time\": \"6:50\",\n            \"money\": \"75.17\",\n            \"date\": \"2021-01-01\",\n            \"is_timer\": true,\n            \"user_from\": {\n                \"id\": \"5514\",\n                \"email\": \"frank.harper@ws.com\",\n                \"name\": \"Frank Harper\"\n            },\n            \"task\": {\n                \"id\": \"330142\",\n                \"name\": \"Workflow revision\",\n                \"page\": \"/project/6622/330142/\",\n                \"status\": \"done\",\n                \"priority\": \"1\",\n                \"user_from\": {\n                    \"id\": \"3993\",\n                    \"email\": \"henry.gardner@ws.com\",\n                    \"name\": \"Henry Gardner\"\n                },\n                \"user_to\": {\n                    \"id\": \"5514\",\n                    \"email\": \"frank.harper@ws.com\",\n                    \"name\": \"Frank Harper\"\n                },\n                \"project\": {\n                    \"id\": \"6622\",\n                    \"name\": \"Performance improvement\",\n                    \"page\": \"/project/6622/\"\n                },\n                \"date_added\": \"2021-01-01 11:00\",\n                \"date_closed\": \"2021-01-02 12:43\"\n            }\n        },\n        {\n            \"id\": \"3686\",\n            \"comment\": \"\",\n            \"time\": \"3:22\",\n            \"money\": \"0.00\",\n            \"date\": \"2021-01-03\",\n            \"is_timer\": false,\n            \"user_from\": {\n                \"id\": \"3993\",\n                \"email\": \"henry.gardner@ws.com\",\n                \"name\": \"Henry Gardner\"\n            },\n            \"task\": {\n                \"id\": \"330090\",\n                \"name\": \"Worksection implementation\",\n                \"page\": \"/project/6622/330090/\",\n                \"status\": \"active\",\n                \"priority\": \"1\",\n                \"user_from\": {\n                    \"id\": \"3993\",\n                    \"email\": \"henry.gardner@ws.com\",\n                    \"name\": \"Henry Gardner\"\n                },\n                \"user_to\": {\n                    \"id\": \"2\",\n                    \"email\": \"ANY\",\n                    \"name\": \"Anyone\"\n                },\n                \"project\": {\n                    \"id\": \"6622\",\n                    \"name\": \"Performance improvement\",\n                    \"page\": \"/project/6622/\"\n                },\n                \"date_added\": \"2021-01-01 12:00\"\n            }\n        },\n\n    ],\n    \"total\": {\n        \"time\": \"10:12\",\n        \"money\": \"75.17\"\n    }\n}"
@@ -338,6 +353,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -367,6 +383,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -375,6 +392,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -401,6 +419,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -424,6 +443,7 @@ _\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -452,6 +472,7 @@ _\*project files include attached to project description and directly to Files s
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -485,6 +506,7 @@ _\*project files include attached to project description and directly to Files s
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -512,6 +534,7 @@ _\*attached to project description, task description, comment or directly to Fil
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "raw": "Txt file\r\n\r\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse vulputate facilisis pellentesque. Fusce massa magna, tempus id sapien id, maximus dictum neque. Etiam imperdiet felis vitae diam placerat, at feugiat risus pulvinar. Quisque in mi pretium metus tincidunt feugiat a sit amet nibh. Nullam porta quis massa sit amet gravida. Integer ullamcorper, nisl quis dapibus dapibus, mauris orci imperdiet tellus, ac porttitor metus eros scelerisque elit. Pellentesque nec imperdiet lectus.\r\n\r\nSed laoreet sagittis massa, vitae consectetur felis placerat in. Donec elementum tortor et suscipit rhoncus. Nulla facilisi. In pulvinar tincidunt massa, eu mollis ligula. Phasellus eu rhoncus est, id maximus lectus. Aenean finibus ac felis sed eleifend. Nullam quis vestibulum justo, eu ullamcorper justo.\r\n\r\nQuisque a tempus magna, et commodo sapien. Sed sit amet accumsan diam. Etiam blandit velit vel ipsum imperdiet maximus. Integer rhoncus purus pellentesque risus vulputate, in consequat nulla consectetur. Nulla vitae sodales risus. Sed sagittis, urna ut pretium egestas, libero nulla feugiat ex, quis consectetur quam purus id nulla. Nam tincidunt tincidunt finibus. Vestibulum ut pellentesque nisl, maximus gravida eros. Duis vel porta felis, vitae feugiat dolor. Fusce ut pulvinar metus. In hac habitasse platea dictumst. Donec vitae nulla sit amet ante mollis sagittis fringilla non libero. Morbi cursus dapibus velit sit amet malesuada. Aliquam fringilla nisl ut diam iaculis pellentesque cursus ac sapien."
@@ -519,6 +542,7 @@ _\*attached to project description, task description, comment or directly to Fil
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -544,6 +568,7 @@ _\*attached to project description, task description, comment or directly to Fil
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -581,6 +606,7 @@ _\*attached to project description, task description, comment or directly to Fil
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -653,6 +679,7 @@ _\*into your team if 'group' parameter is not specified_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -673,6 +700,7 @@ _\*into your team if 'group' parameter is not specified_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -695,6 +723,7 @@ _\*into your team if 'group' parameter is not specified_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -734,6 +763,7 @@ _\*if there are no teams with same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -747,6 +777,7 @@ _\*if there are no teams with same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -769,6 +800,7 @@ _\*if there are no teams with same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -831,6 +863,7 @@ _\*no invitation sent_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -853,6 +886,7 @@ _\*no invitation sent_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -875,6 +909,7 @@ _\*no invitation sent_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -927,6 +962,7 @@ _\*if there are no folders with same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -939,6 +975,7 @@ _\*if there are no folders with same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -969,6 +1006,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -976,6 +1014,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1006,6 +1045,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -1013,6 +1053,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1037,6 +1078,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "raw": "{\n    \"status\": \"ok\",\n    \"data\": [\n        {\n            \"id\": \"6622\",\n            \"name\": \"Performance improvement\",\n            \"page\": \"/project/6622/\",\n            \"status\": \"active\",\n            \"company\": \"Development\",\n            \"user_from\": {\n                \"id\": \"3993\",\n                \"email\": \"henry.gardner@ws.com\",\n                \"name\": \"Henry Gardner\"\n            },\n            \"user_to\": {\n                \"id\": \"3993\",\n                \"email\": \"henry.gardner@ws.com\",\n                \"name\": \"Henry Gardner\"\n            },\n            \"text\": \"Inner project for company KPI improvement\",\n            \"date_added\": \"2021-01-01 10:18\",\n            \"date_start\": \"2021-01-01\",\n            \"date_end\": \"2021-07-01\",\n            \"options\": {\n                \"allow_close\": 1,\n                \"allow_give\": 1,\n                \"allow_term\": 0,\n                \"allow_limit\": 0,\n                \"require_term\": 1,\n                \"require_tag\": 1,\n                \"require_limit\": 1,\n                \"require_hidden\": 0,\n                \"deny_comments_edit\": 0,\n                \"deny_task_edit\": 0,\n                \"deny_task_delete\": 1,\n                \"time_require\": 0,\n                \"time_today\": 0,\n                \"timer_only\": 1\n            },\n            \"max_time\": 1200,\n            \"max_money\": 20400,\n            \"tags\": {\n                \"105554\": \"inner\",\n                \"105570\": \"wiki\"\n            },\n            \"users\": [\n                {\n                    \"id\": \"3993\",\n                    \"email\": \"henry.gardner@ws.com\",\n                    \"name\": \"Henry Gardner\"\n                },\n                {\n                    \"id\": \"5514\",\n                    \"email\": \"frank.harper@ws.com\",\n                    \"name\": \"Frank Harper\"\n                },\n                {\n                    \"id\": \"5686\",\n                    \"email\": \"kate.greenway@ws.com\",\n                    \"name\": \"Kate Greenway\"\n                }\n            ]\n        },\n        {\n            \"id\": \"8506\",\n            \"name\": \"Prototyping\",\n            \"page\": \"/project/8506/\",\n            \"status\": \"pending\",\n            \"company\": \"Development\",\n            \"user_from\": {\n                \"id\": \"5686\",\n                \"email\": \"kate.greenway@ws.com\",\n                \"name\": \"Kate Greenway\"\n            },\n            \"user_to\": {\n                \"id\": \"0\",\n                \"email\": \"NOONE\",\n                \"name\": \"Manager isn't assigned\"\n            },\n            \"text\": \"\",\n            \"date_added\": \"2021-01-05 16:21\",\n            \"options\": {\n                \"allow_close\": 1,\n                \"allow_give\": 0,\n                \"allow_term\": 0,\n                \"allow_limit\": 0,\n                \"require_term\": 0,\n                \"require_tag\": 0,\n                \"require_limit\": 0,\n                \"require_hidden\": 0,\n                \"deny_comments_edit\": 0,\n                \"deny_task_edit\": 0,\n                \"deny_task_delete\": 0,\n                \"time_require\": 0,\n                \"time_today\": 0,\n                \"timer_only\": 0\n            },\n            \"users\": [\n                {\n                    \"id\": \"5686\",\n                    \"email\": \"kate.greenway@ws.com\",\n                    \"name\": \"Kate Greenway\"\n                }\n            ]\n        },\n    ]\n}"
@@ -1060,6 +1102,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1127,6 +1170,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1145,7 +1189,7 @@ _\*task subscribers list can be obtained through 'get_task' method with 'extra=s
 
 **Description:** Creates project
 
-_\*allows files attaching to project description (see_ [<i>details</i>](https://worksection.com/en/faq/api-files.html#q1691)_)_
+_\*allows files attaching to project description (see_ [details](https://worksection.com/en/faq/api-files.html#q1691)_)_
 
 **Parameters:**
 
@@ -1154,6 +1198,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1203,6 +1248,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
   ```
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1244,6 +1290,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1269,6 +1316,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1294,6 +1342,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1319,6 +1368,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -1326,6 +1376,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1351,6 +1402,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -1358,6 +1410,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1385,6 +1438,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -1392,6 +1446,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1420,6 +1475,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -1427,6 +1483,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1449,6 +1506,7 @@ _\*allows files attaching to project description (see_ [<i>details</i>](https://
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1499,6 +1557,7 @@ _\*if there are no folders with same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1511,6 +1570,7 @@ _\*if there are no folders with same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1532,7 +1592,7 @@ _\*if there are no folders with same name_
 
 _\*info on who made changes, what changed and when_
 
-**!! better use webhooks instead (see** [<b>details</b>](https://worksection.com/en/faq/webhooks.html)**) !!**
+**Better use webhooks instead** (see [details](https://worksection.com/en/faq/webhooks.html)).
 
 **Parameters:**
 
@@ -1542,6 +1602,7 @@ _\*info on who made changes, what changed and when_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1638,6 +1699,7 @@ _\*info on who made changes, what changed and when_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1662,6 +1724,7 @@ _\*info on who made changes, what changed and when_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1728,13 +1791,15 @@ _\*if there are no tags with the same name_
 
 **Parameters:**
 
-- `group` (Required) - Group, where task tags will be created You can specify the name of the group or its ID (can be obtained through _get_task_tag_groups_ method)
+- `group` (Required) - Group where task tags will be created.
+  You can specify the group name or its ID (can be obtained through _get_task_tag_groups_ method).
 
 - `title` (Required) - Task tag names separated by commas
 
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1756,6 +1821,7 @@ _\*if there are no tags with the same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1782,6 +1848,7 @@ _\*if there are no tags with the same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -1789,6 +1856,7 @@ _\*if there are no tags with the same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1811,6 +1879,7 @@ _\*if there are no tags with the same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1872,7 +1941,8 @@ _\*if there are no tag groups with same name_
 - `type` (Required) - Group type, possible values: status|label
   - Possible values: `status, label`
 
-- `access` (Required) - Tag group visibility (statuses are always visible and have public value), possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams
+- `access` (Required) - Tag group visibility (statuses are always visible and have public value), possible values: `public|private`.
+  _public_ - available to all teams (including external client teams). _private_ - available only for your company teams.
   - Possible values: `public, private`
 
 - `title` (Required) - Group names separated by commas
@@ -1880,6 +1950,7 @@ _\*if there are no tag groups with same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -1901,6 +1972,7 @@ _\*if there are no tag groups with same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -1923,6 +1995,7 @@ _\*if there are no tag groups with same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -2000,13 +2073,15 @@ _\*if there are no tags with the same name_
 
 **Parameters:**
 
-- `group` (Required) - Group, where project tags will be created You can specify the name of the group or its ID (can be obtained through _get_project_tag_groups_ method)
+- `group` (Required) - Group where project tags will be created.
+  You can specify the group name or its ID (can be obtained through _get_project_tag_groups_ method).
 
 - `title` (Required) - Project tag names separated by commas
 
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -2028,6 +2103,7 @@ _\*if there are no tags with the same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -2054,6 +2130,7 @@ _\*if there are no tags with the same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -2061,6 +2138,7 @@ _\*if there are no tags with the same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -2083,6 +2161,7 @@ _\*if there are no tags with the same name_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -2125,12 +2204,14 @@ _\*if there are no tags with the same name_
 
 - `title` (Required) - Group names separated by commas
 
-- `access` (Required) - Tag group visibility, possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams
+- `access` (Required) - Tag group visibility, possible values: `public|private`.
+  _public_ - available to all teams (including external client teams). _private_ - available only for your company teams.
   - Possible values: `public, private`
 
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -2152,6 +2233,7 @@ _\*if there are no tags with the same name_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -2179,6 +2261,7 @@ _\*except tasks with delayed publication
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -2471,6 +2554,7 @@ _\*except tasks with delayed publication
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -2794,6 +2878,7 @@ _\*except tasks with delayed publication
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -2822,6 +2907,7 @@ _\*except (sub)tasks with delayed publication
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -2987,6 +3073,7 @@ _\*except (sub)tasks with delayed publication
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3005,7 +3092,7 @@ _\*except (sub)tasks with delayed publication
 
 **Description:** Creates (sub)task in selected project
 
-_\*allows files attaching to (sub)task description (see_ [<i>details</i>](https://worksection.com/en/faq/api-files.html#q1691)_)_
+_\*allows files attaching to (sub)task description (see_ [details](https://worksection.com/en/faq/api-files.html#q1691)_)_
 
 **Parameters:**
 
@@ -3016,6 +3103,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3058,6 +3146,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3088,6 +3177,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3113,6 +3203,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3143,6 +3234,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3168,6 +3260,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3198,6 +3291,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3207,6 +3301,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3232,6 +3327,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -3239,6 +3335,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3248,6 +3345,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3269,6 +3367,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3324,6 +3423,7 @@ _\*allows files attaching to (sub)task description (see_ [<i>details</i>](https:
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3350,6 +3450,7 @@ _\*their ID, start time, timer value and who started them_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3441,6 +3542,7 @@ _\*their ID, start time, timer value and who started them_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -3448,6 +3550,7 @@ _\*their ID, start time, timer value and who started them_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3471,6 +3574,7 @@ _\*their ID, start time, timer value and who started them_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3523,6 +3627,7 @@ _\*their ID, start time, timer value and who started them_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -3530,6 +3635,7 @@ _\*their ID, start time, timer value and who started them_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3553,6 +3659,7 @@ _\*their ID, start time, timer value and who started them_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -3560,6 +3667,7 @@ _\*their ID, start time, timer value and who started them_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3583,6 +3691,7 @@ _\*their ID, start time, timer value and who started them_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3618,12 +3727,14 @@ _\*their ID, start time, timer value and who started them_
 
 - `url` (Required) - Webhook URL
 
-- `events` (Required) - Events separated by commas, possible values: post_task|post_comment|post_project|update_task|update_comment|update_project|delete_task|delete_comment|close_task Selected events will send notifications to Webhook URL
+- `events` (Required) - Events separated by commas. Selected events will send notifications to Webhook URL.
+  Possible values: `post_task|post_comment|post_project|update_task|update_comment|update_project|delete_task|delete_comment|close_task`.
   - Possible values: `post_task, post_comment, post_project, update_task, update_comment, update_project, delete_task, delete_comment, close_task`
 
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok",
@@ -3632,6 +3743,7 @@ _\*their ID, start time, timer value and who started them_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",
@@ -3658,6 +3770,7 @@ _\*their ID, start time, timer value and who started them_
 **Responses:**
 
 - **success** (OK - 200)
+
   ```json
   {
     "status": "ok"
@@ -3665,6 +3778,7 @@ _\*their ID, start time, timer value and who started them_
   ```
 
 - **error** (OK - 200)
+
   ```json
   {
     "status": "error",

@@ -14,6 +14,7 @@ This document summarizes the extraction of comprehensive API reference data from
 Structured JSON schema containing all API endpoint definitions in a clean, machine-readable format.
 
 **Structure:**
+
 ```json
 {
   "api_version": "1.0",
@@ -27,6 +28,7 @@ Structured JSON schema containing all API endpoint definitions in a clean, machi
 ```
 
 **Features:**
+
 - Removed all Postman-specific metadata (IDs, exporter info, etc.)
 - Preserved all functional API information
 - Organized by categories
@@ -39,11 +41,13 @@ Structured JSON schema containing all API endpoint definitions in a clean, machi
 Comprehensive Markdown documentation for human consumption.
 
 **Structure:**
+
 - Authentication overview
 - OAuth2 endpoints (4 endpoints)
 - Client API endpoints (57 endpoints) organized by category
 
 **Categories:**
+
 1. **Members** (11 endpoints)
    - User management
    - Teams and groups
@@ -128,12 +132,14 @@ The Worksection API supports two authentication methods:
 ### Client API Endpoints (57 total)
 
 All Client API endpoints:
+
 - Use the base URL: `{{account_url}}/api/`
 - Require authentication (admin token or OAuth2 access token)
 - Use POST method (with action parameter)
 - Return JSON responses with `status` field
 
 **Response Format:**
+
 ```json
 {
   "status": "ok|error",
@@ -202,6 +208,7 @@ All Client API endpoints:
 ### For AI Agents
 
 Use `api-schema.json` for:
+
 - Programmatic API endpoint discovery
 - Parameter validation
 - Response schema validation
@@ -210,6 +217,7 @@ Use `api-schema.json` for:
 ### For Developers
 
 Use `api-reference.md` for:
+
 - Comprehensive API documentation
 - Understanding endpoint behavior
 - Request/response examples
@@ -218,6 +226,7 @@ Use `api-reference.md` for:
 ### For MCP Server Implementation
 
 The extracted data can be used to:
+
 1. Auto-generate MCP tool definitions
 2. Validate API parameters
 3. Generate type definitions
