@@ -1,0 +1,12 @@
+{
+  "globs": ["**/*.md"],
+  "ignores": [".venv/**", "node_modules/**", ".git/**"],
+  "config": {
+    "MD013": {
+      "line_length": 150,
+      "code_blocks": false,
+      "headings": false,
+      "tables": false
+    }
+  }
+}

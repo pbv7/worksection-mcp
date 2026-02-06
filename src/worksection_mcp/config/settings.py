@@ -182,10 +182,7 @@ class Settings(BaseSettings):
                 f"Provided: {v}"
             )
         except Exception as e:
-            raise ValueError(
-                f"Error validating hostname '{hostname}': {e}\n"
-                f"Provided URL: {v}"
-            )
+            raise ValueError(f"Error validating hostname '{hostname}': {e}\nProvided URL: {v}")
 
         return v
 
@@ -253,9 +250,7 @@ class Settings(BaseSettings):
     def validate_port(cls, v: int, info) -> int:
         """Validate port numbers."""
         if not (1 <= v <= 65535):
-            raise ValueError(
-                f"{info.field_name} must be between 1 and 65535. Current: {v}"
-            )
+            raise ValueError(f"{info.field_name} must be between 1 and 65535. Current: {v}")
         return v
 
     @field_validator("max_file_size_mb", "file_cache_retention_hours")

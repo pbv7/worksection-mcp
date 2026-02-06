@@ -39,7 +39,11 @@ def main():
         print(f"API Base URL:         {settings.api_base_url}")
         print(f"OAuth2 URL:           {settings.oauth2_base_url}")
         print(f"Redirect URI:         {settings.worksection_redirect_uri}")
-        print(f"Client ID:            {settings.worksection_client_id[:8]}..." if len(settings.worksection_client_id) > 8 else settings.worksection_client_id)
+        print(
+            f"Client ID:            {settings.worksection_client_id[:8]}..."
+            if len(settings.worksection_client_id) > 8
+            else settings.worksection_client_id
+        )
         print(f"Client Secret:        {settings.worksection_client_secret[:4]}***")
         print(f"Scopes:               {', '.join(settings.scopes_list)}")
         print(f"Callback Host:        {settings.oauth_callback_host}")

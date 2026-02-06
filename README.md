@@ -1,16 +1,22 @@
 # Worksection MCP Server
 
-A multi-tenant MCP (Model Context Protocol) server for [Worksection](https://worksection.com) project management platform, built with FastMCP 2.0.
+A multi-tenant MCP (Model Context Protocol) server for
+[Worksection](https://worksection.com) project management platform,
+built with FastMCP 2.0.
 
-Provides **comprehensive read-only tools** for data access, enabling AI assistants like Claude to generate reports,
-analyze project data, and process image attachments.
+Provides **comprehensive read-only tools** for data access,
+enabling AI assistants like Claude to generate reports, analyze project data,
+and process image attachments.
 
 ## Features
 
 - **Multi-tenant** - Configurable for any Worksection account
-- **OAuth2 Authentication** - Secure authorization code flow with automatic token refresh
-- **Comprehensive Read-only Tools** - Projects, tasks, comments, time tracking, users, and more
-- **Image Analysis** - MCP resources for Claude vision to analyze screenshots and attachments
+- **OAuth2 Authentication** - Secure authorization code flow with automatic
+  token refresh
+- **Comprehensive Read-only Tools** - Projects, tasks, comments, time tracking,
+  users, and more
+- **Image Analysis** - MCP resources for Claude vision to analyze screenshots
+  and attachments
 - **Rate Limiting** - Built-in 1 req/sec throttling per Worksection API limits
 - **File Caching** - Local cache for downloaded attachments
 - **Production Ready** - Docker containerization with multi-stage builds
@@ -99,13 +105,16 @@ docker compose up -d
 1. Go to your Worksection account settings
 2. Navigate to API / Integrations
 3. Create a new OAuth2 application
-4. Set the redirect URI to `https://localhost:8080/oauth/callback` (HTTPS required)
+4. Set the redirect URI to `https://localhost:8080/oauth/callback`
+   (HTTPS required)
 5. Note your `client_id` and `client_secret`
-6. Enable required scopes (read permissions): Projects, Tasks, Costs, Tags, Comments, Files, People, Contacts
+6. Enable required scopes (read permissions): Projects, Tasks, Costs, Tags,
+   Comments, Files, People, Contacts
 
 ### HTTPS for OAuth Callback
 
-Worksection requires HTTPS for OAuth2 redirect URIs. This server automatically generates a self-signed SSL certificate on first run.
+Worksection requires HTTPS for OAuth2 redirect URIs. This server automatically
+generates a self-signed SSL certificate on first run.
 
 **What to expect:**
 
@@ -200,8 +209,9 @@ Subsequent Runs:
 | `get_user_workload` | Get user's time entries |
 | `get_project_time_report` | Get project time report |
 
-> **Note:** Timer-specific tools (`get_timers`, `get_my_timer`) are not available because the Worksection API
-> doesn't provide a `timers_read` scope. Use cost-tracking tools instead, which access the same time data via the
+> **Note:** Timer-specific tools (`get_timers`, `get_my_timer`) are not available
+> because the Worksection API doesn't provide a `timers_read` scope.
+> Use cost-tracking tools instead, which access the same time data via the
 > `costs_read` scope.
 
 ### Users & Teams
@@ -260,7 +270,7 @@ Resources allow Claude to directly access and analyze files:
 
 | Resource URI | Description |
 | -------------- | ------------- |
-| `worksection://file/{file_id}` | Access any file for vision analysis |
+| `worksection://file/{file_id}` | Access file for vision analysis |
 | `worksection://task/{task_id}/context` | Get full task context with attachments |
 | `worksection://cache/stats` | Get file cache statistics |
 
@@ -458,6 +468,7 @@ uv run python scripts/validate_config.py
 The validator performs comprehensive checks in 3 steps:
 
 **Step 1: Pydantic Validation** (automatic when loading .env)
+
 - OAuth2 credentials format and length
 - URL format and structure
 - Redirect URI HTTPS requirement
@@ -466,12 +477,14 @@ The validator performs comprehensive checks in 3 steps:
 - Positive values for file sizes and retention
 - SSL configuration consistency
 
-**Step 2: Configuration Summary**
+#### Step 2: Configuration Summary
+
 - Shows all loaded settings
 - Displays derived values (API URLs)
 - Helps verify environment variables are set correctly
 
-**Step 3: External Resource Checks**
+#### Step 3: External Resource Checks
+
 - DNS resolution for account URL
 - Directory write permissions (tokens, cache, certs)
 - Filesystem accessibility
@@ -508,18 +521,21 @@ If validation passes, your configuration is complete and the server will start s
 This DNS resolution error means the Worksection account URL cannot be resolved:
 
 **Check your configuration:**
+
 ```bash
 # Run validation to diagnose
 uv run python scripts/validate_config.py
 ```
 
 **Common causes:**
+
 - Typo in `WORKSECTION_ACCOUNT_URL` in your `.env` file
 - Missing or incorrect domain name (should be `https://yourcompany.worksection.com`)
 - No internet connectivity
 - Corporate firewall blocking DNS
 
 **Fix:**
+
 1. Verify the URL in your `.env` matches your actual Worksection account
 2. Test DNS resolution: `nslookup yourcompany.worksection.com`
 3. Check internet connectivity
