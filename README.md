@@ -26,7 +26,7 @@ and process image attachments.
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.14+
 - [uv](https://github.com/astral-sh/uv) package manager
 - Worksection account with OAuth2 app credentials
 
@@ -34,7 +34,7 @@ and process image attachments.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/worksection-mcp.git
+git clone https://github.com/pbv7/worksection-mcp.git
 cd worksection-mcp
 
 # Install dependencies with uv
@@ -209,10 +209,9 @@ Subsequent Runs:
 | `get_user_workload` | Get user's time entries |
 | `get_project_time_report` | Get project time report |
 
-> **Note:** Timer-specific tools (`get_timers`, `get_my_timer`) are not available
-> because the Worksection API doesn't provide a `timers_read` scope.
-> Use cost-tracking tools instead, which access the same time data via the
-> `costs_read` scope.
+> **Note:** Timer tools (`get_timers`, `get_my_timer`) require the `timers_read`
+> scope. Cost-tracking tools use the `costs_read` scope to access the same
+> time data.
 
 ### Users & Teams
 
@@ -585,6 +584,6 @@ Contributions are welcome! Please read our contributing guidelines and submit pu
 
 ## Support
 
-- [GitHub Issues](https://github.com/your-org/worksection-mcp/issues)
+- [GitHub Issues](https://github.com/pbv7/worksection-mcp/issues)
 - [Worksection API Docs](https://worksection.com/en/faq/api-start.html)
 - [MCP Documentation](https://modelcontextprotocol.io/)
