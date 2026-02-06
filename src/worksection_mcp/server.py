@@ -86,6 +86,8 @@ def create_server(settings: Settings | None = None) -> FastMCP:
         logger.info(f"Transport: {settings.mcp_transport}")
 
         try:
+            if _oauth is None or _client is None:
+                raise RuntimeError("Server dependencies are not initialized")
             # Ensure we have valid authentication
             await _oauth.ensure_authenticated()
             user_info = await _client.me()
@@ -128,6 +130,9 @@ Rate limited to 1 request/second per Worksection API limits.
         """.strip(),
         lifespan=lifespan,
     )
+
+    if _oauth is None or _client is None or _file_cache is None:
+        raise RuntimeError("Server dependencies are not initialized")
 
     # Register all tools
     register_all_tools(mcp, _client, _oauth, _file_cache)

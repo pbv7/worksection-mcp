@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import ssl
 from http.server import HTTPServer
 from threading import Thread
+from typing import cast
 
 import httpx
 import pytest
@@ -103,7 +105,11 @@ async def test_callback_server_end_to_end_wait_for_callback():
 async def test_callback_server_timeout_and_url_property():
     """Server should timeout correctly and expose protocol-aware callback URL."""
     http_server = CallbackServer(host="localhost", port=8080, ssl_context=None)
-    https_server = CallbackServer(host="localhost", port=8443, ssl_context=object())
+    https_server = CallbackServer(
+        host="localhost",
+        port=8443,
+        ssl_context=cast(ssl.SSLContext, object()),
+    )
 
     assert http_server.callback_url == "http://localhost:8080/oauth/callback"
     assert https_server.callback_url == "https://localhost:8443/oauth/callback"

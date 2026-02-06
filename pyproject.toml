@@ -42,6 +42,7 @@ dev = [
     "respx>=0.21.0",
     "ruff>=0.3.0",
     "mypy>=1.8.0",
+    "pyright>=1.1.400",
 ]
 
 [project.scripts]
@@ -81,3 +82,4 @@ python_version = "3.14"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
+plugins = ["pydantic.mypy"]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock
 
 import httpx
@@ -39,7 +40,7 @@ class DummyLimiter:
 def client(tmp_path):
     """Create client with mocked oauth manager and test settings."""
     settings = build_settings(tmp_path)
-    oauth = SimpleNamespace(
+    oauth: Any = SimpleNamespace(
         get_valid_token=AsyncMock(return_value="test-token"),
         close=AsyncMock(),
     )

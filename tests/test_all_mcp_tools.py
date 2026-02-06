@@ -33,7 +33,7 @@ import json
 import os
 import sys
 from datetime import UTC, datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 # Add src to path
 sys.path.insert(0, "src")
@@ -160,26 +160,26 @@ class MCPToolTester:
         self.project_name = project_name
         self.rich_task = rich_task
         self.verbose = verbose
-        self.results = []
-        self.test_ids = {
+        self.results: list[dict[str, Any]] = []
+        self.test_ids: dict[str, str | None] = {
             "user_id": None,
             "project_id": None,
             "task_id": None,
             "file_id": None,
             "comment_id": None,
         }
-        self.mcp = None
-        self.client = None
-        self.oauth = None
-        self.file_cache = None
-        self.tool_functions = {}
+        self.mcp: FastMCP[Any] | None = None
+        self.client: WorksectionClient | None = None
+        self.oauth: OAuth2Manager | None = None
+        self.file_cache: FileCache | None = None
+        self.tool_functions: dict[str, str] = {}
 
     @staticmethod
     def _out(message: object = "") -> None:
         """Write a single line of human-readable output."""
         sys.stdout.write(f"{message}\n")
 
-    async def setup(self):
+    async def setup(self) -> int:
         """Initialize MCP server and components."""
         self._out("=" * 80)
         self._out("WORKSECTION MCP - COMPREHENSIVE TOOL TEST")
@@ -189,26 +189,30 @@ class MCPToolTester:
         settings = get_settings()
 
         # Initialize components
-        self.oauth = OAuth2Manager(settings)
-        self.client = WorksectionClient(self.oauth, settings)
-        self.file_cache = FileCache(
+        oauth = OAuth2Manager(settings)
+        client = WorksectionClient(oauth, settings)
+        file_cache = FileCache(
             cache_path=settings.file_cache_path,
             max_file_size_bytes=settings.max_file_size_bytes,
             retention_hours=settings.file_cache_retention_hours,
         )
+        self.oauth = oauth
+        self.client = client
+        self.file_cache = file_cache
 
         # Authenticate
         self._out("Authenticating...")
-        await self.oauth.ensure_authenticated()
+        await oauth.ensure_authenticated()
         self._out("✓ Authentication successful\n")
 
         # Create MCP server with tools
         self._out("Registering MCP tools...")
-        self.mcp = FastMCP("test-server")
-        register_all_tools(self.mcp, self.client, self.oauth, self.file_cache)
+        mcp = FastMCP("test-server")
+        register_all_tools(mcp, client, oauth, file_cache)
+        self.mcp = mcp
 
         # Get all registered tools (returns dict of tool_name -> Tool object)
-        tools_dict = await self.mcp.get_tools()
+        tools_dict = await mcp.get_tools()
         self._out(f"✓ Registered {len(tools_dict)} MCP tools\n")
 
         # Store tool names
@@ -216,15 +220,19 @@ class MCPToolTester:
 
         return len(tools_dict)
 
-    async def extract_test_ids(self):
+    async def extract_test_ids(self) -> None:
         """Extract IDs from production data for testing."""
+        if self.client is None:
+            raise RuntimeError("Client is not initialized. Call setup() first.")
+        client = self.client
+
         self._out("=" * 80)
         self._out("EXTRACTING TEST DATA")
         self._out("=" * 80)
 
         # Get current user
         try:
-            me_data = await self.client.me()
+            me_data = await client.me()
             if me_data.get("data"):
                 self.test_ids["user_id"] = me_data["data"]["id"]
                 self._out(f"✓ user_id: {self.test_ids['user_id']}")
@@ -233,7 +241,7 @@ class MCPToolTester:
 
         # Find project by name or use first available
         try:
-            projects = await self.client.get_projects()
+            projects = await client.get_projects()
             if projects.get("data"):
                 if self.project_name:
                     # Search for project by name
@@ -261,7 +269,8 @@ class MCPToolTester:
         # If rich_task is specified, use it as primary task_id and extract file_id from it
         if self.rich_task:
             try:
-                task_detail = await self.client.get_task(self.rich_task, extra="files")
+                assert self.rich_task is not None
+                task_detail = await client.get_task(self.rich_task, extra="files")
                 task_data = task_detail.get("data", task_detail)
                 self.test_ids["task_id"] = self.rich_task
                 self._out(f"✓ task_id: {self.test_ids['task_id']} (rich task)")
@@ -283,14 +292,17 @@ class MCPToolTester:
         # Get a task from the project if no rich_task or it failed
         if self.test_ids["project_id"] and not self.test_ids["task_id"]:
             try:
-                tasks = await self.client.get_tasks(self.test_ids["project_id"])
+                tasks = await client.get_tasks(self.test_ids["project_id"])
                 if tasks.get("data") and len(tasks["data"]) > 0:
                     self.test_ids["task_id"] = tasks["data"][0]["id"]
                     self._out(f"✓ task_id: {self.test_ids['task_id']}")
 
                     # Try to get file_id from task
-                    task_detail = await self.client.get_task(
-                        self.test_ids["task_id"], extra="files"
+                    task_id = self.test_ids["task_id"]
+                    assert task_id is not None
+                    task_detail = await client.get_task(
+                        task_id,
+                        extra="files",
                     )
                     task_data = task_detail.get("data", task_detail)
                     task_files = task_data.get("files", [])
@@ -455,8 +467,11 @@ class MCPToolTester:
             return preview
         return str(response)[:max_len]
 
-    async def call_mcp_tool(self, tool_name: str, **kwargs) -> dict:
+    async def call_mcp_tool(self, tool_name: str, **kwargs: Any) -> dict[str, Any]:
         """Call an MCP tool by name and validate response."""
+        if self.mcp is None:
+            raise RuntimeError("MCP server is not initialized. Call setup() first.")
+
         try:
             # Get tools dict
             tools = await self.mcp.get_tools()
@@ -471,8 +486,18 @@ class MCPToolTester:
                     "validation": {"passed": [], "failed": ["tool not found"]},
                 }
 
-            # Call the tool directly via its fn attribute
-            result = await tool.fn(**kwargs)
+            # Call the underlying tool function (FunctionTool exposes `.fn`).
+            tool_fn = getattr(tool, "fn", None)
+            if not callable(tool_fn):
+                return {
+                    "tool": tool_name,
+                    "status": "error",
+                    "error": f"Tool {tool_name} has no callable function",
+                    "args": kwargs,
+                    "validation": {"passed": [], "failed": ["tool function not callable"]},
+                }
+            typed_tool_fn = cast(Any, tool_fn)
+            result = await typed_tool_fn(**kwargs)
 
             # Validate response
             is_valid, passed, failed = self.validate_response(tool_name, result)
@@ -510,9 +535,9 @@ class MCPToolTester:
                 "validation": {"passed": [], "failed": ["exception thrown"]},
             }
 
-    def get_tool_params(self, tool_name: str) -> dict:
+    def get_tool_params(self, tool_name: str) -> dict[str, Any] | None:
         """Get appropriate parameters for a tool based on its name."""
-        params = {}
+        params: dict[str, Any] = {}
 
         # Project tools
         if (
@@ -613,8 +638,11 @@ class MCPToolTester:
 
         return params
 
-    async def test_all_tools(self):
+    async def test_all_tools(self) -> None:
         """Test all registered MCP tools."""
+        if self.mcp is None:
+            raise RuntimeError("MCP server is not initialized. Call setup() first.")
+
         self._out("=" * 80)
         self._out("TESTING ALL MCP TOOLS")
         self._out("=" * 80)
@@ -735,14 +763,14 @@ class MCPToolTester:
                 if result["status"] == "skipped":
                     self._out(f"  • {result['tool']} - {result.get('reason', 'Unknown')}")
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cleanup resources."""
         if self.client:
             await self.client.close()
         if self.file_cache:
             await self.file_cache.close()
 
-    async def run(self):
+    async def run(self) -> None:
         """Run the complete test suite."""
         try:
             await self.setup()
@@ -754,7 +782,7 @@ class MCPToolTester:
             self._out(f"\nCompleted at: {datetime.now(UTC)}")
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Test all Worksection MCP tools",
@@ -802,7 +830,7 @@ Examples:
     return parser.parse_args()
 
 
-async def main():
+async def main() -> None:
     """Main entry point."""
     args = parse_args()
     tester = MCPToolTester(

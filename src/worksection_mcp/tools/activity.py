@@ -1,11 +1,10 @@
 """Activity and event tracking MCP tools."""
 
-from fastmcp import FastMCP
-
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ToolRegistrar
 
 
-def register_activity_tools(mcp: FastMCP, client: WorksectionClient) -> None:
+def register_activity_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     """Register activity and event tracking tools with the MCP server."""
 
     @mcp.tool()
@@ -76,7 +75,7 @@ def register_activity_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         )
 
         # Count by event type
-        event_types = {}
+        event_types: dict[str, int] = {}
         if isinstance(events_data, dict) and "data" in events_data:
             for event in events_data["data"]:
                 event_type = event.get("type", "unknown")

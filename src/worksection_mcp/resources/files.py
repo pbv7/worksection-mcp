@@ -3,15 +3,16 @@
 import base64
 import logging
 
-from fastmcp import FastMCP
-
 from worksection_mcp.cache import FileCache
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ResourceRegistrar
 
 logger = logging.getLogger(__name__)
 
 
-def register_file_resources(mcp: FastMCP, client: WorksectionClient, file_cache: FileCache) -> None:
+def register_file_resources(
+    mcp: ResourceRegistrar, client: WorksectionClient, file_cache: FileCache
+) -> None:
     """Register file resources with the MCP server.
 
     Args:

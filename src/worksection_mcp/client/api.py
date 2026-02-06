@@ -1,11 +1,10 @@
 """Worksection API client."""
 
 import logging
-from typing import Any
+from typing import Any, Protocol, cast
 
 import httpx
 
-from worksection_mcp.auth import OAuth2Manager
 from worksection_mcp.client.rate_limiter import AdaptiveRateLimiter
 from worksection_mcp.config import Settings
 from worksection_mcp.utils.date_utils import format_date_for_api
@@ -22,10 +21,22 @@ class WorksectionAPIError(Exception):
         self.response = response
 
 
+class OAuthTokenProvider(Protocol):
+    """Protocol for OAuth providers required by WorksectionClient."""
+
+    async def get_valid_token(self) -> str:
+        """Return a valid access token."""
+        ...
+
+    async def close(self) -> None:
+        """Close underlying resources."""
+        ...
+
+
 class WorksectionClient:
     """Async client for Worksection API with rate limiting."""
 
-    def __init__(self, oauth: OAuth2Manager, settings: Settings):
+    def __init__(self, oauth: OAuthTokenProvider, settings: Settings):
         """Initialize Worksection client.
 
         Args:
@@ -115,7 +126,7 @@ class WorksectionClient:
                         status_code=response.status_code,
                     )
 
-                data = response.json()
+                data = cast(dict[str, Any], response.json())
 
                 # Check for API-level errors
                 if "error" in data:
@@ -166,7 +177,7 @@ class WorksectionClient:
         self,
         status_filter: str | None = None,
         extra: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get all projects.
 
         Args:
@@ -194,7 +205,7 @@ class WorksectionClient:
         self,
         project_id: str,
         extra: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get single project details.
 
         Args:
@@ -209,7 +220,7 @@ class WorksectionClient:
             params["extra"] = extra
         return await self._make_request("get_project", params)
 
-    async def get_project_groups(self) -> dict:
+    async def get_project_groups(self) -> dict[str, Any]:
         """Get project folders/groups.
 
         Returns:
@@ -225,7 +236,7 @@ class WorksectionClient:
         self,
         status_filter: str | None = None,
         extra: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get all tasks.
 
         Args:
@@ -257,7 +268,7 @@ class WorksectionClient:
         project_id: str,
         status_filter: str | None = None,
         extra: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get tasks for a project.
 
         Args:
@@ -286,7 +297,7 @@ class WorksectionClient:
         self,
         task_id: str,
         extra: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get single task details.
 
         Args:
@@ -310,7 +321,7 @@ class WorksectionClient:
         email_user_to: str | None = None,
         status: str | None = None,
         extra: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Search tasks using Worksection query syntax.
 
         Args:
@@ -350,7 +361,7 @@ class WorksectionClient:
         self,
         task_id: str,
         extra: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get comments for a task.
 
         Args:
@@ -411,7 +422,7 @@ class WorksectionClient:
         self,
         project_id: str | None = None,
         task_id: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get active timers.
 
         Args:
@@ -428,7 +439,7 @@ class WorksectionClient:
             params["id_task"] = task_id
         return await self._make_request("get_timers", params)
 
-    async def get_my_timer(self) -> dict:
+    async def get_my_timer(self) -> dict[str, Any]:
         """Get current user's active timer.
 
         Returns:
@@ -444,7 +455,7 @@ class WorksectionClient:
         date_start: str | None = None,
         date_end: str | None = None,
         is_timer: bool | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get cost/time records.
 
         Args:
@@ -466,9 +477,13 @@ class WorksectionClient:
         if user_id:
             params["id_user"] = user_id
         if date_start:
-            params["datestart"] = format_date_for_api(date_start)
+            formatted_start = format_date_for_api(date_start)
+            if formatted_start is not None:
+                params["datestart"] = formatted_start
         if date_end:
-            params["dateend"] = format_date_for_api(date_end)
+            formatted_end = format_date_for_api(date_end)
+            if formatted_end is not None:
+                params["dateend"] = formatted_end
         if is_timer is not None:
             params["is_timer"] = "1" if is_timer else "0"
         return await self._make_request("get_costs", params)
@@ -478,7 +493,7 @@ class WorksectionClient:
         project_id: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get aggregated cost totals.
 
         Args:
@@ -493,16 +508,20 @@ class WorksectionClient:
         if project_id:
             params["id_project"] = project_id
         if date_start:
-            params["datestart"] = format_date_for_api(date_start)
+            formatted_start = format_date_for_api(date_start)
+            if formatted_start is not None:
+                params["datestart"] = formatted_start
         if date_end:
-            params["dateend"] = format_date_for_api(date_end)
+            formatted_end = format_date_for_api(date_end)
+            if formatted_end is not None:
+                params["dateend"] = formatted_end
         return await self._make_request("get_costs_total", params)
 
     # ==========================================================================
     # Users API
     # ==========================================================================
 
-    async def get_users(self, status_filter: str | None = None) -> dict:
+    async def get_users(self, status_filter: str | None = None) -> dict[str, Any]:
         """Get all users.
 
         Args:
@@ -523,7 +542,7 @@ class WorksectionClient:
 
         return result
 
-    async def get_user(self, user_id: str) -> dict:
+    async def get_user(self, user_id: str) -> dict[str, Any]:
         """Get single user details.
 
         Note: Worksection API doesn't have a get_user action.

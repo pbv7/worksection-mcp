@@ -70,6 +70,7 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     mcp = server_module.create_server(settings)
     assert isinstance(mcp, FakeFastMCP)
     assert mcp.name == settings.mcp_server_name
+    assert mcp.instructions is not None
     assert "Worksection MCP Server" in mcp.instructions
     register_tools.assert_called_once()
     register_resources.assert_called_once()

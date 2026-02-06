@@ -1,11 +1,10 @@
 """Tag-related MCP tools (read-only)."""
 
-from fastmcp import FastMCP
-
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ToolRegistrar
 
 
-def register_tag_tools(mcp: FastMCP, client: WorksectionClient) -> None:
+def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     """Register tag-related tools with the MCP server."""
 
     # ==========================================================================

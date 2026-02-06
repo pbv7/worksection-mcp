@@ -1,17 +1,28 @@
 """System and account MCP tools."""
 
 import logging
+from typing import Any, Protocol
 
-from fastmcp import FastMCP
-
-from worksection_mcp.auth import OAuth2Manager
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ToolRegistrar
 
 logger = logging.getLogger(__name__)
 
 
+class OAuthInfoProvider(Protocol):
+    """Protocol for OAuth providers used by system tools."""
+
+    async def get_valid_token(self) -> str:
+        """Return a valid access token."""
+        ...
+
+    async def get_user_info(self) -> dict[str, Any]:
+        """Return user info from OAuth resource endpoint."""
+        ...
+
+
 def register_system_tools(
-    mcp: FastMCP, client: WorksectionClient, oauth: OAuth2Manager | None = None
+    mcp: ToolRegistrar, client: WorksectionClient, oauth: OAuthInfoProvider | None = None
 ) -> None:
     """Register system and account tools with the MCP server."""
 

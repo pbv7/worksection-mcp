@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import socket
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -12,7 +13,7 @@ from tests.helpers import build_settings
 from worksection_mcp.config.settings import Settings, get_settings
 
 
-def _base_kwargs(tmp_path):
+def _base_kwargs(tmp_path) -> dict[str, Any]:
     """Base kwargs reused for direct Settings construction in validator tests."""
     return {
         "worksection_client_id": "test_client_id_12345",
@@ -29,17 +30,17 @@ def test_account_url_and_redirect_uri_validators(tmp_path):
     invalid_account_url = _base_kwargs(tmp_path)
     invalid_account_url["worksection_account_url"] = "ftp://test.worksection.com"
     with pytest.raises(ValidationError, match="Invalid URL scheme"):
-        Settings(**invalid_account_url, _env_file=None)
+        Settings.model_validate(invalid_account_url)
 
     missing_hostname = _base_kwargs(tmp_path)
     missing_hostname["worksection_account_url"] = "https://"
     with pytest.raises(ValidationError, match="Missing hostname"):
-        Settings(**missing_hostname, _env_file=None)
+        Settings.model_validate(missing_hostname)
 
     invalid_redirect = _base_kwargs(tmp_path)
     invalid_redirect["worksection_redirect_uri"] = "http://example.com/oauth/callback"
     with pytest.raises(ValidationError, match="requires HTTPS"):
-        Settings(**invalid_redirect, _env_file=None)
+        Settings.model_validate(invalid_redirect)
 
 
 def test_credentials_scope_port_and_positive_validators(tmp_path):
@@ -47,28 +48,28 @@ def test_credentials_scope_port_and_positive_validators(tmp_path):
     short_id = _base_kwargs(tmp_path)
     short_id["worksection_client_id"] = "short"
     with pytest.raises(ValidationError, match="minimum 8"):
-        Settings(**short_id, _env_file=None)
+        Settings.model_validate(short_id)
 
     too_short_secret = "x" * 12
     short_secret = _base_kwargs(tmp_path)
     short_secret["worksection_client_secret"] = too_short_secret
     with pytest.raises(ValidationError, match="minimum 16"):
-        Settings(**short_secret, _env_file=None)
+        Settings.model_validate(short_secret)
 
     invalid_scopes = _base_kwargs(tmp_path)
     invalid_scopes["worksection_scopes"] = "projects_read,invalid_scope"
     with pytest.raises(ValidationError, match="Invalid scopes"):
-        Settings(**invalid_scopes, _env_file=None)
+        Settings.model_validate(invalid_scopes)
 
     invalid_port = _base_kwargs(tmp_path)
     invalid_port["oauth_callback_port"] = 70000
     with pytest.raises(ValidationError, match="must be between 1 and 65535"):
-        Settings(**invalid_port, _env_file=None)
+        Settings.model_validate(invalid_port)
 
     invalid_file_size = _base_kwargs(tmp_path)
     invalid_file_size["max_file_size_mb"] = 0
     with pytest.raises(ValidationError, match="must be greater than 0"):
-        Settings(**invalid_file_size, _env_file=None)
+        Settings.model_validate(invalid_file_size)
 
 
 def test_ssl_consistency_validator_and_path_conversion(tmp_path):
@@ -77,15 +78,12 @@ def test_ssl_consistency_validator_and_path_conversion(tmp_path):
     invalid_ssl_redirect["oauth_callback_use_ssl"] = True
     invalid_ssl_redirect["worksection_redirect_uri"] = "http://localhost:8080/oauth/callback"
     with pytest.raises(ValidationError, match="must use HTTPS"):
-        Settings(**invalid_ssl_redirect, _env_file=None)
+        Settings.model_validate(invalid_ssl_redirect)
 
     path_kwargs = _base_kwargs(tmp_path)
     path_kwargs["token_storage_path"] = str(tmp_path / "tokens-str")
     path_kwargs["file_cache_path"] = str(tmp_path / "files-str")
-    settings = Settings(
-        **path_kwargs,
-        _env_file=None,
-    )
+    settings = Settings.model_validate(path_kwargs)
     assert isinstance(settings.token_storage_path, Path)
     assert isinstance(settings.file_cache_path, Path)
 

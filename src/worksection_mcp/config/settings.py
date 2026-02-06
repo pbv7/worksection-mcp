@@ -340,6 +340,7 @@ class Settings(BaseSettings):
         results = {}
 
         # DNS resolution check for account URL
+        hostname: str | None = None
         try:
             parsed = urlparse(self.worksection_account_url)
             hostname = parsed.hostname
@@ -385,4 +386,4 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    return Settings()  # pyright: ignore[reportCallIssue]

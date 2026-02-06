@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
@@ -21,9 +22,9 @@ from worksection_mcp.tools.timers import register_timer_tools
 from worksection_mcp.tools.users import register_user_tools
 
 
-def _make_client(**overrides):
+def _make_client(**overrides: Any) -> Any:
     """Create a client-like object with async methods used by tools."""
-    defaults = {
+    defaults: dict[str, Any] = {
         "settings": SimpleNamespace(
             api_base_url="https://test.worksection.com/api/oauth2",
             worksection_account_url="https://test.worksection.com",
@@ -334,7 +335,7 @@ async def test_tag_tools_and_timer_tools():
 @pytest.mark.asyncio
 async def test_system_tools_health_and_status_paths():
     """System tools should reflect API reachability and oauth status correctly."""
-    oauth = SimpleNamespace(
+    oauth: Any = SimpleNamespace(
         get_valid_token=AsyncMock(return_value="token"),
         get_user_info=AsyncMock(return_value={"email": "u@example.com"}),
     )

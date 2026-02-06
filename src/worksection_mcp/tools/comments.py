@@ -1,11 +1,10 @@
 """Comment-related MCP tools."""
 
-from fastmcp import FastMCP
-
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ToolRegistrar
 
 
-def register_comment_tools(mcp: FastMCP, client: WorksectionClient) -> None:
+def register_comment_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     """Register comment-related tools with the MCP server."""
 
     @mcp.tool()

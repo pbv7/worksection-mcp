@@ -2,12 +2,11 @@
 
 from datetime import UTC, datetime
 
-from fastmcp import FastMCP
-
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ToolRegistrar
 
 
-def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
+def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     """Register analytics and reporting tools with the MCP server."""
 
     @mcp.tool()
@@ -34,8 +33,8 @@ def register_analytics_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         completed = 0
         active = 0
         overdue = 0
-        by_priority = {}
-        by_status = {}
+        by_priority: dict[str, int] = {}
+        by_status: dict[str, int] = {}
 
         now = datetime.now(UTC)
 

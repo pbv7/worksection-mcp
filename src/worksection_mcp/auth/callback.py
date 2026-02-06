@@ -10,11 +10,13 @@ from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger(__name__)
 
+type CallbackHandlerFn = Callable[[str | None, str | None], None]
+
 
 class CallbackHandler(BaseHTTPRequestHandler):
     """HTTP request handler for OAuth2 callback."""
 
-    callback_received: Callable[[str, str | None], None] | None = None
+    callback_received: CallbackHandlerFn | None = None
     success_html = """
     <!DOCTYPE html>
     <html>
@@ -90,9 +92,25 @@ class CallbackHandler(BaseHTTPRequestHandler):
     </html>
     """
 
-    def log_message(self, fmt, *args):
+    def log_message(self, *args: object, **kwargs: object) -> None:
         """Override to use Python logging instead of stderr."""
-        logger.debug(f"Callback server: {fmt % args}")
+        fmt = kwargs.get("format")
+        fmt_args = args
+
+        if fmt is None and args:
+            fmt = args[0]
+            fmt_args = args[1:]
+
+        if fmt is None:
+            logger.debug("Callback server")
+            return
+
+        try:
+            message = str(fmt) % fmt_args if fmt_args else str(fmt)
+        except (TypeError, ValueError):
+            message = str(fmt)
+
+        logger.debug("Callback server: %s", message)
 
     def do_GET(self):
         """Handle GET request (OAuth callback)."""
@@ -160,7 +178,7 @@ class CallbackServer:
         self.ssl_context = ssl_context
         self._server: HTTPServer | None = None
         self._thread: Thread | None = None
-        self._code_future: asyncio.Future | None = None
+        self._code_future: asyncio.Future[tuple[str, str | None]] | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
 
     def _handle_callback(self, code: str | None, state_or_error: str | None):
@@ -209,7 +227,9 @@ class CallbackServer:
             self._thread = None
             logger.info("Callback server stopped")
 
-    async def wait_for_callback(self, timeout_seconds: float = 300) -> tuple[str, str | None]:
+    async def wait_for_callback(
+        self, timeout_seconds: float = 300
+    ) -> tuple[str, str | None]:
         """Wait for OAuth callback.
 
         Args:

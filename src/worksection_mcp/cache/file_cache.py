@@ -6,7 +6,7 @@ import logging
 import mimetypes
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 import aiosqlite
 from PIL import Image
@@ -198,7 +198,9 @@ class FileCache:
             File content as bytes, or None if not cached
         """
         cached = await self.get(file_id)
-        if cached and await asyncio.to_thread(cached.path.exists):
+        if cached is None:
+            return None
+        if await asyncio.to_thread(cached.path.exists):
             return await asyncio.to_thread(cached.path.read_bytes)
         return None
 
@@ -275,8 +277,13 @@ class FileCache:
         async with db.execute("SELECT COUNT(*), SUM(size_bytes) FROM files") as cursor:
             row = await cursor.fetchone()
 
-        file_count = row[0] or 0
-        total_size = row[1] or 0
+        if row is None:
+            file_count = 0
+            total_size = 0
+        else:
+            stats_row = cast(tuple[int | None, int | None], row)
+            file_count = stats_row[0] or 0
+            total_size = stats_row[1] or 0
 
         return {
             "file_count": file_count,

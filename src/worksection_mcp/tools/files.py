@@ -4,14 +4,13 @@ import base64
 import io
 import mimetypes
 
-from fastmcp import FastMCP
-
 from worksection_mcp.cache import FileCache
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ToolRegistrar
 
 
 def register_file_tools(
-    mcp: FastMCP, client: WorksectionClient, file_cache: FileCache | None = None
+    mcp: ToolRegistrar, client: WorksectionClient, file_cache: FileCache | None = None
 ) -> None:
     """Register file-related tools with the MCP server."""
 
@@ -306,11 +305,10 @@ def register_file_tools(
             result = []
             for slide_num, slide in enumerate(prs.slides, 1):
                 result.append(f"=== Slide {slide_num} ===")
-                result.extend(
-                    shape.text
-                    for shape in slide.shapes
-                    if hasattr(shape, "text") and shape.text.strip()
-                )
+                for shape in slide.shapes:
+                    text = getattr(shape, "text", None)
+                    if isinstance(text, str) and text.strip():
+                        result.append(text)
             return "\n\n".join(result)
         except Exception as e:
             return f"[Error extracting PPTX text: {e}]"

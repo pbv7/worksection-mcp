@@ -28,13 +28,13 @@ class FakeMCP:
 
     def resource(
         self,
-        pattern: str,
+        uri: str,
     ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
         """Decorator that registers a resource by function name and URI pattern."""
 
         def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
             self.resources[func.__name__] = func
-            self.resource_patterns[func.__name__] = pattern
+            self.resource_patterns[func.__name__] = uri
             return func
 
         return decorator
@@ -42,7 +42,7 @@ class FakeMCP:
 
 def build_settings(temp_dir: Path, **overrides: Any) -> Settings:
     """Create a stable Settings object for tests."""
-    base = {
+    base: dict[str, Any] = {
         "worksection_client_id": "test_client_id_12345",
         "worksection_client_secret": "test_client_secret_value_123456",
         "worksection_account_url": "https://test.worksection.com",
@@ -57,4 +57,4 @@ def build_settings(temp_dir: Path, **overrides: Any) -> Settings:
         "mcp_server_host": "127.0.0.1",
     }
     base.update(overrides)
-    return Settings(**base, _env_file=None)
+    return Settings.model_validate(base)

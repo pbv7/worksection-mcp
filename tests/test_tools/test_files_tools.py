@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import types
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
@@ -13,7 +14,7 @@ from tests.helpers import FakeMCP
 from worksection_mcp.tools.files import register_file_tools
 
 
-def _make_file_client(task_payload=None, comments_payload=None):
+def _make_file_client(task_payload: Any = None, comments_payload: Any = None) -> Any:
     return SimpleNamespace(
         download_file=AsyncMock(return_value=b""),
         get_task=AsyncMock(return_value=task_payload or {"status": "ok", "data": {"files": []}}),
@@ -53,7 +54,7 @@ async def test_download_and_attachment_tools(tmp_path):
 
     cache_path = tmp_path / "download.bin"
     cache_path.write_bytes(b"content")
-    file_cache = SimpleNamespace(save=AsyncMock(return_value=cache_path))
+    file_cache: Any = SimpleNamespace(save=AsyncMock(return_value=cache_path))
 
     mcp = FakeMCP()
     register_file_tools(mcp, client, file_cache)

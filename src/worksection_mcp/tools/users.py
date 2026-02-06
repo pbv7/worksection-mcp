@@ -2,12 +2,11 @@
 
 from typing import Literal
 
-from fastmcp import FastMCP
-
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.mcp_protocols import ToolRegistrar
 
 
-def register_user_tools(mcp: FastMCP, client: WorksectionClient) -> None:
+def register_user_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     """Register user and team tools with the MCP server."""
 
     @mcp.tool()

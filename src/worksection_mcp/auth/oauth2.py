@@ -3,6 +3,7 @@
 import logging
 import secrets
 import webbrowser
+from typing import Any, cast
 from urllib.parse import urlencode
 
 import httpx
@@ -68,7 +69,7 @@ class OAuth2Manager:
         base_url = f"{self.settings.oauth2_base_url}/oauth2/authorize"
         return f"{base_url}?{urlencode(params)}"
 
-    async def _exchange_code(self, code: str) -> dict:
+    async def _exchange_code(self, code: str) -> dict[str, Any]:
         """Exchange authorization code for tokens.
 
         Args:
@@ -101,9 +102,9 @@ class OAuth2Manager:
             error_desc = error_data.get("error_description", response.text)
             raise OAuth2Error(f"Token exchange failed: {error} - {error_desc}")
 
-        return response.json()
+        return cast(dict[str, Any], response.json())
 
-    async def _refresh_token(self) -> dict:
+    async def _refresh_token(self) -> dict[str, Any]:
         """Refresh access token using refresh token.
 
         Returns:
@@ -264,7 +265,7 @@ class OAuth2Manager:
             raise OAuth2Error("No access token available after authentication")
         return token
 
-    async def get_user_info(self) -> dict:
+    async def get_user_info(self) -> dict[str, Any]:
         """Get information about the authenticated user.
 
         Returns:
@@ -287,7 +288,7 @@ class OAuth2Manager:
         if response.status_code != 200:
             raise OAuth2Error(f"Failed to get user info: {response.text}")
 
-        return response.json()
+        return cast(dict[str, Any], response.json())
 
     def has_tokens(self) -> bool:
         """Check if we have stored tokens (may be expired).

@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 from datetime import UTC, datetime
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
@@ -27,12 +28,12 @@ async def test_get_file_resource_uses_cache_for_text_file(tmp_path):
         size_bytes=file_path.stat().st_size,
         cached_at=datetime.now(UTC),
     )
-    fake_cache = SimpleNamespace(
+    fake_cache: Any = SimpleNamespace(
         get=AsyncMock(return_value=cache_hit),
         save=AsyncMock(),
         get_cache_stats=AsyncMock(return_value={}),
     )
-    fake_client = SimpleNamespace(
+    fake_client: Any = SimpleNamespace(
         download_file=AsyncMock(),
         get_task=AsyncMock(),
         get_comments=AsyncMock(),
@@ -62,12 +63,12 @@ async def test_get_file_resource_downloads_and_returns_binary_blob(tmp_path):
         size_bytes=len(file_bytes),
         cached_at=datetime.now(UTC),
     )
-    fake_cache = SimpleNamespace(
+    fake_cache: Any = SimpleNamespace(
         get=AsyncMock(side_effect=[None, cached_after_save]),
         save=AsyncMock(),
         get_cache_stats=AsyncMock(return_value={}),
     )
-    fake_client = SimpleNamespace(
+    fake_client: Any = SimpleNamespace(
         download_file=AsyncMock(return_value=file_bytes),
         get_task=AsyncMock(),
         get_comments=AsyncMock(),
@@ -101,8 +102,10 @@ async def test_get_task_full_context_aggregates_attachments_and_images():
         ],
     }
 
-    fake_cache = SimpleNamespace(get=AsyncMock(), save=AsyncMock(), get_cache_stats=AsyncMock())
-    fake_client = SimpleNamespace(
+    fake_cache: Any = SimpleNamespace(
+        get=AsyncMock(), save=AsyncMock(), get_cache_stats=AsyncMock()
+    )
+    fake_client: Any = SimpleNamespace(
         download_file=AsyncMock(),
         get_task=AsyncMock(side_effect=[task_response, task_files_response]),
         get_comments=AsyncMock(return_value=comments_response),
@@ -122,12 +125,12 @@ async def test_get_task_full_context_aggregates_attachments_and_images():
 async def test_get_cache_stats_resource_passthrough():
     """Cache stats resource should wrap file cache stats payload in MCP response shape."""
     stats = {"file_count": 3, "total_size_bytes": 1024}
-    fake_cache = SimpleNamespace(
+    fake_cache: Any = SimpleNamespace(
         get=AsyncMock(),
         save=AsyncMock(),
         get_cache_stats=AsyncMock(return_value=stats),
     )
-    fake_client = SimpleNamespace(
+    fake_client: Any = SimpleNamespace(
         download_file=AsyncMock(), get_task=AsyncMock(), get_comments=AsyncMock()
     )
 
