@@ -168,22 +168,6 @@ class Settings(BaseSettings):
                 f"Expected format: https://yourcompany.worksection.com"
             )
 
-        # Validate DNS resolution
-        try:
-            socket.getaddrinfo(hostname, None)
-        except socket.gaierror as e:
-            raise ValueError(
-                f"Cannot resolve hostname '{hostname}' from WORKSECTION_ACCOUNT_URL\n"
-                f"DNS Error: {e}\n"
-                f"Please check that:\n"
-                f"  1. The domain name is correct\n"
-                f"  2. You have internet connectivity\n"
-                f"  3. The Worksection account URL is valid\n"
-                f"Provided: {v}"
-            )
-        except Exception as e:
-            raise ValueError(f"Error validating hostname '{hostname}': {e}\nProvided URL: {v}")
-
         return v
 
     @field_validator(
@@ -281,6 +265,7 @@ class Settings(BaseSettings):
         valid_scopes = {
             "projects_read",
             "tasks_read",
+            "timers_read",
             "costs_read",
             "tags_read",
             "comments_read",

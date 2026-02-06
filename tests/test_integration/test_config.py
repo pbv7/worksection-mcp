@@ -21,22 +21,22 @@ class TestSettings:
     def test_with_required_fields(self, temp_data_dir):
         """Test settings with all required fields."""
         settings = Settings(
-            worksection_client_id="test_id",
-            worksection_client_secret="test_secret",
+            worksection_client_id="test_client_id",
+            worksection_client_secret="test_client_secret",
             worksection_account_url="https://test.worksection.com",
             token_storage_path=temp_data_dir / "tokens",
             file_cache_path=temp_data_dir / "files",
             _env_file=None,
         )
 
-        assert settings.worksection_client_id == "test_id"
+        assert settings.worksection_client_id == "test_client_id"
         assert settings.worksection_account_url == "https://test.worksection.com"
 
     def test_account_url_trailing_slash(self, temp_data_dir):
         """Test that trailing slash is removed from account URL."""
         settings = Settings(
-            worksection_client_id="test_id",
-            worksection_client_secret="test_secret",
+            worksection_client_id="test_client_id",
+            worksection_client_secret="test_client_secret",
             worksection_account_url="https://test.worksection.com/",
             token_storage_path=temp_data_dir / "tokens",
             file_cache_path=temp_data_dir / "files",
@@ -48,8 +48,8 @@ class TestSettings:
     def test_scopes_list(self, temp_data_dir):
         """Test scopes are parsed as list."""
         settings = Settings(
-            worksection_client_id="test_id",
-            worksection_client_secret="test_secret",
+            worksection_client_id="test_client_id",
+            worksection_client_secret="test_client_secret",
             worksection_account_url="https://test.worksection.com",
             worksection_scopes="projects_read,tasks_read,users_read",
             token_storage_path=temp_data_dir / "tokens",
@@ -66,8 +66,8 @@ class TestSettings:
     def test_api_base_url(self, temp_data_dir):
         """Test API base URL property."""
         settings = Settings(
-            worksection_client_id="test_id",
-            worksection_client_secret="test_secret",
+            worksection_client_id="test_client_id",
+            worksection_client_secret="test_client_secret",
             worksection_account_url="https://test.worksection.com",
             token_storage_path=temp_data_dir / "tokens",
             file_cache_path=temp_data_dir / "files",
@@ -82,8 +82,8 @@ class TestSettings:
         file_path = temp_data_dir / "new_files"
 
         settings = Settings(
-            worksection_client_id="test_id",
-            worksection_client_secret="test_secret",
+            worksection_client_id="test_client_id",
+            worksection_client_secret="test_client_secret",
             worksection_account_url="https://test.worksection.com",
             token_storage_path=token_path,
             file_cache_path=file_path,
@@ -101,8 +101,8 @@ class TestSettings:
     def test_max_file_size_bytes(self, temp_data_dir):
         """Test max file size conversion."""
         settings = Settings(
-            worksection_client_id="test_id",
-            worksection_client_secret="test_secret",
+            worksection_client_id="test_client_id",
+            worksection_client_secret="test_client_secret",
             worksection_account_url="https://test.worksection.com",
             max_file_size_mb=5,
             token_storage_path=temp_data_dir / "tokens",
@@ -115,8 +115,8 @@ class TestSettings:
     def test_default_values(self, temp_data_dir):
         """Test default values are set."""
         settings = Settings(
-            worksection_client_id="test_id",
-            worksection_client_secret="test_secret",
+            worksection_client_id="test_client_id",
+            worksection_client_secret="test_client_secret",
             worksection_account_url="https://test.worksection.com",
             token_storage_path=temp_data_dir / "tokens",
             file_cache_path=temp_data_dir / "files",
