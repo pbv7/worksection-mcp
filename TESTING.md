@@ -90,7 +90,7 @@ some tools may return empty results (which still pass basic validation but don't
 
 - MCP server configured (`.env` file with OAuth2 credentials)
 - Production Worksection account with data
-- Python 3.12+ with dependencies installed (`uv sync`)
+- Python 3.14+ with dependencies installed (`uv sync`)
 
 ## Test Data
 
@@ -113,7 +113,7 @@ Authenticating...
 ✓ Authentication successful
 
 Registering MCP tools...
-✓ Registered 47 MCP tools
+✓ Registered 50 MCP tools
 
 ================================================================================
 EXTRACTING TEST DATA
@@ -127,17 +127,17 @@ EXTRACTING TEST DATA
 TESTING ALL MCP TOOLS
 ================================================================================
 
-[1/47] ✅ get_projects
-[2/47] ✅ get_project
-[3/47] ✅ get_project_groups
+[1/50] ✅ get_projects
+[2/50] ✅ get_project
+[3/50] ✅ get_project_groups
 ...
-[47/47] ✅ health_check
+[50/50] ✅ health_check
 
 ================================================================================
 TEST SUMMARY
 ================================================================================
-Total tools: 47
-✅ Passed: 45
+Total tools: 50
+✅ Passed: 48
 ❌ Failed: 0
 ⊘ Skipped: 2
 Success rate: 100.0%
@@ -153,16 +153,16 @@ Completed at: 2026-01-28 02:35:00
 
 The test covers all tool categories:
 
-- **Projects** (5 tools) - get_projects, get_project, get_project_groups, etc.
-- **Tasks** (10+ tools) - get_tasks, get_task, search_tasks, etc.
-- **Comments** (3+ tools) - get_comments, get_task_discussion, etc.
-- **Files** (5+ tools) - get_task_files, download_file, etc.
-- **Time Tracking** (5+ tools) - get_timers, get_costs, etc.
-- **Users** (6+ tools) - get_users, get_user, me, etc.
+- **Projects** (4 tools) - get_projects, get_project, get_project_groups, etc.
+- **Tasks** (8 tools) - get_tasks, get_task, search_tasks, etc.
+- **Comments** (3 tools) - get_comments, get_task_discussion, etc.
+- **Files** (6 tools) - get_task_files, download_file, get_file_content, etc.
+- **Time Tracking** (4 tools) - get_costs, get_costs_total, get_user_workload, etc.
+- **Users** (6 tools) - get_users, get_user, me, etc.
 - **Tags** (6 tools) - get_task_tags, get_project_tags, search_tasks_by_tag, etc.
-- **Analytics** (5+ tools) - get_project_stats, get_overdue_tasks, etc.
-- **Activity** (3+ tools) - get_events, get_project_activity, etc.
-- **System** (4+ tools) - health_check, get_account_info, etc.
+- **Analytics** (5 tools) - get_project_stats, get_overdue_tasks, etc.
+- **Activity** (4 tools) - get_activity_log, get_project_activity, etc.
+- **System** (4 tools) - health_check, get_account_info, etc.
 
 ## Troubleshooting
 
@@ -291,6 +291,6 @@ After testing:
 
 ## Support
 
-- **Issues**: <https://github.com/yourusername/worksection-mcp/issues>
+- **Issues**: <https://github.com/pbv7/worksection-mcp/issues>
 - **Documentation**: See README.md
 - **API Docs**: <https://worksection.com/en/faq/api-documentations.html>

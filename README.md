@@ -67,7 +67,7 @@ LOG_LEVEL=INFO
 ### Running the Server
 
 ```bash
-# Development (with hot reload)
+# Development
 uv run python -m worksection_mcp
 
 # Or using the entry point
@@ -209,9 +209,9 @@ Subsequent Runs:
 | `get_user_workload` | Get user's time entries |
 | `get_project_time_report` | Get project time report |
 
-> **Note:** Timer tools (`get_timers`, `get_my_timer`) require the `timers_read`
-> scope. Cost-tracking tools use the `costs_read` scope to access the same
-> time data.
+> **Note:** Timer-specific tools (`get_timers`, `get_my_timer`) are not exposed
+> because Worksection API does not provide a `timers_read` scope. Time-tracking
+> access is provided through cost tools using `costs_read`.
 
 ### Users & Teams
 
