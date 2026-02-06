@@ -1,10 +1,8 @@
 """Tests for token storage."""
 
 import pytest
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
 
-from worksection_mcp.auth.tokens import TokenStorage, TokenData
+from worksection_mcp.auth.tokens import TokenStorage
 
 
 class TestTokenStorage:
@@ -37,7 +35,7 @@ class TestTokenStorage:
         assert loaded is not None
         assert loaded["access_token"] == sample_token_response["access_token"]
         assert loaded["refresh_token"] == sample_token_response["refresh_token"]
-        assert loaded["token_type"] == "Bearer"
+        assert loaded["token_type"] == sample_token_response["token_type"]
         assert loaded["account_url"] == sample_token_response["account_url"]
 
     def test_token_not_found(self, token_storage):

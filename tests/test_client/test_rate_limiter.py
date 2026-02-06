@@ -1,10 +1,10 @@
 """Tests for rate limiter."""
 
-import asyncio
 import time
+
 import pytest
 
-from worksection_mcp.client.rate_limiter import RateLimiter, AdaptiveRateLimiter
+from worksection_mcp.client.rate_limiter import AdaptiveRateLimiter, RateLimiter
 
 
 class TestRateLimiter:

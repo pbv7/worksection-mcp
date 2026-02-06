@@ -32,17 +32,18 @@ import asyncio
 import json
 import os
 import sys
-from datetime import datetime
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, ClassVar
 
 # Add src to path
 sys.path.insert(0, "src")
 
-from worksection_mcp.config import get_settings
-from worksection_mcp.auth import OAuth2Manager
-from worksection_mcp.client import WorksectionClient
-from worksection_mcp.cache import FileCache
 from fastmcp import FastMCP
+
+from worksection_mcp.auth import OAuth2Manager
+from worksection_mcp.cache import FileCache
+from worksection_mcp.client import WorksectionClient
+from worksection_mcp.config import get_settings
 from worksection_mcp.tools import register_all_tools
 
 
@@ -59,7 +60,7 @@ class MCPToolTester:
     #   any_of_fields: at least one of these fields must exist
     #   min_items: minimum number of items in data list (for rich task validation)
     #   min_total_files: minimum value for total_files field (for rich task validation)
-    VALIDATION_RULES = {
+    VALIDATION_RULES: ClassVar[dict[str, dict[str, Any]]] = {
         # API status/info tools - custom structures
         "health_check": {"required_fields": ["status"], "status_values": ["ok", "healthy"]},
         "get_api_status": {"required_fields": ["api_base_url", "account_url"]},
@@ -143,7 +144,7 @@ class MCPToolTester:
 
     # Enhanced validation rules when rich task is specified
     # These add min_items requirements to ensure meaningful data is returned
-    RICH_TASK_VALIDATION_RULES = {
+    RICH_TASK_VALIDATION_RULES: ClassVar[dict[str, dict[str, Any]]] = {
         "get_comments": {"min_items": 1},  # Rich task should have comments
         "get_comments_with_images": {"min_items": 0},  # May or may not have image comments
         "get_all_task_attachments": {"min_total_files": 1},  # Rich task should have files
@@ -173,12 +174,17 @@ class MCPToolTester:
         self.file_cache = None
         self.tool_functions = {}
 
+    @staticmethod
+    def _out(message: object = "") -> None:
+        """Write a single line of human-readable output."""
+        sys.stdout.write(f"{message}\n")
+
     async def setup(self):
         """Initialize MCP server and components."""
-        print("=" * 80)
-        print("WORKSECTION MCP - COMPREHENSIVE TOOL TEST")
-        print("=" * 80)
-        print(f"Started at: {datetime.now()}\n")
+        self._out("=" * 80)
+        self._out("WORKSECTION MCP - COMPREHENSIVE TOOL TEST")
+        self._out("=" * 80)
+        self._out(f"Started at: {datetime.now(UTC)}\n")
 
         settings = get_settings()
 
@@ -192,38 +198,38 @@ class MCPToolTester:
         )
 
         # Authenticate
-        print("Authenticating...")
+        self._out("Authenticating...")
         await self.oauth.ensure_authenticated()
-        print("✓ Authentication successful\n")
+        self._out("✓ Authentication successful\n")
 
         # Create MCP server with tools
-        print("Registering MCP tools...")
+        self._out("Registering MCP tools...")
         self.mcp = FastMCP("test-server")
         register_all_tools(self.mcp, self.client, self.oauth, self.file_cache)
 
         # Get all registered tools (returns dict of tool_name -> Tool object)
         tools_dict = await self.mcp.get_tools()
-        print(f"✓ Registered {len(tools_dict)} MCP tools\n")
+        self._out(f"✓ Registered {len(tools_dict)} MCP tools\n")
 
         # Store tool names
-        self.tool_functions = {name: name for name in tools_dict.keys()}
+        self.tool_functions = {name: name for name in tools_dict}
 
         return len(tools_dict)
 
     async def extract_test_ids(self):
         """Extract IDs from production data for testing."""
-        print("=" * 80)
-        print("EXTRACTING TEST DATA")
-        print("=" * 80)
+        self._out("=" * 80)
+        self._out("EXTRACTING TEST DATA")
+        self._out("=" * 80)
 
         # Get current user
         try:
             me_data = await self.client.me()
             if me_data.get("data"):
                 self.test_ids["user_id"] = me_data["data"]["id"]
-                print(f"✓ user_id: {self.test_ids['user_id']}")
+                self._out(f"✓ user_id: {self.test_ids['user_id']}")
         except Exception as e:
-            print(f"⚠️  Failed to get user_id: {e}")
+            self._out(f"⚠️  Failed to get user_id: {e}")
 
         # Find project by name or use first available
         try:
@@ -234,21 +240,23 @@ class MCPToolTester:
                     for project in projects["data"]:
                         if self.project_name.lower() in project.get("name", "").lower():
                             self.test_ids["project_id"] = project["id"]
-                            print(
+                            self._out(
                                 f"✓ project_id: {self.test_ids['project_id']} ({project['name']})"
                             )
                             break
 
                     if not self.test_ids["project_id"]:
-                        print(f"⚠️  Project '{self.project_name}' not found, using first available")
+                        self._out(
+                            f"⚠️  Project '{self.project_name}' not found, using first available"
+                        )
 
                 # Fallback to first project if not found or no name specified
                 if not self.test_ids["project_id"]:
                     self.test_ids["project_id"] = projects["data"][0]["id"]
                     project_name = projects["data"][0].get("name", "Unknown")
-                    print(f"✓ project_id: {self.test_ids['project_id']} ({project_name})")
+                    self._out(f"✓ project_id: {self.test_ids['project_id']} ({project_name})")
         except Exception as e:
-            print(f"⚠️  Failed to get project_id: {e}")
+            self._out(f"⚠️  Failed to get project_id: {e}")
 
         # If rich_task is specified, use it as primary task_id and extract file_id from it
         if self.rich_task:
@@ -256,19 +264,19 @@ class MCPToolTester:
                 task_detail = await self.client.get_task(self.rich_task, extra="files")
                 task_data = task_detail.get("data", task_detail)
                 self.test_ids["task_id"] = self.rich_task
-                print(f"✓ task_id: {self.test_ids['task_id']} (rich task)")
+                self._out(f"✓ task_id: {self.test_ids['task_id']} (rich task)")
 
                 # Extract file_id from rich task
                 task_files = task_data.get("files", [])
                 if task_files:
                     self.test_ids["file_id"] = task_files[0]["id"]
-                    print(
+                    self._out(
                         f"✓ file_id: {self.test_ids['file_id']} (from rich task, {len(task_files)} files total)"
                     )
                 else:
-                    print(f"⚠️  Rich task {self.rich_task} has no file attachments")
+                    self._out(f"⚠️  Rich task {self.rich_task} has no file attachments")
             except Exception as e:
-                print(f"⚠️  Failed to get rich task {self.rich_task}: {e}")
+                self._out(f"⚠️  Failed to get rich task {self.rich_task}: {e}")
                 # Fall back to getting a task from the project
                 self.rich_task = None
 
@@ -278,7 +286,7 @@ class MCPToolTester:
                 tasks = await self.client.get_tasks(self.test_ids["project_id"])
                 if tasks.get("data") and len(tasks["data"]) > 0:
                     self.test_ids["task_id"] = tasks["data"][0]["id"]
-                    print(f"✓ task_id: {self.test_ids['task_id']}")
+                    self._out(f"✓ task_id: {self.test_ids['task_id']}")
 
                     # Try to get file_id from task
                     task_detail = await self.client.get_task(
@@ -288,11 +296,11 @@ class MCPToolTester:
                     task_files = task_data.get("files", [])
                     if task_files:
                         self.test_ids["file_id"] = task_files[0]["id"]
-                        print(f"✓ file_id: {self.test_ids['file_id']}")
+                        self._out(f"✓ file_id: {self.test_ids['file_id']}")
             except Exception as e:
-                print(f"⚠️  Failed to get task_id: {e}")
+                self._out(f"⚠️  Failed to get task_id: {e}")
 
-        print()
+        self._out()
 
     def validate_response(self, tool_name: str, response: Any) -> tuple[bool, list[str], list[str]]:
         """Validate tool response against expected structure.
@@ -482,7 +490,7 @@ class MCPToolTester:
                 return {
                     "tool": tool_name,
                     "status": "error",
-                    "error": f"Tool implementation bug: {str(e)} (tool calls another MCP tool internally)",
+                    "error": f"Tool implementation bug: {e!s} (tool calls another MCP tool internally)",
                     "args": kwargs,
                     "validation": {"passed": [], "failed": ["exception thrown"]},
                 }
@@ -507,10 +515,12 @@ class MCPToolTester:
         params = {}
 
         # Project tools
-        if "project" in tool_name:
-            if tool_name in ["get_project", "get_project_team"]:
-                if self.test_ids["project_id"]:
-                    params["project_id"] = self.test_ids["project_id"]
+        if (
+            "project" in tool_name
+            and tool_name in ["get_project", "get_project_team"]
+            and self.test_ids["project_id"]
+        ):
+            params["project_id"] = self.test_ids["project_id"]
 
         # Task tools
         if "task" in tool_name:
@@ -542,14 +552,12 @@ class MCPToolTester:
                 if self.test_ids["project_id"]:
                     params["project_id"] = self.test_ids["project_id"]
                 params["priority"] = 10  # High priority more likely to have tasks
-            elif tool_name == "get_tasks":
-                if self.test_ids["project_id"]:
-                    params["project_id"] = self.test_ids["project_id"]
+            elif tool_name == "get_tasks" and self.test_ids["project_id"]:
+                params["project_id"] = self.test_ids["project_id"]
 
         # Comment tools
-        if "comment" in tool_name:
-            if self.test_ids["task_id"]:
-                params["task_id"] = self.test_ids["task_id"]
+        if "comment" in tool_name and self.test_ids["task_id"]:
+            params["task_id"] = self.test_ids["task_id"]
 
         # File tools
         if tool_name in ["download_file", "get_file_as_base64", "get_file_content"]:
@@ -561,10 +569,12 @@ class MCPToolTester:
                 params["task_id"] = self.test_ids["task_id"]
 
         # Timer tools
-        if "timer" in tool_name or "cost" in tool_name or "time_report" in tool_name:
-            if tool_name in ["get_costs", "get_costs_total", "get_project_time_report"]:
-                if self.test_ids["project_id"]:
-                    params["project_id"] = self.test_ids["project_id"]
+        if (
+            ("timer" in tool_name or "cost" in tool_name or "time_report" in tool_name)
+            and tool_name in ["get_costs", "get_costs_total", "get_project_time_report"]
+            and self.test_ids["project_id"]
+        ):
+            params["project_id"] = self.test_ids["project_id"]
 
         # User tools
         if "user" in tool_name:
@@ -592,9 +602,10 @@ class MCPToolTester:
                 params["period"] = "7d"  # Required for meaningful data
 
         # Analytics tools
-        if "analytics" in tool_name or "stats" in tool_name or "summary" in tool_name:
-            if self.test_ids["project_id"]:
-                params["project_id"] = self.test_ids["project_id"]
+        if (
+            "analytics" in tool_name or "stats" in tool_name or "summary" in tool_name
+        ) and self.test_ids["project_id"]:
+            params["project_id"] = self.test_ids["project_id"]
 
         # get_all_tasks needs status_filter to avoid "Too many tasks" error
         if tool_name == "get_all_tasks":
@@ -604,10 +615,10 @@ class MCPToolTester:
 
     async def test_all_tools(self):
         """Test all registered MCP tools."""
-        print("=" * 80)
-        print("TESTING ALL MCP TOOLS")
-        print("=" * 80)
-        print()
+        self._out("=" * 80)
+        self._out("TESTING ALL MCP TOOLS")
+        self._out("=" * 80)
+        self._out()
 
         # Get tools dict
         tools_dict = await self.mcp.get_tools()
@@ -620,7 +631,7 @@ class MCPToolTester:
 
             # Skip if params is None (means we can't test this tool)
             if params is None:
-                print(f"[{idx}/{total_tools}] ⊘ {tool_name} (skipped - no test data)")
+                self._out(f"[{idx}/{total_tools}] ⊘ {tool_name} (skipped - no test data)")
                 self.results.append(
                     {
                         "tool": tool_name,
@@ -641,34 +652,34 @@ class MCPToolTester:
             failed_checks = validation.get("failed", [])
 
             if result["status"] == "success":
-                print(f"[{idx}/{total_tools}] ✅ {tool_name}")
+                self._out(f"[{idx}/{total_tools}] ✅ {tool_name}")
                 if self.verbose:
-                    print(f"    Args: {params}")
-                    print(f"    Checks: {', '.join(passed_checks)}")
+                    self._out(f"    Args: {params}")
+                    self._out(f"    Checks: {', '.join(passed_checks)}")
                     preview = self.format_response_preview(result.get("response"))
-                    print(f"    Response: {preview}")
+                    self._out(f"    Response: {preview}")
             elif result["status"] == "validation_failed":
-                print(f"[{idx}/{total_tools}] ⚠️  {tool_name} (validation failed)")
-                print(f"    Args: {params}")
-                print(f"    ✓ Passed: {', '.join(passed_checks) or 'none'}")
-                print(f"    ✗ Failed: {', '.join(failed_checks)}")
+                self._out(f"[{idx}/{total_tools}] ⚠️  {tool_name} (validation failed)")
+                self._out(f"    Args: {params}")
+                self._out(f"    ✓ Passed: {', '.join(passed_checks) or 'none'}")
+                self._out(f"    ✗ Failed: {', '.join(failed_checks)}")
                 if self.verbose:
                     preview = self.format_response_preview(result.get("response"))
-                    print(f"    Response: {preview}")
+                    self._out(f"    Response: {preview}")
             else:
-                print(f"[{idx}/{total_tools}] ❌ {tool_name}")
-                print(f"    Args: {params}")
+                self._out(f"[{idx}/{total_tools}] ❌ {tool_name}")
+                self._out(f"    Args: {params}")
                 error = result.get("error", "Unknown error")
-                print(f"    Error: {error[:150]}")
+                self._out(f"    Error: {error[:150]}")
 
             # Rate limiting
             await asyncio.sleep(1.1)
 
     def print_summary(self):
         """Print test summary."""
-        print("\n" + "=" * 80)
-        print("TEST SUMMARY")
-        print("=" * 80)
+        self._out("\n" + "=" * 80)
+        self._out("TEST SUMMARY")
+        self._out("=" * 80)
 
         total = len(self.results)
         success = sum(1 for r in self.results if r["status"] == "success")
@@ -684,45 +695,45 @@ class MCPToolTester:
         )
         passed_checks = sum(len(r.get("validation", {}).get("passed", [])) for r in self.results)
 
-        print(f"Total tools: {total}")
-        print(f"✅ Passed: {success}")
-        print(f"⚠️  Validation failed: {validation_failed}")
-        print(f"❌ Error: {failed}")
-        print(f"⊘ Skipped: {skipped}")
+        self._out(f"Total tools: {total}")
+        self._out(f"✅ Passed: {success}")
+        self._out(f"⚠️  Validation failed: {validation_failed}")
+        self._out(f"❌ Error: {failed}")
+        self._out(f"⊘ Skipped: {skipped}")
 
         if success + validation_failed + failed > 0:
             success_rate = success / (success + validation_failed + failed) * 100
-            print(f"Success rate: {success_rate:.1f}%")
+            self._out(f"Success rate: {success_rate:.1f}%")
 
         if total_checks > 0:
-            print(f"\nValidation checks: {passed_checks}/{total_checks} passed")
+            self._out(f"\nValidation checks: {passed_checks}/{total_checks} passed")
 
         if failed > 0:
-            print("\n❌ FAILED TOOLS (errors):")
+            self._out("\n❌ FAILED TOOLS (errors):")
             for result in self.results:
                 if result["status"] == "error":
-                    print(f"  • {result['tool']}")
-                    print(f"    Args: {result.get('args', {})}")
+                    self._out(f"  • {result['tool']}")
+                    self._out(f"    Args: {result.get('args', {})}")
                     error_msg = result.get("error", "Unknown")
-                    print(f"    Error: {error_msg[:200]}")
-                    print()
+                    self._out(f"    Error: {error_msg[:200]}")
+                    self._out()
 
         if validation_failed > 0:
-            print("\n⚠️  VALIDATION FAILED TOOLS:")
+            self._out("\n⚠️  VALIDATION FAILED TOOLS:")
             for result in self.results:
                 if result["status"] == "validation_failed":
                     validation = result.get("validation", {})
-                    print(f"  • {result['tool']}")
-                    print(f"    Args: {result.get('args', {})}")
-                    print(f"    ✓ Passed: {', '.join(validation.get('passed', []))}")
-                    print(f"    ✗ Failed: {', '.join(validation.get('failed', []))}")
-                    print()
+                    self._out(f"  • {result['tool']}")
+                    self._out(f"    Args: {result.get('args', {})}")
+                    self._out(f"    ✓ Passed: {', '.join(validation.get('passed', []))}")
+                    self._out(f"    ✗ Failed: {', '.join(validation.get('failed', []))}")
+                    self._out()
 
         if skipped > 0:
-            print("\n⊘ SKIPPED TOOLS:")
+            self._out("\n⊘ SKIPPED TOOLS:")
             for result in self.results:
                 if result["status"] == "skipped":
-                    print(f"  • {result['tool']} - {result.get('reason', 'Unknown')}")
+                    self._out(f"  • {result['tool']} - {result.get('reason', 'Unknown')}")
 
     async def cleanup(self):
         """Cleanup resources."""
@@ -740,7 +751,7 @@ class MCPToolTester:
             self.print_summary()
         finally:
             await self.cleanup()
-            print(f"\nCompleted at: {datetime.now()}")
+            self._out(f"\nCompleted at: {datetime.now(UTC)}")
 
 
 def parse_args():

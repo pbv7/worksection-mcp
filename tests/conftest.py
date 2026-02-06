@@ -1,9 +1,24 @@
 """Pytest configuration and shared fixtures."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-from pathlib import Path
 import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+
+def _build_mock_settings_kwargs(temp_data_dir: Path) -> dict:
+    """Create realistic test settings values."""
+    return {
+        "worksection_client_id": "test_client_id",
+        "worksection_client_secret": "test_client_secret_value_123456",
+        "worksection_account_url": "https://test.worksection.com",
+        "worksection_redirect_uri": "http://localhost:8080/oauth/callback",
+        "worksection_scopes": "projects_read,tasks_read",
+        "token_storage_path": temp_data_dir / "tokens",
+        "file_cache_path": temp_data_dir / "files",
+        "token_encryption_key": "test_encryption_key_value_32_chars_long!",
+    }
 
 
 @pytest.fixture
@@ -18,16 +33,7 @@ def mock_settings(temp_data_dir):
     """Create mock settings for testing."""
     from worksection_mcp.config import Settings
 
-    return Settings(
-        worksection_client_id="test_client_id",
-        worksection_client_secret="test_client_secret",
-        worksection_account_url="https://test.worksection.com",
-        worksection_redirect_uri="http://localhost:8080/oauth/callback",
-        worksection_scopes="projects_read,tasks_read",
-        token_storage_path=temp_data_dir / "tokens",
-        file_cache_path=temp_data_dir / "files",
-        token_encryption_key="test_encryption_key_32_bytes_long!",
-    )
+    return Settings(**_build_mock_settings_kwargs(temp_data_dir))
 
 
 @pytest.fixture

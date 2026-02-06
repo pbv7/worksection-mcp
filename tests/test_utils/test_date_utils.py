@@ -1,7 +1,5 @@
 """Tests for date utilities."""
 
-import pytest
-
 from worksection_mcp.utils.date_utils import format_date_for_api, validate_period
 
 
