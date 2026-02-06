@@ -38,6 +38,8 @@ uv sync
 cp .env.example .env
 
 # Edit .env with your credentials
+# Then validate your configuration
+uv run python scripts/validate_config.py
 ```
 
 ### Configuration
@@ -445,6 +447,37 @@ docker run -v ./data:/app/data worksection-mcp
 
 ## Troubleshooting
 
+### Configuration Validation
+
+Before troubleshooting, validate your complete configuration:
+
+```bash
+uv run python scripts/validate_config.py
+```
+
+The validator performs comprehensive checks in 3 steps:
+
+**Step 1: Pydantic Validation** (automatic when loading .env)
+- OAuth2 credentials format and length
+- URL format and structure
+- Redirect URI HTTPS requirement
+- Valid OAuth2 scope names
+- Port number ranges (1-65535)
+- Positive values for file sizes and retention
+- SSL configuration consistency
+
+**Step 2: Configuration Summary**
+- Shows all loaded settings
+- Displays derived values (API URLs)
+- Helps verify environment variables are set correctly
+
+**Step 3: External Resource Checks**
+- DNS resolution for account URL
+- Directory write permissions (tokens, cache, certs)
+- Filesystem accessibility
+
+If validation passes, your configuration is complete and the server will start successfully.
+
 ### OAuth2 Issues
 
 #### "Invalid redirect URI"
@@ -467,6 +500,44 @@ docker run -v ./data:/app/data worksection-mcp
 
 - Delete `./data/certs/` directory to regenerate certificates
 - Ensure you have write permissions to the data directory
+
+### Configuration & Connection Issues
+
+#### "Cannot resolve hostname" or "nodename nor servname provided, or not known"
+
+This DNS resolution error means the Worksection account URL cannot be resolved:
+
+**Check your configuration:**
+```bash
+# Run validation to diagnose
+uv run python scripts/validate_config.py
+```
+
+**Common causes:**
+- Typo in `WORKSECTION_ACCOUNT_URL` in your `.env` file
+- Missing or incorrect domain name (should be `https://yourcompany.worksection.com`)
+- No internet connectivity
+- Corporate firewall blocking DNS
+
+**Fix:**
+1. Verify the URL in your `.env` matches your actual Worksection account
+2. Test DNS resolution: `nslookup yourcompany.worksection.com`
+3. Check internet connectivity
+4. Try alternative DNS servers (8.8.8.8, 1.1.1.1)
+
+**Note:** With the new validation, this error is caught at startup with a clear message instead of during runtime.
+
+#### "Validation errors" on startup
+
+The server now validates all configuration at startup using Pydantic. If you see validation errors:
+
+1. Check the error message - it tells you exactly what's wrong
+2. Refer to `.env.example` for correct format
+3. Common issues:
+   - Client ID/Secret too short (minimum 8/16 characters)
+   - Invalid redirect URI (must be HTTPS, except localhost)
+   - Invalid scopes (see list in `.env.example`)
+   - Port numbers out of range (1-65535)
 
 ### Rate Limiting
 

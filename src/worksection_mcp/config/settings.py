@@ -1,10 +1,12 @@
 """Configuration management using Pydantic Settings."""
 
+import socket
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlparse
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -123,8 +125,69 @@ class Settings(BaseSettings):
     @field_validator("worksection_account_url")
     @classmethod
     def validate_account_url(cls, v: str) -> str:
-        """Ensure account URL doesn't have trailing slash."""
-        return v.rstrip("/")
+        """Validate account URL format and structure."""
+        if not v:
+            raise ValueError(
+                "WORKSECTION_ACCOUNT_URL is required. "
+                "Set it in your .env file (e.g., https://yourcompany.worksection.com)"
+            )
+
+        # Remove trailing slash
+        v = v.rstrip("/")
+
+        # Parse URL
+        try:
+            parsed = urlparse(v)
+        except Exception as e:
+            raise ValueError(
+                f"Invalid URL format for WORKSECTION_ACCOUNT_URL: {v}\n"
+                f"Error: {e}\n"
+                f"Expected format: https://yourcompany.worksection.com"
+            )
+
+        # Validate scheme
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(
+                f"Invalid URL scheme in WORKSECTION_ACCOUNT_URL: {parsed.scheme}\n"
+                f"Expected 'https' (or 'http' for testing)\n"
+                f"Provided: {v}"
+            )
+
+        # Validate hostname exists
+        if not parsed.netloc:
+            raise ValueError(
+                f"Missing hostname in WORKSECTION_ACCOUNT_URL: {v}\n"
+                f"Expected format: https://yourcompany.worksection.com"
+            )
+
+        # Extract hostname (remove port if present)
+        hostname = parsed.hostname
+        if not hostname:
+            raise ValueError(
+                f"Could not extract hostname from WORKSECTION_ACCOUNT_URL: {v}\n"
+                f"Expected format: https://yourcompany.worksection.com"
+            )
+
+        # Validate DNS resolution
+        try:
+            socket.getaddrinfo(hostname, None)
+        except socket.gaierror as e:
+            raise ValueError(
+                f"Cannot resolve hostname '{hostname}' from WORKSECTION_ACCOUNT_URL\n"
+                f"DNS Error: {e}\n"
+                f"Please check that:\n"
+                f"  1. The domain name is correct\n"
+                f"  2. You have internet connectivity\n"
+                f"  3. The Worksection account URL is valid\n"
+                f"Provided: {v}"
+            )
+        except Exception as e:
+            raise ValueError(
+                f"Error validating hostname '{hostname}': {e}\n"
+                f"Provided URL: {v}"
+            )
+
+        return v
 
     @field_validator(
         "token_storage_path",
@@ -138,6 +201,122 @@ class Settings(BaseSettings):
         """Convert string to Path."""
         path = Path(v) if isinstance(v, str) else v
         return path
+
+    @field_validator("worksection_client_id", "worksection_client_secret")
+    @classmethod
+    def validate_credentials(cls, v: str, info) -> str:
+        """Validate OAuth2 credentials format."""
+        field_name = info.field_name
+        if not v or not v.strip():
+            raise ValueError(
+                f"{field_name.upper()} is required. "
+                f"Set it in your .env file from your Worksection OAuth2 app settings."
+            )
+
+        # Minimum length check
+        min_length = 8 if "id" in field_name else 16
+        if len(v) < min_length:
+            raise ValueError(
+                f"{field_name.upper()} seems too short (minimum {min_length} characters). "
+                f"Please check your Worksection OAuth2 app settings."
+            )
+
+        return v.strip()
+
+    @field_validator("worksection_redirect_uri")
+    @classmethod
+    def validate_redirect_uri(cls, v: str) -> str:
+        """Validate OAuth2 redirect URI."""
+        if not v:
+            raise ValueError("WORKSECTION_REDIRECT_URI is required")
+
+        parsed = urlparse(v)
+
+        # Worksection requires HTTPS (except localhost)
+        if parsed.scheme != "https" and parsed.hostname != "localhost":
+            raise ValueError(
+                f"Worksection requires HTTPS for redirect URIs.\n"
+                f"Current: {v}\n"
+                f"Expected: https://... (or https://localhost:... for local development)"
+            )
+
+        if not parsed.netloc:
+            raise ValueError(
+                f"Invalid redirect URI format: {v}\n"
+                f"Expected format: https://localhost:8080/oauth/callback"
+            )
+
+        return v
+
+    @field_validator("oauth_callback_port", "mcp_server_port")
+    @classmethod
+    def validate_port(cls, v: int, info) -> int:
+        """Validate port numbers."""
+        if not (1 <= v <= 65535):
+            raise ValueError(
+                f"{info.field_name} must be between 1 and 65535. Current: {v}"
+            )
+        return v
+
+    @field_validator("max_file_size_mb", "file_cache_retention_hours")
+    @classmethod
+    def validate_positive(cls, v: int, info) -> int:
+        """Validate positive integers."""
+        if v <= 0:
+            raise ValueError(f"{info.field_name} must be greater than 0. Current: {v}")
+        return v
+
+    @field_validator("worksection_scopes")
+    @classmethod
+    def validate_scopes(cls, v: str) -> str:
+        """Validate OAuth2 scopes."""
+        if not v or not v.strip():
+            raise ValueError(
+                "WORKSECTION_SCOPES is required. "
+                "Set comma-separated scopes (e.g., 'projects_read,tasks_read')"
+            )
+
+        # Parse scopes
+        scopes = [s.strip() for s in v.split(",") if s.strip()]
+
+        if not scopes:
+            raise ValueError("At least one OAuth2 scope is required")
+
+        # Valid scopes
+        valid_scopes = {
+            "projects_read",
+            "tasks_read",
+            "costs_read",
+            "tags_read",
+            "comments_read",
+            "files_read",
+            "users_read",
+            "contacts_read",
+        }
+
+        invalid = [s for s in scopes if s not in valid_scopes]
+        if invalid:
+            raise ValueError(
+                f"Invalid scopes: {', '.join(invalid)}\n"
+                f"Valid scopes: {', '.join(sorted(valid_scopes))}"
+            )
+
+        return v
+
+    @model_validator(mode="after")
+    def validate_ssl_consistency(self) -> "Settings":
+        """Validate SSL configuration consistency."""
+        # If SSL is enabled, redirect URI should use HTTPS
+        if self.oauth_callback_use_ssl:
+            parsed = urlparse(self.worksection_redirect_uri)
+            if parsed.scheme != "https":
+                raise ValueError(
+                    "When OAUTH_CALLBACK_USE_SSL=true, WORKSECTION_REDIRECT_URI must use HTTPS.\n"
+                    f"Current redirect URI: {self.worksection_redirect_uri}\n"
+                    "Either set OAUTH_CALLBACK_USE_SSL=false or use https:// in redirect URI"
+                )
+
+        return self
 
     @property
     def scopes_list(self) -> list[str]:
@@ -165,6 +344,59 @@ class Settings(BaseSettings):
         self.file_cache_path.mkdir(parents=True, exist_ok=True)
         # Create SSL certificates directory
         self.oauth_ssl_cert_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def validate_external_resources(self) -> dict[str, str]:
+        """Validate external resources (DNS, filesystem, etc.).
+
+        Pydantic validators handle field-level validation.
+        This method checks external dependencies that Pydantic can't validate.
+
+        Returns:
+            Dictionary with validation results
+        """
+        results = {}
+
+        # DNS resolution check for account URL
+        try:
+            parsed = urlparse(self.worksection_account_url)
+            hostname = parsed.hostname
+            if hostname:
+                socket.getaddrinfo(hostname, None)
+                results["dns_resolution"] = f"✓ Can resolve {hostname}"
+            else:
+                results["dns_resolution"] = "✗ No hostname found in account URL"
+        except socket.gaierror as e:
+            results["dns_resolution"] = f"✗ Cannot resolve {hostname}: {e}"
+        except Exception as e:
+            results["dns_resolution"] = f"✗ DNS check failed: {e}"
+
+        # Check directory write permissions
+        try:
+            self.token_storage_path.mkdir(parents=True, exist_ok=True)
+            test_file = self.token_storage_path / ".write_test"
+            test_file.touch()
+            test_file.unlink()
+            results["token_storage_writable"] = f"✓ {self.token_storage_path} is writable"
+        except Exception as e:
+            results["token_storage_writable"] = f"✗ Cannot write to {self.token_storage_path}: {e}"
+
+        try:
+            self.file_cache_path.mkdir(parents=True, exist_ok=True)
+            test_file = self.file_cache_path / ".write_test"
+            test_file.touch()
+            test_file.unlink()
+            results["file_cache_writable"] = f"✓ {self.file_cache_path} is writable"
+        except Exception as e:
+            results["file_cache_writable"] = f"✗ Cannot write to {self.file_cache_path}: {e}"
+
+        # Check SSL cert directory
+        try:
+            self.oauth_ssl_cert_path.parent.mkdir(parents=True, exist_ok=True)
+            results["ssl_cert_dir"] = f"✓ SSL cert directory accessible"
+        except Exception as e:
+            results["ssl_cert_dir"] = f"✗ Cannot create SSL cert directory: {e}"
+
+        return results
 
 
 @lru_cache

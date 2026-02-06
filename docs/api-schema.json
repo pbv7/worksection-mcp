@@ -1,0 +1,5822 @@
+{
+  "api_version": "1.0",
+  "base_url": "{{account_url}}/api/",
+  "authentication": {
+    "methods": [
+      {
+        "type": "oauth2",
+        "description": "OAuth2 authentication flow",
+        "endpoints": [
+          {
+            "name": "oauth2_authorize",
+            "path": "/oauth2/authorize",
+            "method": "GET",
+            "description": "Allows to get authorization code needed for token creation\n\n_\\*after login to your Worksection account and approval page confirmation, you will be forwarded to specified Redirect URI with authorization code parameter (code is valid for 10 minutes)_",
+            "authentication": {
+              "type": null,
+              "note": "No authentication required for OAuth2 endpoints"
+            },
+            "parameters": [
+              {
+                "name": "client_id",
+                "type": "string",
+                "required": true,
+                "description": "Client ID Your Worksection application unique ID",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "redirect_uri",
+                "type": "string",
+                "required": true,
+                "description": "Redirect URI Must meet the requirements of the OAuth2 standard and use the HTTPS protocol",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "state",
+                "type": "string",
+                "required": true,
+                "description": "Random text string Will be included in the response to your application at the end of the OAuth stream The main purpose is to prevent CSRF requests from being spoofed",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "scope",
+                "type": "string",
+                "required": true,
+                "description": "OAuth permissions, available values (can be specified with commas): projects_read|projects_write| tasks_read|tasks_write|costs_read|costs_write|tags_read|tags_write|comments_read|comments_write|files_read| files_write|users_read|users_write|contacts_read|contacts_write|administrative Defines which data in the Worksection your application will have access to",
+                "possible_values": [
+                  "projects_read",
+                  "projects_write",
+                  "tasks_read",
+                  "tasks_write",
+                  "costs_read",
+                  "costs_write",
+                  "tags_read",
+                  "tags_write",
+                  "comments_read",
+                  "comments_write",
+                  "files_read",
+                  "files_write",
+                  "users_read",
+                  "users_write",
+                  "contacts_read",
+                  "contacts_write",
+                  "administrative"
+                ],
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "response_type",
+                "type": "string",
+                "required": true,
+                "description": "Response type, possible value: code _code_ - returns the authorization code",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              }
+            ],
+            "responses": []
+          },
+          {
+            "name": "oauth2_token",
+            "path": "/oauth2/token",
+            "method": "POST",
+            "description": "Returns access and refresh tokens\n\n_\\*access_token is valid for 24 hours, refresh_token \u2013 1 month_",
+            "authentication": {
+              "type": null,
+              "note": "No authentication required for OAuth2 endpoints"
+            },
+            "parameters": [
+              {
+                "name": "client_id",
+                "type": "string",
+                "required": true,
+                "description": "Client ID Your Worksection application unique ID",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "client_secret",
+                "type": "string",
+                "required": true,
+                "description": "Client Secret Your Worksection application secret string",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "redirect_uri",
+                "type": "string",
+                "required": true,
+                "description": "Redirect URI Must meet the requirements of the OAuth2 standard and use the HTTPS protocol",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "grant_type",
+                "type": "string",
+                "required": true,
+                "description": "OAuth grant type, possible value: authorization_code",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "code",
+                "type": "string",
+                "required": true,
+                "description": "Authorization code Can be obrained through _oauth2_authorize_ method",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              }
+            ],
+            "responses": [
+              {
+                "name": "success",
+                "status": "OK",
+                "code": 200,
+                "schema": {
+                  "token_type": "Bearer",
+                  "expires_in": 86400,
+                  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIwYTlkYTZhOTE4YWZhNGVkZjAwYWRkYjBkNDFjNTEyMCIsImp0aSI6ImJmOGVhZDNhYTMwMWUyNTYwZDI1ODA1MmY5MWY5MjRkNGIxMDJjYWE3MTYzYjBhOTIzN2NkODczMjBiN2NjNjFhZDdiNDA0YjNhMjljNTY4IiwiaWF0IjoxNjk5NjI3NDAyLCJuYmYiOjE2OTk2Mjc0MDIsImV4cCI6MTY5OTcxMzgwMiwic3ViIjoiMjQ3NyIsInNjb3BlcyI6WyJwcm9qZWN0c19yZWFkIiwicHJvamVjdHNfd3JpdGUiLCJ0YXNrc19yZWFkIiwidGFza3Nfd3JpdGUiLCJjb3N0c19yZWFkIiwiY29zdHNfd3JpdGUiLCJ0YWdzX3JlYWQiLCJ0YWdzX3dyaXRlIiwiY29tbWVudHNfcmVhZCIsImNvbW1lbnRzX3dyaXRlIiwiZmlsZXNfcmVhZCIsImZpbGVzX3dyaXRlIiwidXNlcnNfcmVhZCIsInVzZXJzX3dyaXRlIiwiY29udGFjdHNfcmVhZCIsImNvbnRhY3RzX3dyaXRlIiwiYWRtaW5pc3RyYXRpdmUiXX0.ki4Caqyg-aO5Hhl0mctERkEzssICAC06QjmKBLDWIFKf_0BLW9znOiap4_cIVXAZYpjzzd5J_WxhsYTEvQkBjFjeFxVvW8sGszilz08KMipVwbw_DtvXPPJGKA513wyE6B87oc9dTXIpKr7Ws7UZETUd1rbdj9NgNAB1ghpw5UIyIKfqWWYbomatdtAsFnB5ZAf-AJma74MDT0HHHPm02kbOtsifsHny9TbKmWvcmqtojHltdJC15E4LHHgnaA6QhxGs0tXf6nFv3nIoK-eT0YjaXe0YqbOYXhHtI6SD1L6LDKyUjDiKi0XCKI1XEtvLPjkE7NftG8bOIzlrMI4zRw",
+                  "refresh_token": "def502009eeae35083f65b344d980a855f9f9f456580e3676b993a85c7d7027e20f00474301f8b6355d26ac53187b3d58d871af2efbf96625aeac89bdf696366ec1ae05ddcc8efd6b23ef4806e16565b2eb3124fadaf71090bf344c5cf845ab045575a4567cec410ca98d87a8d68b275bfe880b28b56d9cb13965b60696457bf891db53215fcf98d83c66031b8cb2131784df67657fc8f5111ef781bd86dd17ea31dd6406a4474c20fddacd5946e974b0b1e4c8f5e181334bda96ba8903d15ea5c2be912a1b2187fe6954ca00a33edb9e255acf5a8fae152920d6ff06a23a6ac4c4e8ac176e9965c9db14df41b30519ae1fd0b84047e60e253e14326ca97269ef268e418897d7737c059cb9bdeb60361b8809ddc4eb5b470859bb96d7fed5919044162a111f9c4d12b4e30bf2b734e87635033ccd20a2d3725cb1e2d7e52b13b438251ed5d45dbbeda23a0bd7d6a7a363bb252ca3a3178d71f5dfa728669984b3ad0edd599c211cf7392d4dca3f30a7b1de11c0906b7a6ec44860eb91dc4e4b94f351a2c769a98fdc50c8d124cedf864fb831fd0eea215e05540d5c56325cfc97a76aa3c45c523b0c94149285c9c605983a3e9667b9ac700690a78f5e9510c11b9f18da65b8d989aab4050fc996355dc349d5989002738834edb211f180177a6169da75d90f17f0b0b74549e87c7cf0ccb8a5a2c28cd4e0ec75350645bad15a48e753a18397de3ecbff6ab24dcbf20982df2d823a9bfc70414f8bc3dba7cbdcec6d4e00eb9b92b02282a0dee2e3ecfd1ade93ea1a4454668130548d5ff4d1b4c631449df993da7d928ba03b40022182488d52523088743a35848b1436af8595f9f3db6c34f9f3390a9ab2feab33fe3eff29b9946df0dd96132a2af",
+                  "account_url": "https://acc1234.worksection.com"
+                }
+              },
+              {
+                "name": "invalid_request",
+                "status": "OK",
+                "code": 200,
+                "schema": {
+                  "error": "invalid_request",
+                  "errorDescription": "Authorization code has been revoked"
+                }
+              },
+              {
+                "name": "invalid_client",
+                "status": "OK",
+                "code": 200,
+                "schema": {
+                  "error": "invalid_client",
+                  "errorDescription": "Client authentication failed"
+                }
+              }
+            ]
+          },
+          {
+            "name": "oauth2_refresh",
+            "path": "/oauth2/refresh",
+            "method": "POST",
+            "description": "Returns new access and refresh tokens\n\n\\*used when access token is about to expire or already expired  \n_\\*access_token is valid for 24 hours, refresh_token \u2013 1 month_",
+            "authentication": {
+              "type": null,
+              "note": "No authentication required for OAuth2 endpoints"
+            },
+            "parameters": [
+              {
+                "name": "client_id",
+                "type": "string",
+                "required": true,
+                "description": "Client ID Your Worksection application unique ID",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "client_secret",
+                "type": "string",
+                "required": true,
+                "description": "Client Secret Your Worksection application secret string",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "refresh_token",
+                "type": "string",
+                "required": true,
+                "description": "Refresh token Can be obtained through _oauth2_token_ method",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "grant_type",
+                "type": "string",
+                "required": true,
+                "description": "OAuth grant type, possible value: refresh_token",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              }
+            ],
+            "responses": [
+              {
+                "name": "success",
+                "status": "OK",
+                "code": 200,
+                "schema": {
+                  "token_type": "Bearer",
+                  "expires_in": 86400,
+                  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIwYTlkYTZhOTE4YWZhNGVkZjAwYWRkYjBkNDFjNTEyMCIsImp0aSI6IjM3MjMxZTYyMzM0N2I1NGJkOTc2NWIwNzE4YjU2ZDIyOWM5YTViMWZhOTVhNDc0ODVjYzM0NTNkYmViYmFmYmE2NjU1NDgxNWFkMDc5YzcxIiwiaWF0IjoxNjk5NjI3OTI5LCJuYmYiOjE2OTk2Mjc5MjksImV4cCI6MTY5OTcxNDMyOSwic3ViIjoiMjQ3NyIsInNjb3BlcyI6WyJwcm9qZWN0c19yZWFkIiwicHJvamVjdHNfd3JpdGUiLCJ0YXNrc19yZWFkIiwidGFza3Nfd3JpdGUiLCJjb3N0c19yZWFkIiwiY29zdHNfd3JpdGUiLCJ0YWdzX3JlYWQiLCJ0YWdzX3dyaXRlIiwiY29tbWVudHNfcmVhZCIsImNvbW1lbnRzX3dyaXRlIiwiZmlsZXNfcmVhZCIsImZpbGVzX3dyaXRlIiwidXNlcnNfcmVhZCIsInVzZXJzX3dyaXRlIiwiY29udGFjdHNfcmVhZCIsImNvbnRhY3RzX3dyaXRlIiwiYWRtaW5pc3RyYXRpdmUiXX0.E7e0Kx1vFzTjTkHDsrJRyjkjcZoWkJAoUnI2wCoF64BGCwWEVzSGhCNqpplEapH-s9c-6pokt18QDbkIieUZv9tpHgErwclg_R4ty3bif75zPd0GbzTTfhSaZRHN74uEP5VkrHiAMlMRy7p_SKvHNX9NBw03_q38OfsOLOdAnTaAriD28z8thZww0NImpkb_0r-bJrjr2c_bol-8s6YsG6sU-P4XRVIQj6hoHQ8GjtiT3KqC9dLD3jua8VFPpGblQ0YQsd14oPyzuBRjtQjiTIZcRkQLVVD2_3tRA8Mvkn1bvcnzJuBZB7YLGCvmHG1bXUt_nY72i1UOz7nBZWvs-g",
+                  "refresh_token": "def50200ad37fbada26e58119bbd880f7ff776a8ce06fe74502ed172e7fb02fd42fefb6ad6373883e6d51017234fcc6cbf7cd5b86b3e32f13e11360866baa1ebf57aad99bf9238c9316f946232362fc02966aa9d4d112c628ee0c8b82747bdaf36ad6228c8c07d54b41c447456b0ba2c96f8ad5f530183d14dfc379e21f129fc14601af30840232a3c6a1dc1e819ad6447f8c24cacd00f8ddd22dcfaf63ae13481c1cd5d3192aafa3b24710cd4591b8fe1c4c8e8d7cebf9426b0108a3087b3626d1dd517af31e21e8d4f2eee75bcbe682715d96fa83fde3ec87ed3ff531dc63081ab97e1b160237b5b08e51ffbd60b05700c57aa92e542d438d996829ef973ca8549803ba022a142cb47744896716d0d34ec35e2c2a1967673b1d99750b41fdc8cda57b18feba81dc2b37ce75bcd755afdc97e3e1d722046c6dfc7f71d711a69d964efcee6df6a6232cb001c27d44262b3e6de427f854f578905cef94149d990d4b1c45b288a8fd12483d1e619972f4079769596937a95e9823a34861cbe7be478c6da000608bd12400a0f4abdfb30c638d5adb5fba19a6843488dbd79d6eaf4a84c4f4f0299f2b0b8f277f9a3d55d4851bb97e3a8e05082e32bace4adf7690c0b95d36a479c0f3b2e0fe0fdcb51dab8680cea52f69659b7271c1ac0acb93fcb6fc68f20662cb20f4b3fd505638423262d48994f2ef8b8bb245795f2f86a3c5b732702f5fba5ff47f4217adbc6994361d9fdff9ff142b891286bd0a43c605cebbdb596c8a8213a5f5e73b3a9328274587a8f1e9c33bde3c07f5ef16daa15a7a30d82801e8925515fb8679372e8b7d5dfc2b02ccb5a5ff58170280cc5f1c0c6df6dbb7f48d4c5d456f3d07a73573fa443e5408002f3eefc9ef3c1e7"
+                }
+              },
+              {
+                "name": "invalid_request",
+                "status": "OK",
+                "code": 200,
+                "schema": {
+                  "error": "invalid_request",
+                  "errorDescription": "Cannot decrypt the refresh token"
+                }
+              }
+            ]
+          },
+          {
+            "name": "oauth2_resource",
+            "path": "/oauth2/resource",
+            "method": "POST",
+            "description": "Returns authorized user's (oauth2) info",
+            "authentication": {
+              "type": null,
+              "note": "No authentication required for OAuth2 endpoints"
+            },
+            "parameters": [
+              {
+                "name": "client_id",
+                "type": "string",
+                "required": true,
+                "description": "Client ID Your Worksection application unique ID",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "client_secret",
+                "type": "string",
+                "required": true,
+                "description": "Client Secret Your Worksection application secret string",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              },
+              {
+                "name": "access_token",
+                "type": "string",
+                "required": true,
+                "description": "Access token Can be obtained through _oauth2_token_ method",
+                "possible_values": null,
+                "notes": null,
+                "disabled": false
+              }
+            ],
+            "responses": [
+              {
+                "name": "success",
+                "status": "OK",
+                "code": 200,
+                "schema": {
+                  "id": "3993",
+                  "first_name": "Henry",
+                  "last_name": "Gardner",
+                  "email": "henry.gardner@ws.com",
+                  "account_url": "https://acc1234.worksection.com"
+                }
+              },
+              {
+                "name": "not_authorized",
+                "status": "OK",
+                "code": 200,
+                "schema": {
+                  "error": "not_authorized",
+                  "errorDescription": "Malformed UTF-8 characters"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "admin_token",
+        "description": "Admin API token authentication",
+        "note": "Include API token in requests"
+      }
+    ]
+  },
+  "endpoints": [
+    {
+      "name": "me",
+      "action": "me",
+      "method": "POST",
+      "description": "Returns info about authorized user (oauth2)\n\n**!! User method (only for access token) !!**",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "3993",
+              "first_name": "Henry",
+              "last_name": "Gardner",
+              "name": "Henry Gardner",
+              "title": "developer",
+              "avatar": "https://acc1234.worksection.com/images/user/246965/3993_2001.jpg",
+              "group": "Development",
+              "department": "Dev team",
+              "role": "Owner",
+              "email": "henry.gardner@ws.com",
+              "phone": "+15852827023",
+              "phone2": "4 4950 234 45 90",
+              "phone3": "1 (049) 143-235-08",
+              "phone4": "5989 243 88 1",
+              "address": "Apt. 902 853 Simona Common, Pollybury, SC 98466-2410",
+              "address2": "Suite 329 958 Lashell Branch, Mayertview, SC 07180"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_users",
+      "action": "get_users",
+      "method": "POST",
+      "description": "Returns account users info",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "3993",
+                "first_name": "Henry",
+                "last_name": "Gardner",
+                "name": "Henry Gardner",
+                "title": "developer",
+                "rate": 25,
+                "avatar": "https://acc1234.worksection.com/images/user/246965/3993_2001.jpg",
+                "group": "Development",
+                "department": "Dev team",
+                "role": "Owner",
+                "email": "henry.gardner@ws.com",
+                "phone": "+15852827023",
+                "phone2": "4 4950 234 45 90",
+                "phone3": "1 (049) 143 235 08",
+                "phone4": "5989 243 88 1",
+                "address": "Apt. 902 853 Simona Common, Pollybury, SC 98466-2410",
+                "address2": "Suite 329 958 Lashell Branch, Mayertview, SC 07180"
+              },
+              {
+                "id": "5514",
+                "first_name": "Frank",
+                "last_name": "Harper",
+                "name": "Frank Harper",
+                "title": "QA specialist",
+                "rate": 11,
+                "avatar": "https://acc1234.worksection.com/images/user/0m.gif",
+                "group": "Development",
+                "department": "Test team",
+                "role": "Account admin",
+                "email": "frank.harper@ws.com"
+              },
+              {
+                "id": "5674",
+                "first_name": "John Doe",
+                "last_name": "John Doe",
+                "name": "John Doe",
+                "title": "PM",
+                "rate": 11,
+                "avatar": "https://acc1234.worksection.com/images/avatar/mail/av_9_40.gif",
+                "group": "Singing bird",
+                "department": "",
+                "role": "User",
+                "email": "5674@5674.worksection.com"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_user",
+      "action": "add_user",
+      "method": "POST",
+      "description": "Invites new account user\n\n_\\*into your team if 'group' parameter is not specified_",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "User email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "first_name",
+          "type": "string",
+          "required": false,
+          "description": "User first name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "last_name",
+          "type": "string",
+          "required": false,
+          "description": "User last name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": "User position",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "group",
+          "type": "string",
+          "required": false,
+          "description": "Team name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "department",
+          "type": "string",
+          "required": false,
+          "description": "Department name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "required": false,
+          "description": "User role, possible values: user|guest|reader",
+          "possible_values": [
+            "user",
+            "guest",
+            "reader"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "5686",
+              "first_name": "kate",
+              "last_name": "greenway",
+              "name": "kate greenway",
+              "title": "",
+              "rate": 11,
+              "avatar": "https://acc1234.worksection.com/images/user/0f.gif",
+              "group": "Development",
+              "department": "",
+              "role": "User",
+              "email": "kate.greenway@ws.com"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "email"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_user_groups",
+      "action": "get_user_groups",
+      "method": "POST",
+      "description": "Returns account user teams list",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "2977",
+                "title": "Development",
+                "type": "company",
+                "client": 0
+              },
+              {
+                "id": "4186",
+                "title": "Singing bird",
+                "type": "company",
+                "client": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_user_group",
+      "action": "add_user_group",
+      "method": "POST",
+      "description": "Creates account user team\n\n_\\*if there are no teams with same name_",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Team name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "client",
+          "type": "string",
+          "required": false,
+          "description": "Team type (0 by default), possible values: 1|0 _1_ - external client team _0_ - your company team",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "4190",
+              "title": "Marketing",
+              "type": "company",
+              "client": 0
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "title"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_contacts",
+      "action": "get_contacts",
+      "method": "POST",
+      "description": "Returns account contacts info",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "5606",
+                "first_name": "Brian",
+                "last_name": "Dragonfly",
+                "name": "Brian Dragonfly",
+                "title": "manager",
+                "group": "Clients",
+                "email": "brian.dragonfly@gmail.com",
+                "phone": "1 345 234 23 67",
+                "phone2": "486 09 77",
+                "phone3": "(8984) 345 65 02",
+                "phone4": "389 87 35",
+                "address": "Apt. 406 855 Renner Trail, Rowemouth, IN 42165",
+                "address2": "59064 Robby Prairie, North Abel, NE 93368"
+              },
+              {
+                "id": "5614",
+                "first_name": "Steve",
+                "last_name": "Powerhold",
+                "name": "Steve Powerhold",
+                "title": "",
+                "group": "Contractors",
+                "phone": "1265 458 32 12"
+              },
+              {
+                "id": "5658",
+                "first_name": "Mike",
+                "last_name": "Shaw",
+                "name": "Mike Shaw",
+                "title": "",
+                "group": "DEFAULT",
+                "email": "mike.shaw@gmail.com"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_contact",
+      "action": "add_contact",
+      "method": "POST",
+      "description": "Creates new account contact\n\n_\\*no invitation sent_",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "description": "Contact email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "description": "Contact name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": "Position",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "group",
+          "type": "string",
+          "required": false,
+          "description": "Folder name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "phone",
+          "type": "string",
+          "required": false,
+          "description": "Main phone number",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "phone2",
+          "type": "string",
+          "required": false,
+          "description": "Office phone number",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "phone3",
+          "type": "string",
+          "required": false,
+          "description": "Mobile phone number",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "phone4",
+          "type": "string",
+          "required": false,
+          "description": "Home phone number",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "address",
+          "type": "string",
+          "required": false,
+          "description": "Address",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "address2",
+          "type": "string",
+          "required": false,
+          "description": "Additional address",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "5614",
+              "first_name": "Brian",
+              "last_name": "Dragonfly",
+              "name": "Brian Dragonfly",
+              "title": "manager",
+              "group": "Clients",
+              "email": "brian.dragonfly@gmail.com",
+              "phone": "1 345 234 23 67",
+              "phone2": "486 09 77",
+              "phone3": "(8984) 345 65 02",
+              "phone4": "389 87 35",
+              "address": "Apt. 406 855 Renner Trail, Rowemouth, IN 42165",
+              "address2": "59064 Robby Prairie, North Abel, NE 93368"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Invalid email",
+            "message_details": "brian.dragonfly@gmail.com,mike.showcase@gmail.com"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_contact_groups",
+      "action": "get_contact_groups",
+      "method": "POST",
+      "description": "Returns account contact folders list",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": 1,
+                "title": "USERS",
+                "type": "preset"
+              },
+              {
+                "id": 2,
+                "title": "DEFAULT",
+                "type": "preset"
+              },
+              {
+                "id": 3,
+                "title": "TEAM_ONLY",
+                "type": "preset"
+              },
+              {
+                "id": 4,
+                "title": "HIDDEN",
+                "type": "preset"
+              },
+              {
+                "id": "4178",
+                "title": "Clients",
+                "type": "folder"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_contact_group",
+      "action": "add_contact_group",
+      "method": "POST",
+      "description": "Creates account contacts folder\n\n_\\*if there are no folders with same name_",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Contacts folder name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "4182",
+              "title": "Contractors",
+              "type": "folder"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "title"
+          }
+        }
+      ]
+    },
+    {
+      "name": "subscribe",
+      "action": "subscribe",
+      "method": "POST",
+      "description": "Subscribes user to selected task\n\n_\\*task subscribers list can be obtained through 'get_task' method with 'extra=subscribers' parameter_",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "email_user",
+          "type": "string",
+          "required": true,
+          "description": "User email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Invalid email",
+            "message_details": "henry.gardner@ws.com,frank.harper@ws.com"
+          }
+        }
+      ]
+    },
+    {
+      "name": "unsubscribe",
+      "action": "unsubscribe",
+      "method": "POST",
+      "description": "Unsubscribes user from selected task\n\n_\\*task subscribers list can be obtained through 'get_task' method with 'extra=subscribers' parameter_",
+      "category": "Members",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "email_user",
+          "type": "string",
+          "required": true,
+          "description": "User email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Invalid email",
+            "message_details": "henry.gardner@ws.com,frank.harper@ws.com"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_projects",
+      "action": "get_projects",
+      "method": "POST",
+      "description": "Returns all projects info",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "filter",
+          "type": "string",
+          "required": false,
+          "description": "Project state, possible values: active|pending|archive _active_ - active projects _pending_ - sleeping projects (muted, so don't send notifications) _archive_ - archived projects",
+          "possible_values": [
+            "active",
+            "pending",
+            "archive"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Additional project info, possible values (can be specified with commas): text|options|users _text_ or _html_ - description in text or html format _options_ - project restriction options _users_ - project team members",
+          "possible_values": [
+            "text",
+            "options",
+            "users"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "raw": "{\n    \"status\": \"ok\",\n    \"data\": [\n        {\n            \"id\": \"6622\",\n            \"name\": \"Performance improvement\",\n            \"page\": \"/project/6622/\",\n            \"status\": \"active\",\n            \"company\": \"Development\",\n            \"user_from\": {\n                \"id\": \"3993\",\n                \"email\": \"henry.gardner@ws.com\",\n                \"name\": \"Henry Gardner\"\n            },\n            \"user_to\": {\n                \"id\": \"3993\",\n                \"email\": \"henry.gardner@ws.com\",\n                \"name\": \"Henry Gardner\"\n            },\n            \"text\": \"Inner project for company KPI improvement\",\n            \"date_added\": \"2021-01-01 10:18\",\n            \"date_start\": \"2021-01-01\",\n            \"date_end\": \"2021-07-01\",\n            \"options\": {\n                \"allow_close\": 1,\n                \"allow_give\": 1,\n                \"allow_term\": 0,\n                \"allow_limit\": 0,\n                \"require_term\": 1,\n                \"require_tag\": 1,\n                \"require_limit\": 1,\n                \"require_hidden\": 0,\n                \"deny_comments_edit\": 0,\n                \"deny_task_edit\": 0,\n                \"deny_task_delete\": 1,\n                \"time_require\": 0,\n                \"time_today\": 0,\n                \"timer_only\": 1\n            },\n            \"max_time\": 1200,\n            \"max_money\": 20400,\n            \"tags\": {\n                \"105554\": \"inner\",\n                \"105570\": \"wiki\"\n            },\n            \"users\": [\n                {\n                    \"id\": \"3993\",\n                    \"email\": \"henry.gardner@ws.com\",\n                    \"name\": \"Henry Gardner\"\n                },\n                {\n                    \"id\": \"5514\",\n                    \"email\": \"frank.harper@ws.com\",\n                    \"name\": \"Frank Harper\"\n                },\n                {\n                    \"id\": \"5686\",\n                    \"email\": \"kate.greenway@ws.com\",\n                    \"name\": \"Kate Greenway\"\n                }\n            ]\n        },\n        {\n            \"id\": \"8506\",\n            \"name\": \"Prototyping\",\n            \"page\": \"/project/8506/\",\n            \"status\": \"pending\",\n            \"company\": \"Development\",\n            \"user_from\": {\n                \"id\": \"5686\",\n                \"email\": \"kate.greenway@ws.com\",\n                \"name\": \"Kate Greenway\"\n            },\n            \"user_to\": {\n                \"id\": \"0\",\n                \"email\": \"NOONE\",\n                \"name\": \"Manager isn't assigned\"\n            },\n            \"text\": \"\",\n            \"date_added\": \"2021-01-05 16:21\",\n            \"options\": {\n                \"allow_close\": 1,\n                \"allow_give\": 0,\n                \"allow_term\": 0,\n                \"allow_limit\": 0,\n                \"require_term\": 0,\n                \"require_tag\": 0,\n                \"require_limit\": 0,\n                \"require_hidden\": 0,\n                \"deny_comments_edit\": 0,\n                \"deny_task_edit\": 0,\n                \"deny_task_delete\": 0,\n                \"time_require\": 0,\n                \"time_today\": 0,\n                \"timer_only\": 0\n            },\n            \"users\": [\n                {\n                    \"id\": \"5686\",\n                    \"email\": \"kate.greenway@ws.com\",\n                    \"name\": \"Kate Greenway\"\n                }\n            ]\n        },\n    ]\n}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_project",
+      "action": "get_project",
+      "method": "POST",
+      "description": "Returns selected project info",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Additional project info, possible values (can be specified with commas): text|options|users _text_ or _html_ - description in text or html format _options_ - project restriction options _users_ - project team members",
+          "possible_values": [
+            "text",
+            "options",
+            "users"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "6622",
+              "name": "Performance improvement",
+              "page": "/project/6622/",
+              "status": "active",
+              "company": "Development",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "5686",
+                "email": "kate.greenway@ws.com",
+                "name": "Kate Greenway"
+              },
+              "text": "Inner project for company KPI improvement",
+              "date_added": "2021-01-01 10:18",
+              "date_start": "2021-01-01",
+              "date_end": "2021-07-01",
+              "options": {
+                "allow_close": 1,
+                "allow_give": 1,
+                "allow_term": 0,
+                "allow_limit": 0,
+                "require_term": 1,
+                "require_tag": 1,
+                "require_limit": 1,
+                "require_hidden": 0,
+                "deny_comments_edit": 0,
+                "deny_task_edit": 0,
+                "deny_task_delete": 1,
+                "time_require": 0,
+                "time_today": 0,
+                "timer_only": 1
+              },
+              "max_time": 1200,
+              "max_money": 20400,
+              "tags": {
+                "105554": "inner",
+                "105570": "wiki"
+              },
+              "users": [
+                {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                },
+                {
+                  "id": "5686",
+                  "email": "kate.greenway@ws.com",
+                  "name": "Kate Greenway"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 4,
+            "message": "Project is invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "post_project",
+      "action": "post_project",
+      "method": "POST",
+      "description": "Creates project\n\n_\\*allows files attaching to project description (see_ [<i>details</i>](https://worksection.com/en/faq/api-files.html#q1691)_)_",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Project name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "email_user_from",
+          "type": "string",
+          "required": false,
+          "description": "Project author email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_manager",
+          "type": "string",
+          "required": false,
+          "description": "Project manager email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_to",
+          "type": "string",
+          "required": false,
+          "description": "User email of a default task executive, possible values: ANY|NOONE _ANY_ - for \"Anyone\" _NOONE_ - for \"Executive isn't assigned\"",
+          "possible_values": [
+            "ANY",
+            "NOONE"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "members",
+          "type": "string",
+          "required": false,
+          "description": "Project member emails separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": false,
+          "description": "Project description",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "company",
+          "type": "string",
+          "required": false,
+          "description": "Folder name, where the project will be located",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "datestart",
+          "type": "string",
+          "required": false,
+          "description": "Start date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "dateend",
+          "type": "string",
+          "required": false,
+          "description": "Due date or end date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_time",
+          "type": "string",
+          "required": false,
+          "description": "Time estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_money",
+          "type": "string",
+          "required": false,
+          "description": "Financial estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "tags",
+          "type": "string",
+          "required": false,
+          "description": "Project tags separated by commas You can specify names (if they are unique) or their IDs (can be obtained through _get_project_tags_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction options info, possible value: options",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_close",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can mark task as done, possible values: 1|0 _1_ - enable _0_ - disable",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_give",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can transfer the responsibility, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_term",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can change the task terms, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_limit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can change the estimates, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_term",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires terms, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_tag",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires stages and labels, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_limit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires estimates, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_hidden",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires visibility, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.deny_comments_edit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Users are not permitted to edit and delete comments, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.deny_task_edit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Users are not permitted to edit and delete tasks, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.deny_task_delete",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Users are not permitted to delete tasks, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.time_require",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Mark as done with costs only, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.time_today",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Adding costs for today only, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.timer_only",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Adding costs from timer only, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "8838",
+              "name": "New brand launch",
+              "page": "/project/8838/",
+              "status": "active",
+              "company": "Marketing",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "5514",
+                "email": "frank.harper@ws.com",
+                "name": "Frank Harper"
+              },
+              "date_added": "2021-01-23 10:51",
+              "date_start": "2021-02-01",
+              "date_end": "2021-03-01",
+              "options": {
+                "allow_close": 1,
+                "allow_give": 1,
+                "allow_term": 0,
+                "allow_limit": 0,
+                "require_term": 1,
+                "require_tag": 1,
+                "require_limit": 1,
+                "require_hidden": 0,
+                "deny_comments_edit": 0,
+                "deny_task_edit": 0,
+                "deny_task_delete": 0,
+                "time_require": 0,
+                "time_today": 0,
+                "timer_only": 1
+              },
+              "max_time": 352,
+              "max_money": 4224,
+              "tags": {
+                "105118": "paid",
+                "105126": "contract"
+              }
+            }
+          }
+        },
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "8530",
+              "name": "New brand launch",
+              "page": "/project/8530/",
+              "status": "active",
+              "company": "Development",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "0",
+                "email": "NOONE",
+                "name": "Manager isn't assigned"
+              },
+              "date_added": "2021-02-15 14:25",
+              "options": {
+                "allow_close": 0,
+                "allow_give": 0,
+                "allow_term": 0,
+                "allow_limit": 0,
+                "require_term": 0,
+                "require_tag": 0,
+                "require_limit": 0,
+                "require_hidden": 0,
+                "deny_comments_edit": 0,
+                "deny_task_edit": 0,
+                "deny_task_delete": 0,
+                "time_require": 0,
+                "time_today": 0,
+                "timer_only": 0
+              }
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Only one parameter (options.time_require or options.time_today or options.timer_only) can be set as 1."
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_project",
+      "action": "update_project",
+      "method": "POST",
+      "description": "Updates selected project parameters",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "email_manager",
+          "type": "string",
+          "required": false,
+          "description": "Project manager email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_to",
+          "type": "string",
+          "required": false,
+          "description": "User email of a default task executive, possible values: ANY|NOONE _ANY_ - for \"Anyone\" _NOONE_ - for \"Executive isn't assigned\"",
+          "possible_values": [
+            "ANY",
+            "NOONE"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "members",
+          "type": "string",
+          "required": false,
+          "description": "Project member emails separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": "Project name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "datestart",
+          "type": "string",
+          "required": false,
+          "description": "Start date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "dateend",
+          "type": "string",
+          "required": false,
+          "description": "Due date or end date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_time",
+          "type": "string",
+          "required": false,
+          "description": "Time estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_money",
+          "type": "string",
+          "required": false,
+          "description": "Financial estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction options info, possible value: options",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_close",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can mark task as done, possible values: 1|0 _1_ - enable _0_ - disable",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_give",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can transfer the responsibility, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_term",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can change the task terms, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.allow_limit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Assignee can change the estimates, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_term",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires terms, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_tag",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires stages and labels, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_limit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires estimates, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.require_hidden",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 New task requires visibility, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.deny_comments_edit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Users are not permitted to edit and delete comments, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.deny_task_edit",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Users are not permitted to edit and delete tasks, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.deny_task_delete",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Users are not permitted to delete tasks, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.time_require",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Mark as done with costs only, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.time_today",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Adding costs for today only, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "options.timer_only",
+          "type": "string",
+          "required": false,
+          "description": "Project restriction option \u2013 Adding costs from timer only, possible values: 1|0",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "8530",
+              "name": "Owl brand launch",
+              "page": "/project/8530/",
+              "status": "active",
+              "company": "Development",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "0",
+                "email": "NOONE",
+                "name": "Manager isn't assigned"
+              },
+              "date_added": "2021-02-15 14:25"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Only one parameter (options.time_require or options.time_today or options.timer_only) can be set as 1."
+          }
+        }
+      ]
+    },
+    {
+      "name": "close_project",
+      "action": "close_project",
+      "method": "POST",
+      "description": "Archives selected project",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 12,
+            "message": "Project is already closed"
+          }
+        }
+      ]
+    },
+    {
+      "name": "activate_project",
+      "action": "activate_project",
+      "method": "POST",
+      "description": "Activates selected archived project",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 12,
+            "message": "Project is already active"
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_project_members",
+      "action": "add_project_members",
+      "method": "POST",
+      "description": "Adds account users to selected project team",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "members",
+          "type": "string",
+          "required": true,
+          "description": "User emails separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Invalid email",
+            "message_details": "brian.dragonfly@gmail.com"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delete_project_members",
+      "action": "delete_project_members",
+      "method": "POST",
+      "description": "Removes account users from selected project team",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "members",
+          "type": "string",
+          "required": true,
+          "description": "User emails separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Invalid email",
+            "message_details": "brian.dragonfly@gmail.com"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_project_groups",
+      "action": "get_project_groups",
+      "method": "POST",
+      "description": "Returns all project folders info",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "4302",
+                "title": "Design",
+                "type": "folder"
+              },
+              {
+                "id": "2977",
+                "title": "Development",
+                "type": "company",
+                "client": 0
+              },
+              {
+                "id": "4190",
+                "title": "Marketing",
+                "type": "company",
+                "client": 0
+              },
+              {
+                "id": "4186",
+                "title": "Singing bird",
+                "type": "company",
+                "client": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_project_group",
+      "action": "add_project_groups",
+      "method": "POST",
+      "description": "Creates projects folder\n\n_\\*if there are no folders with same name_",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Project folder name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "4314",
+              "title": "Outsource",
+              "type": "folder"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "title"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_events",
+      "action": "get_events",
+      "method": "POST",
+      "description": "Returns performed actions info in all or selected projects within selected time period\n\n_\\*info on who made changes, what changed and when_\n\n**!! better use webhooks instead (see** [<b>details</b>](https://worksection.com/en/faq/webhooks.html)**) !!**",
+      "category": "Projects",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "period",
+          "type": "string",
+          "required": true,
+          "description": "Time period, possible values: 1m..360m|1h..72h|1d..30d _1m..360m_ - in minutes _1h..72h_ - in hours _1d..30d_ - in days",
+          "possible_values": [
+            "1m..360m",
+            "1h..72h",
+            "1d..30d"
+          ],
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": false,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "action": "post",
+                "object": {
+                  "type": "project",
+                  "id": "8506",
+                  "page": "/project/8506/"
+                },
+                "date_added": "2021-01-02 10:16",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "new": {
+                  "title": "Prototyping",
+                  "user_to": {
+                    "id": "3993",
+                    "email": "henry.gardner@ws.com",
+                    "name": "Henry Gardner"
+                  }
+                }
+              },
+              {
+                "action": "post",
+                "object": {
+                  "type": "comment",
+                  "id": "19870",
+                  "page": "/project/6622/330090/"
+                },
+                "date_added": "2021-01-02 11:07",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "new": {
+                  "text": "Today we have a meetup. Please, prepare your department results."
+                }
+              },
+              {
+                "action": "update",
+                "object": {
+                  "type": "task",
+                  "id": "331786",
+                  "page": "/project/6622/331786/"
+                },
+                "date_added": "2021-01-02 14:37",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "new": {
+                  "priority": "7",
+                  "user_to": {
+                    "id": "5514",
+                    "email": "frank.harper@ws.com",
+                    "name": "Frank Harper"
+                  },
+                  "date_end": "2024-01-11",
+                  "time_end": "16:00"
+                },
+                "old": {
+                  "priority": "1",
+                  "user_to": {
+                    "id": "2",
+                    "email": "ANY",
+                    "name": "Anyone"
+                  },
+                  "date_end": "",
+                  "time_end": ""
+                }
+              },
+              {
+                "action": "close",
+                "object": {
+                  "type": "task",
+                  "id": "330142",
+                  "page": "/project/6622/330142/"
+                },
+                "date_added": "2021-01-02 15:54",
+                "user_from": {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "period"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_all_tasks",
+      "action": "get_all_tasks",
+      "method": "POST",
+      "description": "Returns all incomplete and completed tasks of all projects\n\n_\\*except tasks with delayed publication  \n\\*subtasks can be returned with extra=subtasks parameter_",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "filter",
+          "type": "string",
+          "required": false,
+          "description": "Incomplete tasks, possible value: active \u0421ompleted tasks filtering is not available",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Additional task info, possible values (can be specified with commas): text|files|comments|relations|subtasks|archive _text_ or _html_ - description in text or html format _files_ - attached files info (in task description) _comments_ - five last comments _relations_ - dependencies with other tasks _subtasks_ - list of subtasks (in 'child' dataset) _archive_ - tasks of archived projects",
+          "possible_values": [
+            "text",
+            "files",
+            "comments",
+            "relations",
+            "subtasks",
+            "archive"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "331894",
+                "name": "Development",
+                "page": "/project/8562/331894/",
+                "status": "active",
+                "priority": "7",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "project": {
+                  "id": "8562",
+                  "name": "Owl brand launch",
+                  "page": "/project/8562/"
+                },
+                "text": "Business logic programming",
+                "date_added": "2021-01-07 10:01",
+                "date_start": "2021-01-16",
+                "date_end": "2021-02-16",
+                "time_start": "08:00",
+                "time_end": "18:00",
+                "max_time": 352,
+                "max_money": 5280,
+                "files": [
+                  {
+                    "id": "17694",
+                    "page": "/download/17694/",
+                    "name": "Development requirements.doc",
+                    "size": "27136"
+                  },
+                  {
+                    "id": "17698",
+                    "page": "/download/17698/",
+                    "name": "Development progress.xlsx",
+                    "size": "10698"
+                  }
+                ],
+                "has_comments": 1,
+                "comments": [
+                  {
+                    "id": "19978",
+                    "page": "/project/8562/331894/#com19978",
+                    "text": "Thanks, first section done",
+                    "date_added": "2021-01-07 16:38",
+                    "user_from": {
+                      "id": "5514",
+                      "email": "frank.harper@ws.com",
+                      "name": "Frank Harper"
+                    }
+                  },
+                  {
+                    "id": "19974",
+                    "page": "/project/8562/331894/#com19974",
+                    "text": "As usual",
+                    "date_added": "2021-01-07 11:15",
+                    "user_from": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    }
+                  },
+                  {
+                    "id": "19962",
+                    "page": "/project/8562/331894/#com19962",
+                    "text": "And what about development\u00a0environment?",
+                    "date_added": "2021-01-07 11:10",
+                    "user_from": {
+                      "id": "5514",
+                      "email": "frank.harper@ws.com",
+                      "name": "Frank Harper"
+                    }
+                  },
+                  {
+                    "id": "19954",
+                    "page": "/project/8562/331894/#com19954",
+                    "text": "Need your help with first section",
+                    "date_added": "2021-01-07 11:04",
+                    "user_from": {
+                      "id": "5514",
+                      "email": "frank.harper@ws.com",
+                      "name": "Frank Harper"
+                    }
+                  },
+                  {
+                    "id": "19950",
+                    "page": "/project/8562/331894/#com19950",
+                    "text": "Updated development requirements",
+                    "date_added": "2021-01-07 10:33",
+                    "user_from": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    }
+                  }
+                ],
+                "relations": {
+                  "from": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331902",
+                        "name": "Prototyping",
+                        "page": "/project/8562/331902/",
+                        "status": "active",
+                        "priority": "1"
+                      }
+                    }
+                  ],
+                  "to": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331906",
+                        "name": "Testing",
+                        "page": "/project/8562/331906/",
+                        "status": "active",
+                        "priority": "1"
+                      }
+                    }
+                  ]
+                },
+                "child": [
+                  {
+                    "id": "331910",
+                    "name": "Sprint 1",
+                    "page": "/project/8562/331894/331910/",
+                    "status": "active",
+                    "priority": "1",
+                    "user_from": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    },
+                    "user_to": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    },
+                    "project": {
+                      "id": "8562",
+                      "name": "Owl brand launch",
+                      "page": "/project/8562/"
+                    },
+                    "text": "",
+                    "date_added": "2021-01-07 10:05",
+                    "has_comments": 0,
+                    "child": [
+                      {
+                        "id": "331914",
+                        "name": "Subsprint 1.1",
+                        "page": "/project/8562/331894/331914/",
+                        "status": "active",
+                        "priority": "1",
+                        "user_from": {
+                          "id": "3993",
+                          "email": "henry.gardner@ws.com",
+                          "name": "Henry Gardner"
+                        },
+                        "user_to": {
+                          "id": "3993",
+                          "email": "henry.gardner@ws.com",
+                          "name": "Henry Gardner"
+                        },
+                        "project": {
+                          "id": "8562",
+                          "name": "Owl brand launch",
+                          "page": "/project/8562/"
+                        },
+                        "text": "",
+                        "date_added": "2021-01-07 10:07",
+                        "has_comments": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "331902",
+                "name": "Prototyping",
+                "page": "/project/8562/331902/",
+                "status": "active",
+                "priority": "1",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "5686",
+                  "email": "kate.greenway@ws.com",
+                  "name": "Kate Greenway"
+                },
+                "project": {
+                  "id": "8562",
+                  "name": "Owl brand launch",
+                  "page": "/project/8562/"
+                },
+                "text": "",
+                "date_added": "2021-01-07 11:41",
+                "date_start": "2021-01-10",
+                "date_end": "2021-01-15",
+                "has_comments": 0,
+                "relations": {
+                  "to": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331894",
+                        "name": "Development",
+                        "page": "/project/8562/331894/",
+                        "status": "active",
+                        "priority": "7"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "331906",
+                "name": "Testing",
+                "page": "/project/8562/331906/",
+                "status": "active",
+                "priority": "1",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                },
+                "project": {
+                  "id": "8562",
+                  "name": "Owl brand launch",
+                  "page": "/project/8562/"
+                },
+                "text": "",
+                "date_added": "2021-01-07 12:00",
+                "date_start": "2021-02-17",
+                "date_end": "2021-02-24",
+                "has_comments": 0,
+                "relations": {
+                  "from": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331894",
+                        "name": "Development",
+                        "page": "/project/8562/331894/",
+                        "status": "active",
+                        "priority": "7"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_tasks",
+      "action": "get_tasks",
+      "method": "POST",
+      "description": "Returns all incomplete and completed tasks of selected project\n\n_\\*except tasks with delayed publication  \n\\*subtasks can be returned with extra=subtasks parameter_",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "filter",
+          "type": "string",
+          "required": false,
+          "description": "Incomplete tasks, possible value: active \u0421ompleted tasks filtering is not available",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Additional task info, possible values (can be specified with commas): text|files|comments|relations|subtasks|subscribers _text_ or _html_ - description in text or html format _files_ - attached files info (in task description) _comments_ - five last comments _relations_ - dependencies with other tasks _subtasks_ - list of subtasks (in 'child' dataset) _subscribers_ - subscribers list with user info",
+          "possible_values": [
+            "text",
+            "files",
+            "comments",
+            "relations",
+            "subtasks",
+            "subscribers"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "331894",
+                "name": "Development",
+                "page": "/project/8562/331894/",
+                "status": "active",
+                "priority": "7",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "project": {
+                  "id": "8562",
+                  "name": "Owl brand launch",
+                  "page": "/project/8562/"
+                },
+                "text": "Business logic programming",
+                "date_added": "2021-01-07 10:01",
+                "date_start": "2021-01-16",
+                "date_end": "2021-02-16",
+                "time_start": "08:00",
+                "time_end": "18:00",
+                "max_time": 352,
+                "max_money": 5280,
+                "subscribers": [
+                  {
+                    "id": "3993",
+                    "email": "henry.gardner@ws.com",
+                    "name": "Henry Gardner"
+                  },
+                  {
+                    "id": "5514",
+                    "email": "frank.harper@ws.com",
+                    "name": "Frank Harper"
+                  }
+                ],
+                "files": [
+                  {
+                    "id": "17694",
+                    "page": "/download/17694/",
+                    "name": "Development requirements.doc",
+                    "size": "27136"
+                  },
+                  {
+                    "id": "17698",
+                    "page": "/download/17698/",
+                    "name": "Development progress.xlsx",
+                    "size": "10698"
+                  }
+                ],
+                "has_comments": 1,
+                "comments": [
+                  {
+                    "id": "19978",
+                    "page": "/project/8562/331894/#com19978",
+                    "text": "Thanks, first section done",
+                    "date_added": "2021-01-07 16:38",
+                    "user_from": {
+                      "id": "5514",
+                      "email": "frank.harper@ws.com",
+                      "name": "Frank Harper"
+                    }
+                  },
+                  {
+                    "id": "19974",
+                    "page": "/project/8562/331894/#com19974",
+                    "text": "As usual",
+                    "date_added": "2021-01-07 11:15",
+                    "user_from": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    }
+                  },
+                  {
+                    "id": "19962",
+                    "page": "/project/8562/331894/#com19962",
+                    "text": "And what about development\u00a0environment?",
+                    "date_added": "2021-01-07 11:10",
+                    "user_from": {
+                      "id": "5514",
+                      "email": "frank.harper@ws.com",
+                      "name": "Frank Harper"
+                    }
+                  },
+                  {
+                    "id": "19954",
+                    "page": "/project/8562/331894/#com19954",
+                    "text": "Need your help with first section",
+                    "date_added": "2021-01-07 11:04",
+                    "user_from": {
+                      "id": "5514",
+                      "email": "frank.harper@ws.com",
+                      "name": "Frank Harper"
+                    }
+                  },
+                  {
+                    "id": "19950",
+                    "page": "/project/8562/331894/#com19950",
+                    "text": "Updated development requirements",
+                    "date_added": "2021-01-07 10:33",
+                    "user_from": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    }
+                  }
+                ],
+                "relations": {
+                  "from": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331902",
+                        "name": "Prototyping",
+                        "page": "/project/8562/331902/",
+                        "status": "active",
+                        "priority": "1"
+                      }
+                    }
+                  ],
+                  "to": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331906",
+                        "name": "Testing",
+                        "page": "/project/8562/331906/",
+                        "status": "active",
+                        "priority": "1"
+                      }
+                    }
+                  ]
+                },
+                "child": [
+                  {
+                    "id": "331910",
+                    "name": "Sprint 1",
+                    "page": "/project/8562/331894/331910/",
+                    "status": "active",
+                    "priority": "1",
+                    "user_from": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    },
+                    "user_to": {
+                      "id": "3993",
+                      "email": "henry.gardner@ws.com",
+                      "name": "Henry Gardner"
+                    },
+                    "project": {
+                      "id": "8562",
+                      "name": "Owl brand launch",
+                      "page": "/project/8562/"
+                    },
+                    "text": "",
+                    "date_added": "2021-01-07 10:05",
+                    "subscribers": [
+                      {
+                        "id": "3993",
+                        "email": "henry.gardner@ws.com",
+                        "name": "Henry Gardner"
+                      }
+                    ],
+                    "has_comments": 0,
+                    "child": [
+                      {
+                        "id": "331914",
+                        "name": "Subsprint 1.1",
+                        "page": "/project/8562/331894/331914/",
+                        "status": "active",
+                        "priority": "1",
+                        "user_from": {
+                          "id": "3993",
+                          "email": "henry.gardner@ws.com",
+                          "name": "Henry Gardner"
+                        },
+                        "user_to": {
+                          "id": "3993",
+                          "email": "henry.gardner@ws.com",
+                          "name": "Henry Gardner"
+                        },
+                        "project": {
+                          "id": "8562",
+                          "name": "Owl brand launch",
+                          "page": "/project/8562/"
+                        },
+                        "text": "",
+                        "date_added": "2021-01-07 10:07",
+                        "subscribers": [
+                          {
+                            "id": "3993",
+                            "email": "henry.gardner@ws.com",
+                            "name": "Henry Gardner"
+                          }
+                        ],
+                        "has_comments": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "331902",
+                "name": "Prototyping",
+                "page": "/project/8562/331902/",
+                "status": "active",
+                "priority": "1",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "5686",
+                  "email": "kate.greenway@ws.com",
+                  "name": "Kate Greenway"
+                },
+                "project": {
+                  "id": "8562",
+                  "name": "Owl brand launch",
+                  "page": "/project/8562/"
+                },
+                "text": "",
+                "date_added": "2021-01-07 11:41",
+                "date_start": "2021-01-10",
+                "date_end": "2021-01-15",
+                "subscribers": [
+                  {
+                    "id": "3993",
+                    "email": "henry.gardner@ws.com",
+                    "name": "Henry Gardner"
+                  },
+                  {
+                    "id": "5686",
+                    "email": "kate.greenway@ws.com",
+                    "name": "Kate Greenway"
+                  }
+                ],
+                "has_comments": 0,
+                "relations": {
+                  "to": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331894",
+                        "name": "Development",
+                        "page": "/project/8562/331894/",
+                        "status": "active",
+                        "priority": "7"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "331906",
+                "name": "Testing",
+                "page": "/project/8562/331906/",
+                "status": "active",
+                "priority": "1",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                },
+                "project": {
+                  "id": "8562",
+                  "name": "Owl brand launch",
+                  "page": "/project/8562/"
+                },
+                "text": "",
+                "date_added": "2021-01-07 12:00",
+                "date_start": "2021-02-17",
+                "date_end": "2021-02-24",
+                "subscribers": [
+                  {
+                    "id": "3993",
+                    "email": "henry.gardner@ws.com",
+                    "name": "Henry Gardner"
+                  },
+                  {
+                    "id": "5514",
+                    "email": "frank.harper@ws.com",
+                    "name": "Frank Harper"
+                  }
+                ],
+                "has_comments": 0,
+                "relations": {
+                  "from": [
+                    {
+                      "type": "finish-to-start",
+                      "task": {
+                        "id": "331894",
+                        "name": "Development",
+                        "page": "/project/8562/331894/",
+                        "status": "active",
+                        "priority": "7"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 4,
+            "message": "Project is invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_task",
+      "action": "get_task",
+      "method": "POST",
+      "description": "Returns selected incomplete or completed (sub)task\n\n_\\*except (sub)tasks with delayed publication  \n\\*task along with its subtasks can be returned with extra=subtasks parameter_",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "filter",
+          "type": "string",
+          "required": false,
+          "description": "Incomplete subtasks (if using extra=subtasks parameter), possible value: active \u0421ompleted subtasks filtering is not available",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Additional task info, possible values (can be specified with commas): text|files|comments|relations|subtasks|subscribers _text_ or _html_ - description in text or html format _files_ - attached files info (in task description) _comments_ - five last comments _relations_ - dependencies with other tasks _subtasks_ - list of subtasks (in 'child' dataset) _subscribers_ - subscribers list with user info",
+          "possible_values": [
+            "text",
+            "files",
+            "comments",
+            "relations",
+            "subtasks",
+            "subscribers"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "331894",
+              "name": "Development",
+              "page": "/project/8562/331894/",
+              "status": "active",
+              "priority": "7",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "project": {
+                "id": "8562",
+                "name": "Owl brand launch",
+                "page": "/project/8562/"
+              },
+              "text": "Business logic programming",
+              "date_added": "2021-01-07 10:01",
+              "date_start": "2021-01-16",
+              "date_end": "2021-02-16",
+              "time_start": "08:00",
+              "time_end": "18:00",
+              "max_time": 352,
+              "max_money": 5280,
+              "files": [
+                {
+                  "id": "17694",
+                  "page": "/download/17694/",
+                  "name": "Development requirements.doc",
+                  "size": "27136"
+                },
+                {
+                  "id": "17698",
+                  "page": "/download/17698/",
+                  "name": "Development progress.xlsx",
+                  "size": "10698"
+                }
+              ],
+              "has_comments": 1,
+              "comments": [
+                {
+                  "id": "19978",
+                  "page": "/project/8562/331894/#com19978",
+                  "text": "Thanks, first section done",
+                  "date_added": "2021-01-07 16:38",
+                  "user_from": {
+                    "id": "5514",
+                    "email": "frank.harper@ws.com",
+                    "name": "Frank Harper"
+                  }
+                },
+                {
+                  "id": "19974",
+                  "page": "/project/8562/331894/#com19974",
+                  "text": "As usual",
+                  "date_added": "2021-01-07 11:15",
+                  "user_from": {
+                    "id": "3993",
+                    "email": "henry.gardner@ws.com",
+                    "name": "Henry Gardner"
+                  }
+                },
+                {
+                  "id": "19962",
+                  "page": "/project/8562/331894/#com19962",
+                  "text": "And what about development\u00a0environment?",
+                  "date_added": "2021-01-07 11:10",
+                  "user_from": {
+                    "id": "5514",
+                    "email": "frank.harper@ws.com",
+                    "name": "Frank Harper"
+                  }
+                },
+                {
+                  "id": "19954",
+                  "page": "/project/8562/331894/#com19954",
+                  "text": "Need your help with first section",
+                  "date_added": "2021-01-07 11:04",
+                  "user_from": {
+                    "id": "5514",
+                    "email": "frank.harper@ws.com",
+                    "name": "Frank Harper"
+                  }
+                },
+                {
+                  "id": "19950",
+                  "page": "/project/8562/331894/#com19950",
+                  "text": "Updated development requirements",
+                  "date_added": "2021-01-07 10:33",
+                  "user_from": {
+                    "id": "3993",
+                    "email": "henry.gardner@ws.com",
+                    "name": "Henry Gardner"
+                  }
+                }
+              ],
+              "subscribers": [
+                {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                }
+              ],
+              "relations": {
+                "from": [
+                  {
+                    "type": "finish-to-start",
+                    "task": {
+                      "id": "331902",
+                      "name": "Prototyping",
+                      "page": "/project/8562/331902/",
+                      "status": "active",
+                      "priority": "1"
+                    }
+                  }
+                ],
+                "to": [
+                  {
+                    "type": "finish-to-start",
+                    "task": {
+                      "id": "331906",
+                      "name": "Testing",
+                      "page": "/project/8562/331906/",
+                      "status": "active",
+                      "priority": "1"
+                    }
+                  }
+                ]
+              },
+              "child": [
+                {
+                  "id": "331910",
+                  "name": "Sprint 1",
+                  "page": "/project/8562/331894/331910/",
+                  "status": "active",
+                  "priority": "1",
+                  "child": [
+                    {
+                      "id": "331914",
+                      "name": "Subsprint 1.1",
+                      "page": "/project/8562/331894/331914/",
+                      "status": "active",
+                      "priority": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 5,
+            "message": "Task is invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "post_task",
+      "action": "post_task",
+      "method": "POST",
+      "description": "Creates (sub)task in selected project\n\n_\\*allows files attaching to (sub)task description (see_ [<i>details</i>](https://worksection.com/en/faq/api-files.html#q1691)_)_",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Task name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "id_parent",
+          "type": "string",
+          "required": false,
+          "description": "Parent task ID for creating subtask",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_from",
+          "type": "string",
+          "required": false,
+          "description": "Task author email (will be set automatically if using access token)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_to",
+          "type": "string",
+          "required": false,
+          "description": "Task executive email, possible values: ANY|NOONE _ANY_ - for \"Anyone\" _NOONE_ - for \"Executive isn't assigned\"",
+          "possible_values": [
+            "ANY",
+            "NOONE"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "priority",
+          "type": "string",
+          "required": false,
+          "description": "Priority, possible values: 0..10",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": false,
+          "description": "Task description",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "todo[]",
+          "type": "string",
+          "required": false,
+          "description": "Checkbox item Will be added to task description Combine several items to get checklist, example: `todo[]=case1&todo[]=case2`",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "datestart",
+          "type": "string",
+          "required": false,
+          "description": "Start date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "dateend",
+          "type": "string",
+          "required": false,
+          "description": "Due date or end date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "subscribe",
+          "type": "string",
+          "required": false,
+          "description": "User emails separated by commas, who will be subscribed to the task",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "hidden",
+          "type": "string",
+          "required": false,
+          "description": "User emails separated by commas, who will have access to this task, while it will be hidden for others",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "mention",
+          "type": "string",
+          "required": false,
+          "description": "User emails separated by commas, who will be mentioned at the end of the task description",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_time",
+          "type": "string",
+          "required": false,
+          "description": "Time estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_money",
+          "type": "string",
+          "required": false,
+          "description": "Financial estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "tags",
+          "type": "string",
+          "required": false,
+          "description": "Comma separated list of existing task tags You can specify names (if they are unique) or their IDs (can be obtained through _get_task_tags_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "333118",
+              "name": "Template prototype",
+              "page": "/project/6622/332150/333118/",
+              "status": "active",
+              "priority": "2",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "5514",
+                "email": "frank.harper@ws.com",
+                "name": "Frank Harper"
+              },
+              "project": {
+                "id": "6622",
+                "name": "Performance improvement",
+                "page": "/project/6622/"
+              },
+              "parent": {
+                "id": "332150",
+                "name": "Template creation",
+                "page": "/project/6622/332150/",
+                "status": "active",
+                "priority": "10"
+              },
+              "text": "Take previous prototype as an example\r\n\u2022 draft\r\n\u2022 first version\r\n\u2022 final result",
+              "date_added": "2021-01-11 11:37",
+              "date_start": "2021-01-15",
+              "date_end": "2021-01-17",
+              "max_time": 15,
+              "max_money": 165
+            }
+          }
+        },
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "332150",
+              "name": "Template creation",
+              "page": "/project/6622/332150/",
+              "status": "active",
+              "priority": "1",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "1",
+                "email": "NOONE",
+                "name": "Executive isn't assigned"
+              },
+              "project": {
+                "id": "6622",
+                "name": "Performance improvement",
+                "page": "/project/6622/"
+              },
+              "date_added": "2021-01-10 15:17"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 8,
+            "message": "Task is closed"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_task",
+      "action": "update_task",
+      "method": "POST",
+      "description": "Updates selected incomplete or completed (sub)task parameters",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "email_user_to",
+          "type": "string",
+          "required": false,
+          "description": "Task executive email, possible values: ANY|NOONE _ANY_ - for \"Anyone\" _NOONE_ - for \"Executive isn't assigned\"",
+          "possible_values": [
+            "ANY",
+            "NOONE"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "priority",
+          "type": "string",
+          "required": false,
+          "description": "Priority, possible values: 0..10",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": "Task name",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "datestart",
+          "type": "string",
+          "required": false,
+          "description": "Start date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "dateend",
+          "type": "string",
+          "required": false,
+          "description": "Due date or end date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "dateclosed",
+          "type": "string",
+          "required": false,
+          "description": "Closing date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_time",
+          "type": "string",
+          "required": false,
+          "description": "Time estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "max_money",
+          "type": "string",
+          "required": false,
+          "description": "Financial estimates",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "332150",
+              "name": "Template creation",
+              "page": "/project/6622/332150/",
+              "status": "active",
+              "priority": "10",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "1",
+                "email": "NOONE",
+                "name": "Executive isn't assigned"
+              },
+              "project": {
+                "id": "6622",
+                "name": "Performance improvement",
+                "page": "/project/6622/"
+              },
+              "date_added": "2021-01-20 15:17"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 5,
+            "message": "Task is invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "complete_task",
+      "action": "complete_task",
+      "method": "POST",
+      "description": "Completes selected (sub)task",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "331430",
+              "name": "Team meetup",
+              "page": "/project/6622/331430/",
+              "status": "active",
+              "priority": "1",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "user_to": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              },
+              "project": {
+                "id": "6622",
+                "name": "Performance improvement",
+                "page": "/project/6622/"
+              },
+              "date_added": "2021-01-05 11:24"
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 12,
+            "message": "Task is already closed"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 13,
+            "message": "Task has children"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reopen_task",
+      "action": "reopen_task",
+      "method": "POST",
+      "description": "Reopens selected completed (sub)task",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 12,
+            "message": "Task is already active"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 14,
+            "message": "Parent task is done"
+          }
+        }
+      ]
+    },
+    {
+      "name": "search_tasks",
+      "action": "search_tasks",
+      "method": "POST",
+      "description": "Returns tasks that meet search query",
+      "category": "Tasks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Project ID At least one of parameters required: _id_project, id_task, email_user_from, email_user_to, filter_",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_from",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Task author email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_to",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Task executive email",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "filter",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Search query (see description below) Integer fields: id=TASK_ID - returns particular task project=PROJECT_ID - returns tasks of a particular project parent=TASK_ID - returns subtasks of a particular parent task Equality and range operators for integer fields: =, in Example: `project = 2456`, `id in (1234, 1240)` String fields: name - task name Full or partial match for string fields: =, has Example: `name = 'Task Report'`, `name has 'Report'` Date fields: dateadd - task creation date in 'DD.MM.YYYY' format datestart - task start date in 'DD.MM.YYYY' format dateend - task due date or end date in 'DD.MM.YYYY' format dateclose - task closing date in 'DD.MM.YYYY' format Relational operators for date fields: >, <, >=, <=, ! =, = Example: `dateadd = '01.05.2021'` Query conditions can be combined with parentheses () and logical operations and, or (only in lowercase) Example filter query: `&filter=(name has 'Report' or name has 'Approval') and (dateend>'25.05.2021' and dateend<'31.05.2021')`",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "required": false,
+          "description": "Task state, possible values: active|done _active_ - incomplete tasks _done_ - completed tasks",
+          "possible_values": [
+            "active",
+            "done"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Additional task info, possible values (can be specified with commas): text|files _text_ or _html_ - description in text or html format _files_ - attached files info (in task description)",
+          "possible_values": [
+            "text",
+            "files"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "330090",
+                "name": "Worksection implementation",
+                "page": "/project/6622/330090/",
+                "status": "active",
+                "priority": "1",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "2",
+                  "email": "ANY",
+                  "name": "Anyone"
+                },
+                "project": {
+                  "id": "6622",
+                  "name": "Performance improvement",
+                  "page": "/project/6622/"
+                },
+                "date_added": "2021-01-01 12:00"
+              },
+              {
+                "id": "331502",
+                "name": "Worksection docs",
+                "page": "/project/6622/331502/",
+                "status": "active",
+                "priority": "1",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "1",
+                  "email": "NOONE",
+                  "name": "Executive isn't assigned"
+                },
+                "project": {
+                  "id": "6622",
+                  "name": "Performance improvement",
+                  "page": "/project/6622/"
+                },
+                "date_added": "2021-01-01 13:04"
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "At least one of fields required",
+            "message_details": "filter, id_project, id_task, email_user_from, email_user_to"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_comments",
+      "action": "get_comments",
+      "method": "POST",
+      "description": "Returns comments of selected task",
+      "category": "Comments",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "extra",
+          "type": "string",
+          "required": false,
+          "description": "Attached files info, possible value: files",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "19086",
+                "page": "/project/6622/330090/#com19086",
+                "text": "Added one more file needed",
+                "date_added": "2021-01-02 11:21",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "files": [
+                  {
+                    "id": "17362",
+                    "size": "512596",
+                    "name": "Image file.png",
+                    "page": "/download/17362/"
+                  }
+                ]
+              },
+              {
+                "id": "19078",
+                "page": "/project/6622/330090/#com19078",
+                "text": "",
+                "date_added": "2021-01-01 10:00",
+                "user_from": {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                },
+                "files": [
+                  {
+                    "id": "17350",
+                    "size": "111303",
+                    "name": "Text file.docx",
+                    "page": "/download/17350/"
+                  },
+                  {
+                    "id": "17354",
+                    "size": "42669",
+                    "name": "Spreadsheet file.xlsx",
+                    "page": "/download/17354/"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 5,
+            "message": "Task is invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "post_comment",
+      "action": "post_comment",
+      "method": "POST",
+      "description": "Creates comment in selected task\n\n_\\*allows files attaching (see_ [<i>details</i>](https://worksection.com/en/faq/api-files.html#q1691)_)_",
+      "category": "Comments",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Comment text At least one of parameters required: _text, todo_",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "todo[]",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Checkbox item Combine several items to get checklist, example: `todo[]=case1&todo[]=case2`",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_from",
+          "type": "string",
+          "required": false,
+          "description": "Comment author email (will be set automatically if using access token)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "hidden",
+          "type": "string",
+          "required": false,
+          "description": "User emails separated by commas, who will have access to this comment, while it will be hidden for others",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "mention",
+          "type": "string",
+          "required": false,
+          "description": "User emails separated by commas, who will be mentioned at the end of the comment",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "id": "20478",
+              "page": "/project/6622/330090/#com20478",
+              "text": "Need info on the topic about your department\r\n\u2022 survey results\r\n\u2022 questions and suggestions\r\n\u2022 gamification and motivation Frank Harper",
+              "date_added": "2021-01-03 09:17",
+              "user_from": {
+                "id": "3993",
+                "email": "henry.gardner@ws.com",
+                "name": "Henry Gardner"
+              }
+            }
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 5,
+            "message": "Task is invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_task_tags",
+      "action": "get_task_tags",
+      "method": "POST",
+      "description": "Returns task tags of all or selected group",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "group",
+          "type": "string",
+          "required": false,
+          "description": "Group (tags of a particular group) You can specify the name of the group or its ID (can be obtained through the same method from the returned group parameter or through _get_task_tag_groups_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "Group type (tags of a particular group type), possible values: status|label",
+          "possible_values": [
+            "status",
+            "label"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "access",
+          "type": "string",
+          "required": false,
+          "description": "Tags with a particular visibility, possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams",
+          "possible_values": [
+            "public",
+            "private"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "To-do",
+                "id": 72565,
+                "group": {
+                  "title": "Basic workflow",
+                  "id": 100,
+                  "id_group": "1",
+                  "type": "status",
+                  "access": "public"
+                }
+              },
+              {
+                "title": "In progress",
+                "id": 72569,
+                "group": {
+                  "title": "Basic workflow",
+                  "id": 100,
+                  "id_group": "1",
+                  "type": "status",
+                  "access": "public"
+                }
+              },
+              {
+                "title": "Need approval",
+                "id": 72573,
+                "group": {
+                  "title": "Basic workflow",
+                  "id": 100,
+                  "id_group": "1",
+                  "type": "status",
+                  "access": "public"
+                }
+              },
+              {
+                "title": "Done",
+                "id": 72577,
+                "group": {
+                  "title": "Basic workflow",
+                  "id": 100,
+                  "id_group": "1",
+                  "type": "status",
+                  "access": "public"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_task_tags",
+      "action": "add_task_tags",
+      "method": "POST",
+      "description": "Creates task tags in selected group\n\n_\\*if there are no tags with the same name_",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "group",
+          "type": "string",
+          "required": true,
+          "description": "Group, where task tags will be created You can specify the name of the group or its ID (can be obtained through _get_task_tag_groups_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Task tag names separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "bug",
+                "id": 104978
+              },
+              {
+                "title": "feature",
+                "id": 104982
+              },
+              {
+                "title": "design",
+                "id": 104986
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "group (id or title)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_task_tags",
+      "action": "update_task_tags",
+      "method": "POST",
+      "description": "Sets new and removes previously set tags for selected task",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "plus",
+          "type": "string",
+          "required": false,
+          "description": "Task tags separated by commas, which will be added You can specify their names or IDs (can be obtained through _get_task_tags_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "minus",
+          "type": "string",
+          "required": false,
+          "description": "Task tags separated by commas, which will be removed",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 16,
+            "message": "Tag is invalid",
+            "message_details": "docs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_task_tag_groups",
+      "action": "get_task_tag_groups",
+      "method": "POST",
+      "description": "Returns task tag groups",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "Tags of a particular group type, possible values: status|label",
+          "possible_values": [
+            "status",
+            "label"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "access",
+          "type": "string",
+          "required": false,
+          "description": "Tags with a particular visibility, possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams",
+          "possible_values": [
+            "public",
+            "private"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "Basic workflow",
+                "id": 100,
+                "type": "status",
+                "access": "public"
+              },
+              {
+                "title": "Sales",
+                "id": 104,
+                "type": "status",
+                "access": "public"
+              },
+              {
+                "title": "Finance",
+                "id": 105,
+                "type": "label",
+                "access": "public"
+              },
+              {
+                "title": "General labels",
+                "id": 101,
+                "type": "label",
+                "access": "public"
+              },
+              {
+                "title": "Time tracking types",
+                "id": 106,
+                "type": "label",
+                "access": "public"
+              },
+              {
+                "title": "Task results",
+                "id": 102,
+                "type": "label",
+                "access": "private"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_task_tag_groups",
+      "action": "add_task_tag_groups",
+      "method": "POST",
+      "description": "Creates task tag groups\n\n_\\*if there are no tag groups with same name_",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "type",
+          "type": "string",
+          "required": true,
+          "description": "Group type, possible values: status|label",
+          "possible_values": [
+            "status",
+            "label"
+          ],
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "access",
+          "type": "string",
+          "required": true,
+          "description": "Tag group visibility (statuses are always visible and have public value), possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams",
+          "possible_values": [
+            "public",
+            "private"
+          ],
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Group names separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "Development",
+                "id": 110,
+                "type": "label",
+                "access": "public"
+              },
+              {
+                "title": "Marketing",
+                "id": 111,
+                "type": "label",
+                "access": "public"
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "title"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_project_tags",
+      "action": "get_project_tags",
+      "method": "POST",
+      "description": "Returns project tags of all or selected group",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "group",
+          "type": "string",
+          "required": false,
+          "description": "Group (tags of a particular group) You can specify the name of the group or its ID (can be obtained through the same method from the returned group parameter or through _get_task_tag_groups_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "Group type (tags of a particular group type), possible values: status|label",
+          "possible_values": [
+            "status",
+            "label"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "access",
+          "type": "string",
+          "required": false,
+          "description": "Tags with a particular visibility, possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams",
+          "possible_values": [
+            "public",
+            "private"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "Backlog",
+                "id": 105114,
+                "group": {
+                  "title": "Project status",
+                  "id": 97,
+                  "id_group": "-4",
+                  "type": "status",
+                  "access": "public"
+                }
+              },
+              {
+                "title": "In progress",
+                "id": 105098,
+                "group": {
+                  "title": "Project status",
+                  "id": 97,
+                  "id_group": "-4",
+                  "type": "status",
+                  "access": "public"
+                }
+              },
+              {
+                "title": "Paused",
+                "id": 105106,
+                "group": {
+                  "title": "Project status",
+                  "id": 97,
+                  "id_group": "-4",
+                  "type": "status",
+                  "access": "public"
+                }
+              },
+              {
+                "title": "Canceled",
+                "id": 105110,
+                "group": {
+                  "title": "Project status",
+                  "id": 97,
+                  "id_group": "-4",
+                  "type": "status",
+                  "access": "public"
+                }
+              },
+              {
+                "title": "Completed",
+                "id": 105102,
+                "group": {
+                  "title": "Project status",
+                  "id": 97,
+                  "id_group": "-4",
+                  "type": "status",
+                  "access": "public"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_project_tags",
+      "action": "add_project_tags",
+      "method": "POST",
+      "description": "Creates project tags in selected group\n\n_\\*if there are no tags with the same name_",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "group",
+          "type": "string",
+          "required": true,
+          "description": "Group, where project tags will be created You can specify the name of the group or its ID (can be obtained through _get_project_tag_groups_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Project tag names separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "paid",
+                "id": 105118
+              },
+              {
+                "title": "bill",
+                "id": 105122
+              },
+              {
+                "title": "contract",
+                "id": 105126
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "group (id or title)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_project_tags",
+      "action": "update_project_tags",
+      "method": "POST",
+      "description": "Sets new and removes previously set tags for selected project",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "plus",
+          "type": "string",
+          "required": false,
+          "description": "Project tags separated by commas, which will be added You can specify their names or IDs (can be obtained through _get_project_tags_ method)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "minus",
+          "type": "string",
+          "required": false,
+          "description": "Project tags separated by commas, which will be removed",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 16,
+            "message": "Tag is invalid",
+            "message_details": "declined"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_project_tag_groups",
+      "action": "get_project_tag_groups",
+      "method": "POST",
+      "description": "Returns project tag groups",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "Tags of a particular group type, possible values: status|label",
+          "possible_values": [
+            "status",
+            "label"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "access",
+          "type": "string",
+          "required": false,
+          "description": "Tags with a particular visibility, possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams",
+          "possible_values": [
+            "public",
+            "private"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "Project status",
+                "id": 97,
+                "type": "status",
+                "access": "public"
+              },
+              {
+                "title": "Common labels",
+                "id": 98,
+                "type": "label",
+                "access": "public"
+              },
+              {
+                "title": "Internal labels",
+                "id": 99,
+                "type": "label",
+                "access": "private"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_project_tag_groups",
+      "action": "add_project_tag_groups",
+      "method": "POST",
+      "description": "Creates project tag groups\n\n_\\*if there are no tags with the same name_",
+      "category": "Tags",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Group names separated by commas",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "access",
+          "type": "string",
+          "required": true,
+          "description": "Tag group visibility, possible values: public|private _public_ - available to all teams (including external client teams) _private_ - available only for your company teams",
+          "possible_values": [
+            "public",
+            "private"
+          ],
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "title": "Budget level",
+                "id": 113,
+                "type": "",
+                "access": "public"
+              },
+              {
+                "title": "Devs number",
+                "id": 114,
+                "type": "",
+                "access": "public"
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "title"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_costs",
+      "action": "get_costs",
+      "method": "POST",
+      "description": "Returns individual costs added for selected or all tasks",
+      "category": "Costs",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": false,
+          "description": "Project ID (costs of all tasks of a particular project)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": false,
+          "description": "Task ID (costs of a particular task)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "datestart",
+          "type": "string",
+          "required": false,
+          "description": "Start searching date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "dateend",
+          "type": "string",
+          "required": false,
+          "description": "End searching date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "is_timer",
+          "type": "string",
+          "required": false,
+          "description": "Time costs of particular type, possible values: 1|0 _1_ - received from the timer _0_ - entered manually",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "filter",
+          "type": "string",
+          "required": false,
+          "description": "Additional searching parameters (see description below) Integer fields: id=TASK_ID - returns costs of a particular task project=PROJECT_ID - returns costs on tasks of a particular project Equality and range operators for integer fields: =, in Example: `project = 2456`, `id in (1234, 1240)` String fields: comment - user comment to a separate cost line (String) Full or partial match for string fields: =, has Example: `comment = 'Monthly report'`, `comment has 'report'` Date fields: dateadd - date, when the costs were added in the 'DD.MM. YYYY' format Relational operators for date fields: >, <, >=, <=, ! =, = Example: `dateadd = '01.05.2021'` Query conditions can be combined with parentheses () and logical operations and, or (only in lowercase) Example filter query: `&filter=(comment has 'report' or comment has 'review') and (dateadd<'25.05.2021' and dateadd>'31.05.2021')`",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "raw": "{\n    \"status\": \"ok\",\n    \"data\": [\n        {\n            \"id\": \"3610\",\n            \"comment\": \"Developed new workflow scheme for dev team\",\n            \"time\": \"6:50\",\n            \"money\": \"75.17\",\n            \"date\": \"2021-01-01\",\n            \"is_timer\": true,\n            \"user_from\": {\n                \"id\": \"5514\",\n                \"email\": \"frank.harper@ws.com\",\n                \"name\": \"Frank Harper\"\n            },\n            \"task\": {\n                \"id\": \"330142\",\n                \"name\": \"Workflow revision\",\n                \"page\": \"/project/6622/330142/\",\n                \"status\": \"done\",\n                \"priority\": \"1\",\n                \"user_from\": {\n                    \"id\": \"3993\",\n                    \"email\": \"henry.gardner@ws.com\",\n                    \"name\": \"Henry Gardner\"\n                },\n                \"user_to\": {\n                    \"id\": \"5514\",\n                    \"email\": \"frank.harper@ws.com\",\n                    \"name\": \"Frank Harper\"\n                },\n                \"project\": {\n                    \"id\": \"6622\",\n                    \"name\": \"Performance improvement\",\n                    \"page\": \"/project/6622/\"\n                },\n                \"date_added\": \"2021-01-01 11:00\",\n                \"date_closed\": \"2021-01-02 12:43\"\n            }\n        },\n        {\n            \"id\": \"3686\",\n            \"comment\": \"\",\n            \"time\": \"3:22\",\n            \"money\": \"0.00\",\n            \"date\": \"2021-01-03\",\n            \"is_timer\": false,\n            \"user_from\": {\n                \"id\": \"3993\",\n                \"email\": \"henry.gardner@ws.com\",\n                \"name\": \"Henry Gardner\"\n            },\n            \"task\": {\n                \"id\": \"330090\",\n                \"name\": \"Worksection implementation\",\n                \"page\": \"/project/6622/330090/\",\n                \"status\": \"active\",\n                \"priority\": \"1\",\n                \"user_from\": {\n                    \"id\": \"3993\",\n                    \"email\": \"henry.gardner@ws.com\",\n                    \"name\": \"Henry Gardner\"\n                },\n                \"user_to\": {\n                    \"id\": \"2\",\n                    \"email\": \"ANY\",\n                    \"name\": \"Anyone\"\n                },\n                \"project\": {\n                    \"id\": \"6622\",\n                    \"name\": \"Performance improvement\",\n                    \"page\": \"/project/6622/\"\n                },\n                \"date_added\": \"2021-01-01 12:00\"\n            }\n        },\n\n    ],\n    \"total\": {\n        \"time\": \"10:12\",\n        \"money\": \"75.17\"\n    }\n}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_costs_total",
+      "action": "get_costs_total",
+      "method": "POST",
+      "description": "Returns total costs added for selected or all tasks",
+      "category": "Costs",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": false,
+          "description": "Project ID (costs of all tasks of a certain project)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": false,
+          "description": "Task ID (costs of a certain task)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "datestart",
+          "type": "string",
+          "required": false,
+          "description": "Start searching date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "dateend",
+          "type": "string",
+          "required": false,
+          "description": "End searching date in DD.MM.YYYY format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "is_timer",
+          "type": "string",
+          "required": false,
+          "description": "Time costs of particular type, possible values: 1|0 _1_ - received from the timer _0_ - entered manually",
+          "possible_values": [
+            "1",
+            "0"
+          ],
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "total": {
+              "time": "103:39",
+              "money": "5436.00"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_costs",
+      "action": "add_costs",
+      "method": "POST",
+      "description": "Creates individual costs for selected task",
+      "category": "Costs",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "time",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Time costs in one of the following formats: 0.15 / 0,15 / 0:09 At least one of parameters required: _time, money_",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "money",
+          "type": "string",
+          "required": false,
+          "description": "(Conditional) Financial costs in account currency (if it needs to be specified without reference to an hourly rate)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "is_rate",
+          "type": "string",
+          "required": false,
+          "description": "Financial costs are calculated on an hourly rate (money parameter is ignored), possible value: 1",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "email_user_from",
+          "type": "string",
+          "required": false,
+          "description": "Cost author email (required if using admin token; will be set automatically if using access token)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "comment",
+          "type": "string",
+          "required": false,
+          "description": "Cost log comment",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "date",
+          "type": "string",
+          "required": false,
+          "description": "Cost log date in 'DD.MM.YYYY' format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "id": 3706
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "Field is required",
+            "message_details": "time or money"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_costs",
+      "action": "update_costs",
+      "method": "POST",
+      "description": "Updates selected individual costs of task",
+      "category": "Costs",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_costs",
+          "type": "string",
+          "required": true,
+          "description": "Cost ID Can be obtained through _get_costs_ method",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "time",
+          "type": "string",
+          "required": false,
+          "description": "Time costs in one of the following formats: 0.15 / 0,15 / 0:09",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "money",
+          "type": "string",
+          "required": false,
+          "description": "Financial costs in account currency (if it needs to be specified without reference to an hourly rate)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "is_rate",
+          "type": "string",
+          "required": false,
+          "description": "Financial costs are calculated on an hourly rate, if new time value is specified (money parameter is ignored), possible value: 1",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "comment",
+          "type": "string",
+          "required": false,
+          "description": "Cost log comment",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "date",
+          "type": "string",
+          "required": false,
+          "description": "Cost log date in 'DD.MM.YYYY' format",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delete_costs",
+      "action": "delete_costs",
+      "method": "POST",
+      "description": "Deletes selected individual costs of task",
+      "category": "Costs",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_costs",
+          "type": "string",
+          "required": true,
+          "description": "Cost ID Can be obtained through _get_costs_ method",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_timers",
+      "action": "get_timers",
+      "method": "POST",
+      "description": "Returns running timers info\n\n_\\*their ID, start time, timer value and who started them_",
+      "category": "Timers",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "2918",
+                "time": "00:11:13",
+                "date_started": "2021-01-01 13:23",
+                "user_from": {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                },
+                "task": {
+                  "id": "330142",
+                  "name": "Workflow revision",
+                  "page": "/project/6622/330142/",
+                  "status": "active",
+                  "priority": "1",
+                  "user_from": {
+                    "id": "3993",
+                    "email": "henry.gardner@ws.com",
+                    "name": "Henry Gardner"
+                  },
+                  "user_to": {
+                    "id": "5514",
+                    "email": "frank.harper@ws.com",
+                    "name": "Frank Harper"
+                  },
+                  "project": {
+                    "id": "6622",
+                    "name": "Performance improvement",
+                    "page": "/project/6622/"
+                  },
+                  "date_added": "2021-01-01 09:11"
+                }
+              },
+              {
+                "id": "2914",
+                "time": "01:12:45",
+                "date_started": "2021-01-01 12:00",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "task": {
+                  "id": "330090",
+                  "name": "Worksection implementation",
+                  "page": "/project/6622/330090/",
+                  "status": "active",
+                  "priority": "1",
+                  "user_from": {
+                    "id": "3993",
+                    "email": "dimitriy.worksection@gmail.com",
+                    "name": "Henry Gardner"
+                  },
+                  "user_to": {
+                    "id": "2",
+                    "email": "ANY",
+                    "name": "Anyone"
+                  },
+                  "project": {
+                    "id": "6622",
+                    "name": "Performance improvement",
+                    "page": "/project/6622/"
+                  },
+                  "date_added": "2021-01-01 11:00"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "stop_timer",
+      "action": "stop_timer",
+      "method": "POST",
+      "description": "Stops and saves selected running timer",
+      "category": "Timers",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "timer",
+          "type": "string",
+          "required": true,
+          "description": "Timer ID Can be obtained through _get_timers_ method",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 7,
+            "message": "Timer not found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_my_timer",
+      "action": "get_my_timer",
+      "method": "POST",
+      "description": "Returns authorized user's (oauth2) active timer\n\n**!! User method (available only for access token) !!**",
+      "category": "Timers",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": {
+              "time": 4360,
+              "date_started": "2021-01-01 12:00",
+              "task": {
+                "id": "330090",
+                "name": "Worksection implementation",
+                "page": "/project/6622/330090/",
+                "status": "active",
+                "priority": "8",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                },
+                "user_to": {
+                  "id": "2",
+                  "email": "ANY",
+                  "name": "Anyone"
+                },
+                "project": {
+                  "id": "6622",
+                  "name": "Performance improvement",
+                  "page": "/project/6622/"
+                },
+                "date_added": "2021-01-01 11:00"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "start_my_timer",
+      "action": "start_my_timer",
+      "method": "POST",
+      "description": "Starts authorized user's (oauth2) timer in selected task\n\n**!! User method (available only for access token) !!**",
+      "category": "Timers",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": true,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 6,
+            "message": "Timer is already started"
+          }
+        }
+      ]
+    },
+    {
+      "name": "stop_my_timer",
+      "action": "stop_my_timer",
+      "method": "POST",
+      "description": "Stops and saves authorized user's (oauth2) active timer\n\n**!! User method (only for access token) !!**",
+      "category": "Timers",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "comment",
+          "type": "string",
+          "required": false,
+          "description": "Timer log comment",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 7,
+            "message": "Timer is not started"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_files",
+      "action": "get_files",
+      "method": "POST",
+      "description": "Returns files list of selected project or task\n\n_\\*project files include attached to project description and directly to Files section  \n\\*task files include attached to task description and comments_",
+      "category": "Files",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_project",
+          "type": "string",
+          "required": true,
+          "description": "Project ID Optional if Task ID selected",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "id_task",
+          "type": "string",
+          "required": false,
+          "description": "Task ID",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "16246",
+                "page": "/download/16246/102/",
+                "name": "Text file.docx",
+                "size": "111303",
+                "date_added": "2021-01-01 10:00",
+                "user_from": {
+                  "id": "3993",
+                  "email": "henry.gardner@ws.com",
+                  "name": "Henry Gardner"
+                }
+              },
+              {
+                "id": "16242",
+                "page": "/download/16242/",
+                "name": "Image file.jpeg",
+                "size": "73444",
+                "date_added": "2022-01-01 10:00",
+                "user_from": {
+                  "id": "5514",
+                  "email": "frank.harper@ws.com",
+                  "name": "Frank Harper"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 4,
+            "message": "Project is invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "download",
+      "action": "download",
+      "method": "POST",
+      "description": "Downloads selected file\n\n_\\*attached to project description, task description, comment or directly to Files section_",
+      "category": "Files",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id_file",
+          "type": "string",
+          "required": true,
+          "description": "File ID Can be obtained through _get_files_ method",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "raw": "Txt file\r\n\r\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse vulputate facilisis pellentesque. Fusce massa magna, tempus id sapien id, maximus dictum neque. Etiam imperdiet felis vitae diam placerat, at feugiat risus pulvinar. Quisque in mi pretium metus tincidunt feugiat a sit amet nibh. Nullam porta quis massa sit amet gravida. Integer ullamcorper, nisl quis dapibus dapibus, mauris orci imperdiet tellus, ac porttitor metus eros scelerisque elit. Pellentesque nec imperdiet lectus.\r\n\r\nSed laoreet sagittis massa, vitae consectetur felis placerat in. Donec elementum tortor et suscipit rhoncus. Nulla facilisi. In pulvinar tincidunt massa, eu mollis ligula. Phasellus eu rhoncus est, id maximus lectus. Aenean finibus ac felis sed eleifend. Nullam quis vestibulum justo, eu ullamcorper justo.\r\n\r\nQuisque a tempus magna, et commodo sapien. Sed sit amet accumsan diam. Etiam blandit velit vel ipsum imperdiet maximus. Integer rhoncus purus pellentesque risus vulputate, in consequat nulla consectetur. Nulla vitae sodales risus. Sed sagittis, urna ut pretium egestas, libero nulla feugiat ex, quis consectetur quam purus id nulla. Nam tincidunt tincidunt finibus. Vestibulum ut pellentesque nisl, maximus gravida eros. Duis vel porta felis, vitae feugiat dolor. Fusce ut pulvinar metus. In hac habitasse platea dictumst. Donec vitae nulla sit amet ante mollis sagittis fringilla non libero. Morbi cursus dapibus velit sit amet malesuada. Aliquam fringilla nisl ut diam iaculis pellentesque cursus ac sapien."
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 4,
+            "message": "File not found"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get_webhooks",
+      "action": "get_webhooks",
+      "method": "POST",
+      "description": "Returns webhooks list",
+      "category": "Webhooks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "data": [
+              {
+                "id": "122",
+                "url": "https://eoaerhysr9s04hw.m.pipedream.net",
+                "events": "post_task,post_comment,post_project",
+                "status": "active",
+                "projects": "5"
+              },
+              {
+                "id": "123",
+                "url": "https://eogt7ju5yih2iks.m.pipedream.net",
+                "events": "update_task,update_comment,delete_task,delete_comment,close_task",
+                "status": "paused"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_webhook",
+      "action": "add_webhook",
+      "method": "POST",
+      "description": "Creates webhook",
+      "category": "Webhooks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "url",
+          "type": "string",
+          "required": true,
+          "description": "Webhook URL",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "events",
+          "type": "string",
+          "required": true,
+          "description": "Events separated by commas, possible values: post_task|post_comment|post_project|update_task|update_comment|update_project|delete_task|delete_comment|close_task Selected events will send notifications to Webhook URL",
+          "possible_values": [
+            "post_task",
+            "post_comment",
+            "post_project",
+            "update_task",
+            "update_comment",
+            "update_project",
+            "delete_task",
+            "delete_comment",
+            "close_task"
+          ],
+          "notes": null,
+          "disabled": false
+        },
+        {
+          "name": "projects",
+          "type": "string",
+          "required": false,
+          "description": "Project IDs separated by commas If you want to limit the sending of events only for particular projects",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "http_user",
+          "type": "string",
+          "required": false,
+          "description": "Username (if using basic access authentication)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        },
+        {
+          "name": "http_pass",
+          "type": "string",
+          "required": false,
+          "description": "Password (if using basic access authentication)",
+          "possible_values": null,
+          "notes": null,
+          "disabled": true
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok",
+            "id": 130
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 11,
+            "message": "Url should respond 200 HTTP_CODE and JSON {status:OK}",
+            "message_details": "https://google.com"
+          }
+        }
+      ]
+    },
+    {
+      "name": "delete_webhook",
+      "action": "delete_webhook",
+      "method": "POST",
+      "description": "Deletes selected webhook",
+      "category": "Webhooks",
+      "authentication": {
+        "type": "bearer",
+        "note": "Requires admin token or OAuth2 access token"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "description": "Webhook ID Can be obtained through _get_webhooks_ method",
+          "possible_values": null,
+          "notes": null,
+          "disabled": false
+        }
+      ],
+      "responses": [
+        {
+          "name": "success",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "ok"
+          }
+        },
+        {
+          "name": "error",
+          "status": "OK",
+          "code": 200,
+          "schema": {
+            "status": "error",
+            "status_code": 10,
+            "message": "WebHook not found"
+          }
+        }
+      ]
+    }
+  ],
+  "categories": [
+    "Files",
+    "Webhooks",
+    "Comments",
+    "Timers",
+    "Members",
+    "Tags",
+    "Projects",
+    "Tasks",
+    "Costs"
+  ]
+}

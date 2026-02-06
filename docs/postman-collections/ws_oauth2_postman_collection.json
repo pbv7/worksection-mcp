@@ -1,0 +1,892 @@
+{
+	"info": {
+		"_postman_id": "bd9dfab3-8e33-42b0-859a-51364b50fcdc",
+		"name": "Worksection OAuth2 methods",
+		"description": "To use OAuth2 methods:\n\n1. create Worksection API app (see [details](https://worksection.com/en/faq/oauth.html#q1812))\n2. save its '_Client ID_', '_Client Secret_' and '_Redirect URL_' into Postman '_client_id'_, '_client_secret_' and '_redirect_url_' collection variables  \n    path: `'Worksection OAuth2 methods' collection folder -> 'Variables' tab -> 'Current value' column`\n    \n3. save collection\n    \n4. you are ready to go\n    \n\n[OAuth2 docs](https://worksection.com/en/faq/oauth.html)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12328152"
+	},
+	"item": [
+		{
+			"name": "oauth2_authorize",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{oauth2_url}}/oauth2/authorize?client_id={{client_id}}&redirect_uri={{redirect_url}}&state={{$randomBankAccount}}&scope=&response_type=code",
+					"host": [
+						"{{oauth2_url}}"
+					],
+					"path": [
+						"oauth2",
+						"authorize"
+					],
+					"query": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "{{redirect_url}}",
+							"description": "(Required) Redirect URI\n\nMust meet the requirements of the OAuth2 standard and use the HTTPS protocol"
+						},
+						{
+							"key": "state",
+							"value": "{{$randomBankAccount}}",
+							"description": "(Required) Random text string\n\nWill be included in the response to your application at the end of the OAuth stream\nThe main purpose is to prevent CSRF requests from being spoofed"
+						},
+						{
+							"key": "scope",
+							"value": "",
+							"description": "(Required) OAuth permissions, available values (can be specified with commas): **projects_read|projects_write| tasks_read|tasks_write|costs_read|costs_write|tags_read|tags_write|comments_read|comments_write|files_read| files_write|users_read|users_write|contacts_read|contacts_write|administrative**\n\nDefines which data in the Worksection your application will have access to"
+						},
+						{
+							"key": "response_type",
+							"value": "code",
+							"description": "(Required) Response type, possible value: **code**\n\n_code_ - returns the authorization code"
+						}
+					]
+				},
+				"description": "###### Allows to get authorization code needed for token creation\n\n_\\*after login to your Worksection account and approval page confirmation, you will be forwarded to specified Redirect URI with authorization code parameter (code is valid for 10 minutes)_"
+			},
+			"response": []
+		},
+		{
+			"name": "oauth2_token",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var access_token = pm.response.json().access_token;\r",
+							"var refresh_token = pm.response.json().refresh_token;\r",
+							"\r",
+							"if (access_token.length) {\r",
+							"    pm.collectionVariables.set(\"access_token\", access_token);\r",
+							"    pm.collectionVariables.set(\"refresh_token\", refresh_token);\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{oauth2_url}}/oauth2/token?client_id={{client_id}}&client_secret={{client_secret}}&redirect_uri={{redirect_url}}&grant_type=authorization_code&code=",
+					"host": [
+						"{{oauth2_url}}"
+					],
+					"path": [
+						"oauth2",
+						"token"
+					],
+					"query": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "{{redirect_url}}",
+							"description": "(Required) Redirect URI\n\nMust meet the requirements of the OAuth2 standard and use the HTTPS protocol"
+						},
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"description": "(Required) OAuth grant type, possible value: **authorization_code**"
+						},
+						{
+							"key": "code",
+							"value": "",
+							"description": "(Required) Authorization code\n\nCan be obrained through _oauth2_authorize_ method"
+						}
+					]
+				},
+				"description": "###### Returns access and refresh tokens\n\n_\\*access_token is valid for 24 hours, refresh_token – 1 month_"
+			},
+			"response": [
+				{
+					"name": "success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{oauth2_url}}/oauth2/token?client_id={{client_id}}&client_secret={{client_secret}}&redirect_uri={{account_url}}&grant_type=authorization_code&code=def502006ff8aa0723cf5a16eed0018b9f93074e4316bcd06937ce099d3311a84ec2f3f194c9a8c426cf0789a50d594b00181e1e324dd081412a88253ae74dd01c63efa75b99a7fe08c497075634108cf9bc9061b4d04ff2b74f05208880102f4c9cc896545ee6730ca4b01ca5e4f784da7003c98a044bc176c0260eb1c7a9bb30da22bba50b051b79636af4a9a9ba2831f1773f298b71d0645cf7fbcffe6d37d4f4708d76a5eeda9c6363f03d089d44357e86e7dfdbae956d51364f2e018c79ba10f4ab29bad6dc36b701dd76257ccedafddcdb28be61bce4bd90b1c63f0509beb69167974c87be41cf6326cd8869a3422c2eafe157b7bd8dfdf0fca645fd1b22a8a8dbb399126c76642055385e4893921aaf377e7ac872b1b0385dc6becd489dc579d1b35560be952f23e0b4af7ae3841842deb68261e706cd88bd0cceff68c7938fa4a383adc6920ba1dd89c64bef20f0b3ed5b9f15e9d936d031d117090ae1754a89c2650d63c5b672677720aa824e31405324ff71f307b5e60f4e60bbb783bf76a5f412b9803fbb7c74aa9d57fcb135a18e42462425f160c42309d1f220bfe8de1ff1f7cd6cef6a49875c5e3bc66c521a1a4e9858dd5d015f037f282d529fd6cbb05fedf5a9a610b06282c12dc54506558179dac94b8ac14e1a72baefcdf4bc280d5407dd564f919ddb27d09a20a814f825ebe9f8447caa96922d417c2197c883182a3160af422ee267c0ee0e1a0a4b3faffbcf980671b34af76b825a505221754c79d6c464087e5ef2b4ad9f8d0f2d1a1793a187fa4737b047a97139c5bd9bc097815122119f8b4d89355a6a17db4085f08003252389e182ab93131a4cb1585ed5ca7fac37df953cd92c5ee18705a3b8d10e63b49b6816cde0a16907de2c10b8d6f1",
+							"host": [
+								"{{oauth2_url}}"
+							],
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client_secret}}",
+									"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{account_url}}",
+									"description": "(Required) Redirect URI\n\nMust meet the requirements of the OAuth2 standard and use the HTTPS protocol"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"description": "(Required) OAuth grant type, possible value: **authorization_code**"
+								},
+								{
+									"key": "code",
+									"value": "def502006ff8aa0723cf5a16eed0018b9f93074e4316bcd06937ce099d3311a84ec2f3f194c9a8c426cf0789a50d594b00181e1e324dd081412a88253ae74dd01c63efa75b99a7fe08c497075634108cf9bc9061b4d04ff2b74f05208880102f4c9cc896545ee6730ca4b01ca5e4f784da7003c98a044bc176c0260eb1c7a9bb30da22bba50b051b79636af4a9a9ba2831f1773f298b71d0645cf7fbcffe6d37d4f4708d76a5eeda9c6363f03d089d44357e86e7dfdbae956d51364f2e018c79ba10f4ab29bad6dc36b701dd76257ccedafddcdb28be61bce4bd90b1c63f0509beb69167974c87be41cf6326cd8869a3422c2eafe157b7bd8dfdf0fca645fd1b22a8a8dbb399126c76642055385e4893921aaf377e7ac872b1b0385dc6becd489dc579d1b35560be952f23e0b4af7ae3841842deb68261e706cd88bd0cceff68c7938fa4a383adc6920ba1dd89c64bef20f0b3ed5b9f15e9d936d031d117090ae1754a89c2650d63c5b672677720aa824e31405324ff71f307b5e60f4e60bbb783bf76a5f412b9803fbb7c74aa9d57fcb135a18e42462425f160c42309d1f220bfe8de1ff1f7cd6cef6a49875c5e3bc66c521a1a4e9858dd5d015f037f282d529fd6cbb05fedf5a9a610b06282c12dc54506558179dac94b8ac14e1a72baefcdf4bc280d5407dd564f919ddb27d09a20a814f825ebe9f8447caa96922d417c2197c883182a3160af422ee267c0ee0e1a0a4b3faffbcf980671b34af76b825a505221754c79d6c464087e5ef2b4ad9f8d0f2d1a1793a187fa4737b047a97139c5bd9bc097815122119f8b4d89355a6a17db4085f08003252389e182ab93131a4cb1585ed5ca7fac37df953cd92c5ee18705a3b8d10e63b49b6816cde0a16907de2c10b8d6f1",
+									"description": "(Required) Authorization code\n\nCan be obrained through _oauth2_authorize_ method"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx/1.18.0 (Ubuntu)"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2023 14:43:22 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Expires",
+							"value": "Thu, 19 Nov 1981 08:52:00 GMT"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-store, no-cache, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"token_type\": \"Bearer\",\n    \"expires_in\": 86400,\n    \"access_token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIwYTlkYTZhOTE4YWZhNGVkZjAwYWRkYjBkNDFjNTEyMCIsImp0aSI6ImJmOGVhZDNhYTMwMWUyNTYwZDI1ODA1MmY5MWY5MjRkNGIxMDJjYWE3MTYzYjBhOTIzN2NkODczMjBiN2NjNjFhZDdiNDA0YjNhMjljNTY4IiwiaWF0IjoxNjk5NjI3NDAyLCJuYmYiOjE2OTk2Mjc0MDIsImV4cCI6MTY5OTcxMzgwMiwic3ViIjoiMjQ3NyIsInNjb3BlcyI6WyJwcm9qZWN0c19yZWFkIiwicHJvamVjdHNfd3JpdGUiLCJ0YXNrc19yZWFkIiwidGFza3Nfd3JpdGUiLCJjb3N0c19yZWFkIiwiY29zdHNfd3JpdGUiLCJ0YWdzX3JlYWQiLCJ0YWdzX3dyaXRlIiwiY29tbWVudHNfcmVhZCIsImNvbW1lbnRzX3dyaXRlIiwiZmlsZXNfcmVhZCIsImZpbGVzX3dyaXRlIiwidXNlcnNfcmVhZCIsInVzZXJzX3dyaXRlIiwiY29udGFjdHNfcmVhZCIsImNvbnRhY3RzX3dyaXRlIiwiYWRtaW5pc3RyYXRpdmUiXX0.ki4Caqyg-aO5Hhl0mctERkEzssICAC06QjmKBLDWIFKf_0BLW9znOiap4_cIVXAZYpjzzd5J_WxhsYTEvQkBjFjeFxVvW8sGszilz08KMipVwbw_DtvXPPJGKA513wyE6B87oc9dTXIpKr7Ws7UZETUd1rbdj9NgNAB1ghpw5UIyIKfqWWYbomatdtAsFnB5ZAf-AJma74MDT0HHHPm02kbOtsifsHny9TbKmWvcmqtojHltdJC15E4LHHgnaA6QhxGs0tXf6nFv3nIoK-eT0YjaXe0YqbOYXhHtI6SD1L6LDKyUjDiKi0XCKI1XEtvLPjkE7NftG8bOIzlrMI4zRw\",\n    \"refresh_token\": \"def502009eeae35083f65b344d980a855f9f9f456580e3676b993a85c7d7027e20f00474301f8b6355d26ac53187b3d58d871af2efbf96625aeac89bdf696366ec1ae05ddcc8efd6b23ef4806e16565b2eb3124fadaf71090bf344c5cf845ab045575a4567cec410ca98d87a8d68b275bfe880b28b56d9cb13965b60696457bf891db53215fcf98d83c66031b8cb2131784df67657fc8f5111ef781bd86dd17ea31dd6406a4474c20fddacd5946e974b0b1e4c8f5e181334bda96ba8903d15ea5c2be912a1b2187fe6954ca00a33edb9e255acf5a8fae152920d6ff06a23a6ac4c4e8ac176e9965c9db14df41b30519ae1fd0b84047e60e253e14326ca97269ef268e418897d7737c059cb9bdeb60361b8809ddc4eb5b470859bb96d7fed5919044162a111f9c4d12b4e30bf2b734e87635033ccd20a2d3725cb1e2d7e52b13b438251ed5d45dbbeda23a0bd7d6a7a363bb252ca3a3178d71f5dfa728669984b3ad0edd599c211cf7392d4dca3f30a7b1de11c0906b7a6ec44860eb91dc4e4b94f351a2c769a98fdc50c8d124cedf864fb831fd0eea215e05540d5c56325cfc97a76aa3c45c523b0c94149285c9c605983a3e9667b9ac700690a78f5e9510c11b9f18da65b8d989aab4050fc996355dc349d5989002738834edb211f180177a6169da75d90f17f0b0b74549e87c7cf0ccb8a5a2c28cd4e0ec75350645bad15a48e753a18397de3ecbff6ab24dcbf20982df2d823a9bfc70414f8bc3dba7cbdcec6d4e00eb9b92b02282a0dee2e3ecfd1ade93ea1a4454668130548d5ff4d1b4c631449df993da7d928ba03b40022182488d52523088743a35848b1436af8595f9f3db6c34f9f3390a9ab2feab33fe3eff29b9946df0dd96132a2af\",\n    \"account_url\": \"https://acc1234.worksection.com\"\n}"
+				},
+				{
+					"name": "invalid_request",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{oauth2_url}}/oauth2/token?client_id={{client_id}}&client_secret={{client_secret}}&redirect_uri={{account_url}}&grant_type=authorization_code&code=def502006ff8aa0723cf5a16eed0018b9f93074e4316bcd06937ce099d3311a84ec2f3f194c9a8c426cf0789a50d594b00181e1e324dd081412a88253ae74dd01c63efa75b99a7fe08c497075634108cf9bc9061b4d04ff2b74f05208880102f4c9cc896545ee6730ca4b01ca5e4f784da7003c98a044bc176c0260eb1c7a9bb30da22bba50b051b79636af4a9a9ba2831f1773f298b71d0645cf7fbcffe6d37d4f4708d76a5eeda9c6363f03d089d44357e86e7dfdbae956d51364f2e018c79ba10f4ab29bad6dc36b701dd76257ccedafddcdb28be61bce4bd90b1c63f0509beb69167974c87be41cf6326cd8869a3422c2eafe157b7bd8dfdf0fca645fd1b22a8a8dbb399126c76642055385e4893921aaf377e7ac872b1b0385dc6becd489dc579d1b35560be952f23e0b4af7ae3841842deb68261e706cd88bd0cceff68c7938fa4a383adc6920ba1dd89c64bef20f0b3ed5b9f15e9d936d031d117090ae1754a89c2650d63c5b672677720aa824e31405324ff71f307b5e60f4e60bbb783bf76a5f412b9803fbb7c74aa9d57fcb135a18e42462425f160c42309d1f220bfe8de1ff1f7cd6cef6a49875c5e3bc66c521a1a4e9858dd5d015f037f282d529fd6cbb05fedf5a9a610b06282c12dc54506558179dac94b8ac14e1a72baefcdf4bc280d5407dd564f919ddb27d09a20a814f825ebe9f8447caa96922d417c2197c883182a3160af422ee267c0ee0e1a0a4b3faffbcf980671b34af76b825a505221754c79d6c464087e5ef2b4ad9f8d0f2d1a1793a187fa4737b047a97139c5bd9bc097815122119f8b4d89355a6a17db4085f08003252389e182ab93131a4cb1585ed5ca7fac37df953cd92c5ee18705a3b8d10e63b49b6816cde0a16907de2c10b8d6f1",
+							"host": [
+								"{{oauth2_url}}"
+							],
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client_secret}}",
+									"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{account_url}}",
+									"description": "(Required) Redirect URI\n\nMust meet the requirements of the OAuth2 standard and use the HTTPS protocol"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"description": "(Required) OAuth grant type, possible value: **authorization_code**"
+								},
+								{
+									"key": "code",
+									"value": "def502006ff8aa0723cf5a16eed0018b9f93074e4316bcd06937ce099d3311a84ec2f3f194c9a8c426cf0789a50d594b00181e1e324dd081412a88253ae74dd01c63efa75b99a7fe08c497075634108cf9bc9061b4d04ff2b74f05208880102f4c9cc896545ee6730ca4b01ca5e4f784da7003c98a044bc176c0260eb1c7a9bb30da22bba50b051b79636af4a9a9ba2831f1773f298b71d0645cf7fbcffe6d37d4f4708d76a5eeda9c6363f03d089d44357e86e7dfdbae956d51364f2e018c79ba10f4ab29bad6dc36b701dd76257ccedafddcdb28be61bce4bd90b1c63f0509beb69167974c87be41cf6326cd8869a3422c2eafe157b7bd8dfdf0fca645fd1b22a8a8dbb399126c76642055385e4893921aaf377e7ac872b1b0385dc6becd489dc579d1b35560be952f23e0b4af7ae3841842deb68261e706cd88bd0cceff68c7938fa4a383adc6920ba1dd89c64bef20f0b3ed5b9f15e9d936d031d117090ae1754a89c2650d63c5b672677720aa824e31405324ff71f307b5e60f4e60bbb783bf76a5f412b9803fbb7c74aa9d57fcb135a18e42462425f160c42309d1f220bfe8de1ff1f7cd6cef6a49875c5e3bc66c521a1a4e9858dd5d015f037f282d529fd6cbb05fedf5a9a610b06282c12dc54506558179dac94b8ac14e1a72baefcdf4bc280d5407dd564f919ddb27d09a20a814f825ebe9f8447caa96922d417c2197c883182a3160af422ee267c0ee0e1a0a4b3faffbcf980671b34af76b825a505221754c79d6c464087e5ef2b4ad9f8d0f2d1a1793a187fa4737b047a97139c5bd9bc097815122119f8b4d89355a6a17db4085f08003252389e182ab93131a4cb1585ed5ca7fac37df953cd92c5ee18705a3b8d10e63b49b6816cde0a16907de2c10b8d6f1",
+									"description": "(Required) Authorization code\n\nCan be obrained through _oauth2_authorize_ method"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx/1.18.0 (Ubuntu)"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2023 14:43:22 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Expires",
+							"value": "Thu, 19 Nov 1981 08:52:00 GMT"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-store, no-cache, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"error\": \"invalid_request\",\n    \"errorDescription\": \"Authorization code has been revoked\"\n}"
+				},
+				{
+					"name": "invalid_client",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{oauth2_url}}/oauth2/token?client_id={{client_id}}&client_secret={{client_secret}}&redirect_uri={{account_url}}&grant_type=authorization_code&code=def502006ff8aa0723cf5a16eed0018b9f93074e4316bcd06937ce099d3311a84ec2f3f194c9a8c426cf0789a50d594b00181e1e324dd081412a88253ae74dd01c63efa75b99a7fe08c497075634108cf9bc9061b4d04ff2b74f05208880102f4c9cc896545ee6730ca4b01ca5e4f784da7003c98a044bc176c0260eb1c7a9bb30da22bba50b051b79636af4a9a9ba2831f1773f298b71d0645cf7fbcffe6d37d4f4708d76a5eeda9c6363f03d089d44357e86e7dfdbae956d51364f2e018c79ba10f4ab29bad6dc36b701dd76257ccedafddcdb28be61bce4bd90b1c63f0509beb69167974c87be41cf6326cd8869a3422c2eafe157b7bd8dfdf0fca645fd1b22a8a8dbb399126c76642055385e4893921aaf377e7ac872b1b0385dc6becd489dc579d1b35560be952f23e0b4af7ae3841842deb68261e706cd88bd0cceff68c7938fa4a383adc6920ba1dd89c64bef20f0b3ed5b9f15e9d936d031d117090ae1754a89c2650d63c5b672677720aa824e31405324ff71f307b5e60f4e60bbb783bf76a5f412b9803fbb7c74aa9d57fcb135a18e42462425f160c42309d1f220bfe8de1ff1f7cd6cef6a49875c5e3bc66c521a1a4e9858dd5d015f037f282d529fd6cbb05fedf5a9a610b06282c12dc54506558179dac94b8ac14e1a72baefcdf4bc280d5407dd564f919ddb27d09a20a814f825ebe9f8447caa96922d417c2197c883182a3160af422ee267c0ee0e1a0a4b3faffbcf980671b34af76b825a505221754c79d6c464087e5ef2b4ad9f8d0f2d1a1793a187fa4737b047a97139c5bd9bc097815122119f8b4d89355a6a17db4085f08003252389e182ab93131a4cb1585ed5ca7fac37df953cd92c5ee18705a3b8d10e63b49b6816cde0a16907de2c10b8d6f1",
+							"host": [
+								"{{oauth2_url}}"
+							],
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client_secret}}",
+									"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "{{account_url}}",
+									"description": "(Required) Redirect URI\n\nMust meet the requirements of the OAuth2 standard and use the HTTPS protocol"
+								},
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"description": "(Required) OAuth grant type, possible value: **authorization_code**"
+								},
+								{
+									"key": "code",
+									"value": "def502006ff8aa0723cf5a16eed0018b9f93074e4316bcd06937ce099d3311a84ec2f3f194c9a8c426cf0789a50d594b00181e1e324dd081412a88253ae74dd01c63efa75b99a7fe08c497075634108cf9bc9061b4d04ff2b74f05208880102f4c9cc896545ee6730ca4b01ca5e4f784da7003c98a044bc176c0260eb1c7a9bb30da22bba50b051b79636af4a9a9ba2831f1773f298b71d0645cf7fbcffe6d37d4f4708d76a5eeda9c6363f03d089d44357e86e7dfdbae956d51364f2e018c79ba10f4ab29bad6dc36b701dd76257ccedafddcdb28be61bce4bd90b1c63f0509beb69167974c87be41cf6326cd8869a3422c2eafe157b7bd8dfdf0fca645fd1b22a8a8dbb399126c76642055385e4893921aaf377e7ac872b1b0385dc6becd489dc579d1b35560be952f23e0b4af7ae3841842deb68261e706cd88bd0cceff68c7938fa4a383adc6920ba1dd89c64bef20f0b3ed5b9f15e9d936d031d117090ae1754a89c2650d63c5b672677720aa824e31405324ff71f307b5e60f4e60bbb783bf76a5f412b9803fbb7c74aa9d57fcb135a18e42462425f160c42309d1f220bfe8de1ff1f7cd6cef6a49875c5e3bc66c521a1a4e9858dd5d015f037f282d529fd6cbb05fedf5a9a610b06282c12dc54506558179dac94b8ac14e1a72baefcdf4bc280d5407dd564f919ddb27d09a20a814f825ebe9f8447caa96922d417c2197c883182a3160af422ee267c0ee0e1a0a4b3faffbcf980671b34af76b825a505221754c79d6c464087e5ef2b4ad9f8d0f2d1a1793a187fa4737b047a97139c5bd9bc097815122119f8b4d89355a6a17db4085f08003252389e182ab93131a4cb1585ed5ca7fac37df953cd92c5ee18705a3b8d10e63b49b6816cde0a16907de2c10b8d6f1",
+									"description": "(Required) Authorization code\n\nCan be obrained through _oauth2_authorize_ method"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx/1.18.0 (Ubuntu)"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2023 14:43:22 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Expires",
+							"value": "Thu, 19 Nov 1981 08:52:00 GMT"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-store, no-cache, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"error\": \"invalid_client\",\n    \"errorDescription\": \"Client authentication failed\"\n}"
+				}
+			]
+		},
+		{
+			"name": "oauth2_refresh",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var access_token = pm.response.json().access_token;\r",
+							"var refresh_token = pm.response.json().refresh_token;\r",
+							"\r",
+							"if (access_token.length) {\r",
+							"    pm.collectionVariables.set(\"access_token\", access_token);\r",
+							"    pm.collectionVariables.set(\"refresh_token\", refresh_token);\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{oauth2_url}}/oauth2/refresh?client_id={{client_id}}&client_secret={{client_secret}}&refresh_token={{refresh_token}}&grant_type=refresh_token",
+					"host": [
+						"{{oauth2_url}}"
+					],
+					"path": [
+						"oauth2",
+						"refresh"
+					],
+					"query": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+						},
+						{
+							"key": "refresh_token",
+							"value": "{{refresh_token}}",
+							"description": "(Required) Refresh token\n\nCan be obtained through _oauth2_token_ method"
+						},
+						{
+							"key": "grant_type",
+							"value": "refresh_token",
+							"description": "(Required) OAuth grant type, possible value: **refresh_token**"
+						}
+					]
+				},
+				"description": "###### Returns new access and refresh tokens\n\n\\*used when access token is about to expire or already expired  \n_\\*access_token is valid for 24 hours, refresh_token – 1 month_"
+			},
+			"response": [
+				{
+					"name": "success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{oauth2_url}}/oauth2/refresh?client_id={{client_id}}&client_secret={{client_secret}}&refresh_token={{refresh_token}}&grant_type=refresh_token",
+							"host": [
+								"{{oauth2_url}}"
+							],
+							"path": [
+								"oauth2",
+								"refresh"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client_secret}}",
+									"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"description": "(Required) Refresh token\n\nCan be obtained through _oauth2_token_ method"
+								},
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"description": "(Required) OAuth grant type, possible value: **refresh_token**"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx/1.18.0 (Ubuntu)"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2023 14:52:09 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Expires",
+							"value": "Thu, 19 Nov 1981 08:52:00 GMT"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-store, no-cache, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"token_type\": \"Bearer\",\n    \"expires_in\": 86400,\n    \"access_token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIwYTlkYTZhOTE4YWZhNGVkZjAwYWRkYjBkNDFjNTEyMCIsImp0aSI6IjM3MjMxZTYyMzM0N2I1NGJkOTc2NWIwNzE4YjU2ZDIyOWM5YTViMWZhOTVhNDc0ODVjYzM0NTNkYmViYmFmYmE2NjU1NDgxNWFkMDc5YzcxIiwiaWF0IjoxNjk5NjI3OTI5LCJuYmYiOjE2OTk2Mjc5MjksImV4cCI6MTY5OTcxNDMyOSwic3ViIjoiMjQ3NyIsInNjb3BlcyI6WyJwcm9qZWN0c19yZWFkIiwicHJvamVjdHNfd3JpdGUiLCJ0YXNrc19yZWFkIiwidGFza3Nfd3JpdGUiLCJjb3N0c19yZWFkIiwiY29zdHNfd3JpdGUiLCJ0YWdzX3JlYWQiLCJ0YWdzX3dyaXRlIiwiY29tbWVudHNfcmVhZCIsImNvbW1lbnRzX3dyaXRlIiwiZmlsZXNfcmVhZCIsImZpbGVzX3dyaXRlIiwidXNlcnNfcmVhZCIsInVzZXJzX3dyaXRlIiwiY29udGFjdHNfcmVhZCIsImNvbnRhY3RzX3dyaXRlIiwiYWRtaW5pc3RyYXRpdmUiXX0.E7e0Kx1vFzTjTkHDsrJRyjkjcZoWkJAoUnI2wCoF64BGCwWEVzSGhCNqpplEapH-s9c-6pokt18QDbkIieUZv9tpHgErwclg_R4ty3bif75zPd0GbzTTfhSaZRHN74uEP5VkrHiAMlMRy7p_SKvHNX9NBw03_q38OfsOLOdAnTaAriD28z8thZww0NImpkb_0r-bJrjr2c_bol-8s6YsG6sU-P4XRVIQj6hoHQ8GjtiT3KqC9dLD3jua8VFPpGblQ0YQsd14oPyzuBRjtQjiTIZcRkQLVVD2_3tRA8Mvkn1bvcnzJuBZB7YLGCvmHG1bXUt_nY72i1UOz7nBZWvs-g\",\n    \"refresh_token\": \"def50200ad37fbada26e58119bbd880f7ff776a8ce06fe74502ed172e7fb02fd42fefb6ad6373883e6d51017234fcc6cbf7cd5b86b3e32f13e11360866baa1ebf57aad99bf9238c9316f946232362fc02966aa9d4d112c628ee0c8b82747bdaf36ad6228c8c07d54b41c447456b0ba2c96f8ad5f530183d14dfc379e21f129fc14601af30840232a3c6a1dc1e819ad6447f8c24cacd00f8ddd22dcfaf63ae13481c1cd5d3192aafa3b24710cd4591b8fe1c4c8e8d7cebf9426b0108a3087b3626d1dd517af31e21e8d4f2eee75bcbe682715d96fa83fde3ec87ed3ff531dc63081ab97e1b160237b5b08e51ffbd60b05700c57aa92e542d438d996829ef973ca8549803ba022a142cb47744896716d0d34ec35e2c2a1967673b1d99750b41fdc8cda57b18feba81dc2b37ce75bcd755afdc97e3e1d722046c6dfc7f71d711a69d964efcee6df6a6232cb001c27d44262b3e6de427f854f578905cef94149d990d4b1c45b288a8fd12483d1e619972f4079769596937a95e9823a34861cbe7be478c6da000608bd12400a0f4abdfb30c638d5adb5fba19a6843488dbd79d6eaf4a84c4f4f0299f2b0b8f277f9a3d55d4851bb97e3a8e05082e32bace4adf7690c0b95d36a479c0f3b2e0fe0fdcb51dab8680cea52f69659b7271c1ac0acb93fcb6fc68f20662cb20f4b3fd505638423262d48994f2ef8b8bb245795f2f86a3c5b732702f5fba5ff47f4217adbc6994361d9fdff9ff142b891286bd0a43c605cebbdb596c8a8213a5f5e73b3a9328274587a8f1e9c33bde3c07f5ef16daa15a7a30d82801e8925515fb8679372e8b7d5dfc2b02ccb5a5ff58170280cc5f1c0c6df6dbb7f48d4c5d456f3d07a73573fa443e5408002f3eefc9ef3c1e7\"\n}"
+				},
+				{
+					"name": "invalid_request",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{oauth2_url}}/oauth2/refresh?client_id={{client_id}}&client_secret={{client_secret}}&refresh_token={{refresh_token}}&grant_type=refresh_token",
+							"host": [
+								"{{oauth2_url}}"
+							],
+							"path": [
+								"oauth2",
+								"refresh"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client_secret}}",
+									"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"description": "(Required) Refresh token\n\nCan be obtained through _oauth2_token_ method"
+								},
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"description": "(Required) OAuth grant type, possible value: **refresh_token**"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx/1.18.0 (Ubuntu)"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2023 14:52:09 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Expires",
+							"value": "Thu, 19 Nov 1981 08:52:00 GMT"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-store, no-cache, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"error\": \"invalid_request\",\n    \"errorDescription\": \"Cannot decrypt the refresh token\"\n}"
+				}
+			]
+		},
+		{
+			"name": "oauth2_resource",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{oauth2_url}}/oauth2/resource?client_id={{client_id}}&client_secret={{client_secret}}&access_token={{access_token}}",
+					"host": [
+						"{{oauth2_url}}"
+					],
+					"path": [
+						"oauth2",
+						"resource"
+					],
+					"query": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+						},
+						{
+							"key": "access_token",
+							"value": "{{access_token}}",
+							"description": "(Required) Access token\n\nCan be obtained through _oauth2_token_ method"
+						}
+					]
+				},
+				"description": "###### Returns authorized user's (oauth2) info"
+			},
+			"response": [
+				{
+					"name": "success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{oauth2_url}}/oauth2/resource?client_id={{client_id}}&client_secret={{client_secret}}&access_token={{access_token}}",
+							"host": [
+								"{{oauth2_url}}"
+							],
+							"path": [
+								"oauth2",
+								"resource"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client_secret}}",
+									"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+								},
+								{
+									"key": "access_token",
+									"value": "{{access_token}}",
+									"description": "(Required) Access token\n\nCan be obtained through _oauth2_token_ method"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx/1.18.0 (Ubuntu)"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2023 14:46:54 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Expires",
+							"value": "Thu, 19 Nov 1981 08:52:00 GMT"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-store, no-cache, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"3993\",\n    \"first_name\": \"Henry\",\n    \"last_name\": \"Gardner\",\n    \"email\": \"henry.gardner@ws.com\",\n    \"account_url\": \"https://acc1234.worksection.com\"\n}"
+				},
+				{
+					"name": "not_authorized",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{oauth2_url}}/oauth2/resource?client_id={{client_id}}&client_secret={{client_secret}}&access_token={{access_token}}",
+							"host": [
+								"{{oauth2_url}}"
+							],
+							"path": [
+								"oauth2",
+								"resource"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}",
+									"description": "(Required) Client ID\n\nYour Worksection application unique ID"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client_secret}}",
+									"description": "(Required) Client Secret\n\nYour Worksection application secret string"
+								},
+								{
+									"key": "access_token",
+									"value": "{{access_token}}",
+									"description": "(Required) Access token\n\nCan be obtained through _oauth2_token_ method"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx/1.18.0 (Ubuntu)"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 10 Nov 2023 14:46:54 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Expires",
+							"value": "Thu, 19 Nov 1981 08:52:00 GMT"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-store, no-cache, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"error\": \"not_authorized\",\n    \"errorDescription\": \"Malformed UTF-8 characters\"\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"var oauth2Url = pm.collectionVariables.get('oauth2_url');",
+					"if (!oauth2Url) throw new Error(' `oauth2_url` collection variable is undefined or unchecked');"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "client_id",
+			"value": "<client_id>",
+			"type": "string"
+		},
+		{
+			"key": "client_secret",
+			"value": "<client_secret>",
+			"type": "string"
+		},
+		{
+			"key": "oauth2_url",
+			"value": "https://worksection.com",
+			"type": "string"
+		},
+		{
+			"key": "redirect_url",
+			"value": "https://redirect-url.com",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "<access_token>",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "<refresh_token>",
+			"type": "string"
+		}
+	]
+}

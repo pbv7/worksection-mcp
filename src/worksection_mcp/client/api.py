@@ -126,9 +126,36 @@ class WorksectionClient:
 
                 return data
 
+            except httpx.ConnectError as e:
+                # DNS or connection errors
+                error_msg = str(e)
+                if "nodename nor servname provided" in error_msg or "Name or service not known" in error_msg:
+                    logger.error(f"DNS resolution failed for {url}")
+                    raise WorksectionAPIError(
+                        f"Cannot connect to Worksection API at {url}\n"
+                        f"DNS resolution failed - the hostname cannot be resolved.\n"
+                        f"Please verify WORKSECTION_ACCOUNT_URL in your .env file is correct.\n"
+                        f"Current value: {self.settings.worksection_account_url}\n"
+                        f"Original error: {e}"
+                    )
+                else:
+                    logger.error(f"Connection failed to {url}: {e}")
+                    raise WorksectionAPIError(
+                        f"Cannot connect to Worksection API at {url}\n"
+                        f"Connection error: {e}\n"
+                        f"Please check:\n"
+                        f"  1. Your internet connection\n"
+                        f"  2. WORKSECTION_ACCOUNT_URL is correct: {self.settings.worksection_account_url}\n"
+                        f"  3. The Worksection service is accessible"
+                    )
+
             except httpx.RequestError as e:
                 logger.error(f"HTTP request failed: {e}")
-                raise WorksectionAPIError(f"Request failed: {e}")
+                raise WorksectionAPIError(
+                    f"Request failed: {e}\n"
+                    f"URL: {url}\n"
+                    f"Action: {action}"
+                )
 
     # ==========================================================================
     # Projects API

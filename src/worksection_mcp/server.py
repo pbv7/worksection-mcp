@@ -49,6 +49,20 @@ def create_server(settings: Settings | None = None) -> FastMCP:
     # Ensure directories exist
     settings.ensure_directories()
 
+    # Validate external resources
+    logger.info("Validating external resources...")
+    validation_results = settings.validate_external_resources()
+    has_errors = False
+    for key, result in validation_results.items():
+        if result.startswith("✗"):
+            logger.error(f"{key}: {result}")
+            has_errors = True
+        else:
+            logger.debug(f"{key}: {result}")
+
+    if has_errors:
+        logger.warning("Some external resource checks failed. Server may not function correctly.")
+
     # Initialize OAuth2 manager
     _oauth = OAuth2Manager(settings)
 
@@ -69,6 +83,7 @@ def create_server(settings: Settings | None = None) -> FastMCP:
         # Startup
         logger.info("Worksection MCP server starting...")
         logger.info(f"Account: {settings.worksection_account_url}")
+        logger.info(f"API URL: {settings.api_base_url}")
         logger.info(f"Transport: {settings.mcp_transport}")
 
         try:
