@@ -157,6 +157,15 @@ def register_file_tools(
                     continue  # Not WebP, skip
                 return mime
 
+        # Heuristic text detection for plain UTF-8 content without magic bytes.
+        # This keeps binary payloads in octet-stream while allowing readable text files.
+        try:
+            decoded = content.decode("utf-8")
+            if decoded and all((ch.isprintable() or ch in "\r\n\t") for ch in decoded):
+                return "text/plain"
+        except UnicodeDecodeError:
+            pass
+
         return "application/octet-stream"
 
     @mcp.tool()
