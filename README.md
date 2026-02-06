@@ -367,6 +367,12 @@ uv run pytest --cov=worksection_mcp --cov-report=html
 # Lint code
 uv run ruff check src/
 
+# Lint all Markdown from repo root
+npx markdownlint-cli2
+
+# Auto-fix all Markdown from repo root
+npx markdownlint-cli2 --fix
+
 # Type check
 uv run mypy src/
 ```
