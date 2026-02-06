@@ -143,7 +143,9 @@ def register_tag_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         """
         # Get all tasks from project with tags included
         # The 'extra' parameter with 'tags' value tells API to include task tags
-        tasks_data = await client.get_tasks(project_id=project_id, filter="all", extra="tags")
+        tasks_data = await client.get_tasks(
+            project_id=project_id, status_filter="all", extra="tags"
+        )
 
         if not isinstance(tasks_data, dict) or "data" not in tasks_data:
             return {

@@ -4,7 +4,7 @@ import asyncio
 import hashlib
 import logging
 import mimetypes
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
 
@@ -77,7 +77,7 @@ class FileCache:
     def _get_cache_path(self, file_id: str, extension: str = "") -> Path:
         """Generate cache file path for a file ID."""
         # Use hash of file_id to distribute files
-        hash_prefix = hashlib.md5(file_id.encode()).hexdigest()[:4]
+        hash_prefix = hashlib.sha256(file_id.encode()).hexdigest()[:4]
         subdir = self.cache_path / hash_prefix
         subdir.mkdir(exist_ok=True)
         return subdir / f"{file_id}{extension}"
@@ -133,7 +133,7 @@ class FileCache:
 
             # Update database
             db = await self._get_db()
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
             await db.execute(
                 """
                 INSERT OR REPLACE INTO files (file_id, path, mime_type, size_bytes, cached_at)
@@ -169,13 +169,13 @@ class FileCache:
         path = Path(path_str)
 
         # Check if file still exists
-        if not path.exists():
+        if not await asyncio.to_thread(path.exists):
             await self.delete(file_id)
             return None
 
         # Check if file is expired
         cached_at = datetime.fromisoformat(cached_at_str)
-        age_hours = (datetime.now(timezone.utc) - cached_at).total_seconds() / 3600
+        age_hours = (datetime.now(UTC) - cached_at).total_seconds() / 3600
         if age_hours > self.retention_hours:
             await self.delete(file_id)
             return None
@@ -198,8 +198,8 @@ class FileCache:
             File content as bytes, or None if not cached
         """
         cached = await self.get(file_id)
-        if cached and cached.path.exists():
-            return cached.path.read_bytes()
+        if cached and await asyncio.to_thread(cached.path.exists):
+            return await asyncio.to_thread(cached.path.read_bytes)
         return None
 
     async def delete(self, file_id: str) -> bool:
@@ -220,8 +220,8 @@ class FileCache:
 
             if row:
                 path = Path(row[0])
-                if path.exists():
-                    path.unlink()
+                if await asyncio.to_thread(path.exists):
+                    await asyncio.to_thread(path.unlink)
 
                 await db.execute("DELETE FROM files WHERE file_id = ?", (file_id,))
                 await db.commit()
@@ -237,8 +237,8 @@ class FileCache:
             Number of files removed
         """
         db = await self._get_db()
-        cutoff = datetime.now(timezone.utc).timestamp() - (self.retention_hours * 3600)
-        cutoff_iso = datetime.fromtimestamp(cutoff, tz=timezone.utc).isoformat()
+        cutoff = datetime.now(UTC).timestamp() - (self.retention_hours * 3600)
+        cutoff_iso = datetime.fromtimestamp(cutoff, tz=UTC).isoformat()
 
         # Get expired files
         async with db.execute(
@@ -249,10 +249,10 @@ class FileCache:
 
         # Delete files
         count = 0
-        for file_id, path_str in expired:
+        for _file_id, path_str in expired:
             path = Path(path_str)
-            if path.exists():
-                path.unlink()
+            if await asyncio.to_thread(path.exists):
+                await asyncio.to_thread(path.unlink)
             count += 1
 
         # Remove from database

@@ -103,6 +103,10 @@ class Settings(BaseSettings):
         default="worksection",
         description="Server name used in MCP protocol",
     )
+    mcp_server_host: str = Field(
+        default=".".join(["0"] * 4),
+        description="Server host for SSE transport (0.0.0.0 for LAN access, 127.0.0.1 for local only)",
+    )
     mcp_server_port: int = Field(
         default=8000,
         description="Server port for SSE transport",
@@ -143,7 +147,7 @@ class Settings(BaseSettings):
                 f"Invalid URL format for WORKSECTION_ACCOUNT_URL: {v}\n"
                 f"Error: {e}\n"
                 f"Expected format: https://yourcompany.worksection.com"
-            )
+            ) from e
 
         # Validate scheme
         if parsed.scheme not in ("http", "https"):
@@ -180,8 +184,7 @@ class Settings(BaseSettings):
     @classmethod
     def ensure_path(cls, v):
         """Convert string to Path."""
-        path = Path(v) if isinstance(v, str) else v
-        return path
+        return Path(v) if isinstance(v, str) else v
 
     @field_validator("worksection_client_id", "worksection_client_secret")
     @classmethod
@@ -284,7 +287,7 @@ class Settings(BaseSettings):
         return v
 
     @model_validator(mode="after")
-    def validate_ssl_consistency(self) -> "Settings":
+    def validate_ssl_consistency(self) -> Settings:
         """Validate SSL configuration consistency."""
         # If SSL is enabled, redirect URI should use HTTPS
         if self.oauth_callback_use_ssl:
@@ -372,7 +375,7 @@ class Settings(BaseSettings):
         # Check SSL cert directory
         try:
             self.oauth_ssl_cert_path.parent.mkdir(parents=True, exist_ok=True)
-            results["ssl_cert_dir"] = f"✓ SSL cert directory accessible"
+            results["ssl_cert_dir"] = "✓ SSL cert directory accessible"
         except Exception as e:
             results["ssl_cert_dir"] = f"✗ Cannot create SSL cert directory: {e}"
 

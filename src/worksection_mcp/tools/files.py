@@ -3,12 +3,11 @@
 import base64
 import io
 import mimetypes
-from pathlib import Path
 
 from fastmcp import FastMCP
 
-from worksection_mcp.client import WorksectionClient
 from worksection_mcp.cache import FileCache
+from worksection_mcp.client import WorksectionClient
 
 
 def register_file_tools(
@@ -31,18 +30,20 @@ def register_file_tools(
             data = task_data.get("data", task_data)
             task_files = data.get("files", [])
 
-        comment_files = []
-        if isinstance(comments_data, dict) and "data" in comments_data:
-            for comment in comments_data["data"]:
-                for file in comment.get("files", []):
-                    comment_files.append(
-                        {
-                            **file,
-                            "comment_id": comment.get("id"),
-                            "comment_text": comment.get("text", "")[:100],  # Preview
-                            "comment_author": comment.get("user_from", {}).get("name"),
-                        }
-                    )
+        comment_files = [
+            {
+                **file,
+                "comment_id": comment.get("id"),
+                "comment_text": comment.get("text", "")[:100],  # Preview
+                "comment_author": comment.get("user_from", {}).get("name"),
+            }
+            for comment in (
+                comments_data.get("data", [])
+                if isinstance(comments_data, dict) and "data" in comments_data
+                else []
+            )
+            for file in comment.get("files", [])
+        ]
 
         return {
             "task_id": task_id,
@@ -144,15 +145,15 @@ def register_file_tools(
                     # Check for specific Office format markers in the ZIP
                     if b"word/" in content[:2000]:
                         return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    elif b"xl/" in content[:2000]:
+                    if b"xl/" in content[:2000]:
                         return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    elif b"ppt/" in content[:2000]:
+                    if b"ppt/" in content[:2000]:
                         return "application/vnd.openxmlformats-officedocument.presentationml.presentation"
                     return mime
                 # WebP needs additional check
                 if sig == b"RIFF" and b"WEBP" in content[:12]:
                     return "image/webp"
-                elif sig == b"RIFF":
+                if sig == b"RIFF":
                     continue  # Not WebP, skip
                 return mime
 
@@ -296,9 +297,11 @@ def register_file_tools(
             result = []
             for slide_num, slide in enumerate(prs.slides, 1):
                 result.append(f"=== Slide {slide_num} ===")
-                for shape in slide.shapes:
-                    if hasattr(shape, "text") and shape.text.strip():
-                        result.append(shape.text)
+                result.extend(
+                    shape.text
+                    for shape in slide.shapes
+                    if hasattr(shape, "text") and shape.text.strip()
+                )
             return "\n\n".join(result)
         except Exception as e:
             return f"[Error extracting PPTX text: {e}]"

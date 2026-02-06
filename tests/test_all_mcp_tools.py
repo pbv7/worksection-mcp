@@ -596,9 +596,9 @@ class MCPToolTester:
             if self.test_ids["project_id"]:
                 params["project_id"] = self.test_ids["project_id"]
 
-        # get_all_tasks needs a filter to avoid "Too many tasks" error
+        # get_all_tasks needs status_filter to avoid "Too many tasks" error
         if tool_name == "get_all_tasks":
-            params["filter"] = "active"
+            params["status_filter"] = "active"
 
         return params
 

@@ -7,9 +7,9 @@ from urllib.parse import urlencode
 
 import httpx
 
-from worksection_mcp.config import Settings
-from worksection_mcp.auth.tokens import TokenStorage
 from worksection_mcp.auth.callback import CallbackServer
+from worksection_mcp.auth.tokens import TokenStorage
+from worksection_mcp.config import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -159,7 +159,7 @@ class OAuth2Manager:
         # Initialize SSL if enabled
         ssl_context = None
         if self.settings.oauth_callback_use_ssl:
-            from worksection_mcp.auth.ssl_utils import ensure_ssl_cert, create_ssl_context
+            from worksection_mcp.auth.ssl_utils import create_ssl_context, ensure_ssl_cert
 
             ensure_ssl_cert(
                 self.settings.oauth_ssl_cert_path,
@@ -190,11 +190,13 @@ class OAuth2Manager:
                 logger.info("Opening browser for authorization...")
                 webbrowser.open(auth_url)
             else:
-                print(f"\nPlease open this URL in your browser:\n{auth_url}\n")
+                logger.warning("Please open this URL in your browser:\n%s", auth_url)
 
             # Wait for callback
             logger.info("Waiting for authorization callback...")
-            code, returned_state = await self._callback_server.wait_for_callback(timeout=300)
+            code, returned_state = await self._callback_server.wait_for_callback(
+                timeout_seconds=300
+            )
 
             # Verify state
             if returned_state != state:

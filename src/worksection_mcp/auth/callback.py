@@ -3,10 +3,10 @@
 import asyncio
 import logging
 import ssl
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from collections.abc import Callable
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 from urllib.parse import parse_qs, urlparse
-from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -90,9 +90,9 @@ class CallbackHandler(BaseHTTPRequestHandler):
     </html>
     """
 
-    def log_message(self, format, *args):
+    def log_message(self, fmt, *args):
         """Override to use Python logging instead of stderr."""
-        logger.debug(f"Callback server: {format % args}")
+        logger.debug(f"Callback server: {fmt % args}")
 
     def do_GET(self):
         """Handle GET request (OAuth callback)."""
@@ -208,11 +208,11 @@ class CallbackServer:
             self._thread = None
             logger.info("Callback server stopped")
 
-    async def wait_for_callback(self, timeout: float = 300) -> tuple[str, str | None]:
+    async def wait_for_callback(self, timeout_seconds: float = 300) -> tuple[str, str | None]:
         """Wait for OAuth callback.
 
         Args:
-            timeout: Maximum time to wait in seconds
+            timeout_seconds: Maximum time to wait in seconds
 
         Returns:
             Tuple of (authorization_code, state)
@@ -226,8 +226,7 @@ class CallbackServer:
         self._code_future = self._loop.create_future()
 
         try:
-            result = await asyncio.wait_for(self._code_future, timeout=timeout)
-            return result
+            return await asyncio.wait_for(self._code_future, timeout=timeout_seconds)
         finally:
             self._code_future = None
             self._loop = None

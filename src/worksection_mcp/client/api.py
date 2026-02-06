@@ -5,9 +5,9 @@ from typing import Any
 
 import httpx
 
-from worksection_mcp.config import Settings
 from worksection_mcp.auth import OAuth2Manager
 from worksection_mcp.client.rate_limiter import AdaptiveRateLimiter
+from worksection_mcp.config import Settings
 from worksection_mcp.utils.date_utils import format_date_for_api
 
 logger = logging.getLogger(__name__)
@@ -140,21 +140,23 @@ class WorksectionClient:
                         f"Please verify WORKSECTION_ACCOUNT_URL in your .env file is correct.\n"
                         f"Current value: {self.settings.worksection_account_url}\n"
                         f"Original error: {e}"
-                    )
-                else:
-                    logger.error(f"Connection failed to {url}: {e}")
-                    raise WorksectionAPIError(
-                        f"Cannot connect to Worksection API at {url}\n"
-                        f"Connection error: {e}\n"
-                        f"Please check:\n"
-                        f"  1. Your internet connection\n"
-                        f"  2. WORKSECTION_ACCOUNT_URL is correct: {self.settings.worksection_account_url}\n"
-                        f"  3. The Worksection service is accessible"
-                    )
+                    ) from e
+
+                logger.error(f"Connection failed to {url}: {e}")
+                raise WorksectionAPIError(
+                    f"Cannot connect to Worksection API at {url}\n"
+                    f"Connection error: {e}\n"
+                    f"Please check:\n"
+                    f"  1. Your internet connection\n"
+                    f"  2. WORKSECTION_ACCOUNT_URL is correct: {self.settings.worksection_account_url}\n"
+                    f"  3. The Worksection service is accessible"
+                ) from e
 
             except httpx.RequestError as e:
                 logger.error(f"HTTP request failed: {e}")
-                raise WorksectionAPIError(f"Request failed: {e}\nURL: {url}\nAction: {action}")
+                raise WorksectionAPIError(
+                    f"Request failed: {e}\nURL: {url}\nAction: {action}"
+                ) from e
 
     # ==========================================================================
     # Projects API
@@ -162,21 +164,21 @@ class WorksectionClient:
 
     async def get_projects(
         self,
-        filter: str | None = None,
+        status_filter: str | None = None,
         extra: str | None = None,
     ) -> dict:
         """Get all projects.
 
         Args:
-            filter: Filter by status (active, archive)
+            status_filter: Filter by status (active, archive)
             extra: Additional data (text, options, users)
 
         Returns:
             Projects data with consistent structure
         """
         params = {}
-        if filter:
-            params["filter"] = filter
+        if status_filter:
+            params["filter"] = status_filter
         if extra:
             params["extra"] = extra
 
@@ -221,13 +223,13 @@ class WorksectionClient:
 
     async def get_all_tasks(
         self,
-        filter: str | None = None,
+        status_filter: str | None = None,
         extra: str | None = None,
     ) -> dict:
         """Get all tasks.
 
         Args:
-            filter: Filter by status
+            status_filter: Filter by status
             extra: Additional data (text, files, comments, relations, subtasks, subscribers)
 
         Returns:
@@ -236,8 +238,8 @@ class WorksectionClient:
             - data: List of tasks (empty list if no tasks)
         """
         params = {}
-        if filter:
-            params["filter"] = filter
+        if status_filter:
+            params["filter"] = status_filter
         if extra:
             params["extra"] = extra
 
@@ -253,22 +255,22 @@ class WorksectionClient:
     async def get_tasks(
         self,
         project_id: str,
-        filter: str | None = None,
+        status_filter: str | None = None,
         extra: str | None = None,
     ) -> dict:
         """Get tasks for a project.
 
         Args:
             project_id: Project ID
-            filter: Filter by status
+            status_filter: Filter by status
             extra: Additional data
 
         Returns:
             Tasks data with consistent structure
         """
         params = {"id_project": project_id}
-        if filter:
-            params["filter"] = filter
+        if status_filter:
+            params["filter"] = status_filter
         if extra:
             params["extra"] = extra
 
@@ -301,7 +303,7 @@ class WorksectionClient:
 
     async def search_tasks(
         self,
-        filter: str,
+        search_query: str,
         project_id: str | None = None,
         task_id: str | None = None,
         email_user_from: str | None = None,
@@ -312,7 +314,7 @@ class WorksectionClient:
         """Search tasks using Worksection query syntax.
 
         Args:
-            filter: Search query using Worksection syntax (e.g., "name has 'Report'")
+            search_query: Search query using Worksection syntax (e.g., "name has 'Report'")
                    Supports: name, dateadd, datestart, dateend, dateclose fields
                    Operators: =, has, >, <, >=, <=, !=, in, and, or
             project_id: Project ID to scope the search (at least one scope param required)
@@ -325,7 +327,7 @@ class WorksectionClient:
         Returns:
             Search results
         """
-        params = {"filter": filter}
+        params = {"filter": search_query}
         if project_id:
             params["id_project"] = project_id
         if task_id:
@@ -500,18 +502,18 @@ class WorksectionClient:
     # Users API
     # ==========================================================================
 
-    async def get_users(self, filter: str | None = None) -> dict:
+    async def get_users(self, status_filter: str | None = None) -> dict:
         """Get all users.
 
         Args:
-            filter: Filter by status
+            status_filter: Filter by status
 
         Returns:
             Users data with consistent structure
         """
         params = {}
-        if filter:
-            params["filter"] = filter
+        if status_filter:
+            params["filter"] = status_filter
 
         result = await self._make_request("get_users", params)
 
@@ -675,7 +677,7 @@ class WorksectionClient:
         self,
         project_id: str | None = None,
         period: str | None = None,
-        filter: str | None = None,
+        event_filter: str | None = None,
     ) -> dict:
         """Get activity/event log.
 
@@ -685,7 +687,7 @@ class WorksectionClient:
                 - Minutes: 1m to 360m (e.g., "120m" for 2 hours)
                 - Hours: 1h to 72h (e.g., "24h" for 1 day)
                 - Days: 1d to 30d (e.g., "7d" for 1 week)
-            filter: Filter by event type
+            event_filter: Filter by event type
 
         Returns:
             Events data
@@ -695,8 +697,8 @@ class WorksectionClient:
             params["id_project"] = project_id
         if period:
             params["period"] = period
-        if filter:
-            params["filter"] = filter
+        if event_filter:
+            params["filter"] = event_filter
         return await self._make_request("get_events", params)
 
     # ==========================================================================

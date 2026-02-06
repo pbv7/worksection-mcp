@@ -12,14 +12,14 @@ def register_task_tools(mcp: FastMCP, client: WorksectionClient) -> None:
 
     @mcp.tool()
     async def get_all_tasks(
-        filter: Literal["active", "done", "all"] | None = None,
+        status_filter: Literal["active", "done", "all"] | None = None,
         extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
         | None = None,
     ) -> dict:
         """Get all tasks across all projects.
 
         Args:
-            filter: Filter tasks by status:
+            status_filter: Filter tasks by status:
                 - active: Only incomplete tasks (default)
                 - done: Only completed tasks
                 - all: All tasks
@@ -38,12 +38,12 @@ def register_task_tools(mcp: FastMCP, client: WorksectionClient) -> None:
             - user_from, user_to: Creator and assignee
             - dates: Creation, start, end, deadline
         """
-        return await client.get_all_tasks(filter=filter, extra=extra)
+        return await client.get_all_tasks(status_filter=status_filter, extra=extra)
 
     @mcp.tool()
     async def get_tasks(
         project_id: str,
-        filter: Literal["active", "done", "all"] | None = None,
+        status_filter: Literal["active", "done", "all"] | None = None,
         extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
         | None = None,
     ) -> dict:
@@ -51,13 +51,15 @@ def register_task_tools(mcp: FastMCP, client: WorksectionClient) -> None:
 
         Args:
             project_id: The project ID to get tasks from
-            filter: Filter by status (active, done, all)
+            status_filter: Filter by status (active, done, all)
             extra: Additional data to include
 
         Returns:
             List of tasks in the specified project
         """
-        return await client.get_tasks(project_id=project_id, filter=filter, extra=extra)
+        return await client.get_tasks(
+            project_id=project_id, status_filter=status_filter, extra=extra
+        )
 
     @mcp.tool()
     async def get_task(
@@ -109,7 +111,7 @@ def register_task_tools(mcp: FastMCP, client: WorksectionClient) -> None:
         filter_query = f"name has '{query}'"
 
         return await client.search_tasks(
-            filter=filter_query,
+            search_query=filter_query,
             project_id=project_id,
             email_user_from=author_email,
             email_user_to=assignee_email,
