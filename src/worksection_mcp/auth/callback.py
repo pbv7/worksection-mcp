@@ -107,7 +107,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
 
         try:
             message = str(fmt) % fmt_args if fmt_args else str(fmt)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             message = str(fmt)
 
         logger.debug("Callback server: %s", message)
@@ -227,9 +227,7 @@ class CallbackServer:
             self._thread = None
             logger.info("Callback server stopped")
 
-    async def wait_for_callback(
-        self, timeout_seconds: float = 300
-    ) -> tuple[str, str | None]:
+    async def wait_for_callback(self, timeout_seconds: float = 300) -> tuple[str, str | None]:
         """Wait for OAuth callback.
 
         Args:

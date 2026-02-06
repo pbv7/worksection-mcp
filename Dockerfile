@@ -4,7 +4,7 @@
 # =============================================================================
 # Stage 1: Builder - Install dependencies with uv
 # =============================================================================
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ COPY src/ ./src/
 # =============================================================================
 # Stage 2: Runtime - Minimal production image
 # =============================================================================
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 # Labels
 LABEL org.opencontainers.image.title="Worksection MCP Server"

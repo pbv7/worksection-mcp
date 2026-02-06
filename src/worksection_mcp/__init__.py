@@ -5,7 +5,13 @@ A multi-tenant MCP server for Worksection with 46+ read-only tools
 for comprehensive data access and reporting.
 """
 
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("worksection-mcp")
+except PackageNotFoundError:
+    # Source tree execution before package install.
+    __version__ = "0.0.0"
 
 
 def main():
