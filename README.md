@@ -60,6 +60,7 @@ WORKSECTION_ACCOUNT_URL=https://yourcompany.worksection.com
 
 # Optional (defaults shown)
 WORKSECTION_REDIRECT_URI=https://localhost:8080/oauth/callback
+MCP_SERVER_HOST=127.0.0.1
 MCP_SERVER_PORT=8000
 LOG_LEVEL=INFO
 ```
@@ -90,6 +91,7 @@ docker build -t worksection-mcp .
 docker run -d \
   --name worksection-mcp \
   -p 8000:8000 \
+  -e MCP_SERVER_HOST=0.0.0.0 \
   --env-file .env \
   -v $(pwd)/data:/app/data \
   worksection-mcp
@@ -308,6 +310,7 @@ for file in task["images"]:
 | `FILE_CACHE_RETENTION_HOURS` | Cache retention | `24` |
 | `MAX_FILE_SIZE_MB` | Max cached file size | `10` |
 | `MCP_SERVER_NAME` | Server name | `worksection` |
+| `MCP_SERVER_HOST` | SSE bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
 | `MCP_SERVER_PORT` | Server port | `8000` |
 | `MCP_TRANSPORT` | Transport type (`sse`/`stdio`) | `sse` |
 | `LOG_LEVEL` | Logging level | `INFO` |

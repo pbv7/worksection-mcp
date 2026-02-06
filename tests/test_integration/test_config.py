@@ -115,6 +115,7 @@ class TestSettings:
         """Test default values are set."""
         settings = Settings.model_validate(_settings_kwargs(temp_data_dir))
 
+        assert settings.mcp_server_host == "127.0.0.1"
         assert settings.mcp_server_port == 8000
         assert settings.mcp_transport == "sse"
         assert settings.log_level == "INFO"

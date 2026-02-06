@@ -104,7 +104,7 @@ class Settings(BaseSettings):
         description="Server name used in MCP protocol",
     )
     mcp_server_host: str = Field(
-        default=".".join(["0"] * 4),
+        default="127.0.0.1",
         description="Server host for SSE transport (0.0.0.0 for LAN access, 127.0.0.1 for local only)",
     )
     mcp_server_port: int = Field(

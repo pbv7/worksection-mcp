@@ -15,6 +15,7 @@ services:
     environment:
       - ENVIRONMENT=development
       - LOG_LEVEL=DEBUG
+      - MCP_SERVER_HOST=${MCP_SERVER_HOST:-0.0.0.0}
     volumes:
       # Persist tokens and cached files
       - ./data:/app/data
