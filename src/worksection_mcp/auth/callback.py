@@ -113,7 +113,8 @@ class CallbackHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            self.wfile.write(self.error_html.format(error=error_desc).encode())
+            # Avoid str.format() on CSS-heavy HTML, which contains many braces.
+            self.wfile.write(self.error_html.replace("{error}", error_desc).encode())
 
             if self.callback_received:
                 self.callback_received(None, f"{error}: {error_desc}")
