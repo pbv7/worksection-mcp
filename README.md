@@ -110,7 +110,7 @@ docker compose up -d
 4. Set the redirect URI to `https://localhost:8080/oauth/callback`
    (HTTPS required)
 5. Note your `client_id` and `client_secret`
-6. Enable required scopes (read permissions): Projects, Tasks, Costs, Tags,
+6. Enable required read scopes: Projects, Tasks, Costs, Tags,
    Comments, Files, People, Contacts
 
 ### HTTPS for OAuth Callback
@@ -177,19 +177,17 @@ Subsequent Runs:
 | `get_all_tasks` | Get all tasks across projects |
 | `get_tasks` | Get tasks for a specific project |
 | `get_task` | Get single task details |
-| `search_tasks` | Search tasks by query |
+| `search_tasks` | Search tasks by query or filter expression |
 | `get_task_subtasks` | Get subtasks of a task |
 | `get_task_relations` | Get related/dependent tasks |
 | `get_task_subscribers` | Get task watchers |
-| `get_task_with_comments_and_files` | Get full task context |
 
 ### Comments
 
 | Tool | Description |
 | ------ | ------------- |
 | `get_comments` | Get comments for a task |
-| `get_task_discussion` | Get full discussion thread |
-| `get_comments_with_images` | Get comments with image attachments |
+| `get_task_discussion` | Get full discussion thread with comments and files |
 
 ### Files
 
@@ -197,12 +195,13 @@ Subsequent Runs:
 | ------ | ------------- |
 | `get_task_files` | Get files attached to task |
 | `get_all_task_attachments` | Get all attachments from task and comments |
+| `get_project_files` | List all files in a project or task |
 | `download_file` | Download and cache a file |
 | `get_file_as_base64` | Download file as base64 encoded string |
 | `get_file_content` | Extract text content from files |
 | `list_image_attachments` | List all image files for a task |
 
-### Time Tracking
+### Costs
 
 | Tool | Description |
 | ------ | ------------- |
@@ -211,19 +210,16 @@ Subsequent Runs:
 | `get_user_workload` | Get user's time entries |
 | `get_project_time_report` | Get project time report |
 
-> **Note:** Timer-specific tools (`get_timers`, `get_my_timer`) are not exposed
-> because Worksection API does not provide a `timers_read` scope. Time-tracking
-> access is provided through cost tools using `costs_read`.
-
 ### Users & Teams
 
 | Tool | Description |
 | ------ | ------------- |
 | `get_users` | Get all account users |
 | `get_user` | Get single user details |
-| `me` | Get current authenticated user |
+| `get_current_user` | Get current authenticated user |
 | `get_user_groups` | Get teams/departments |
 | `get_contacts` | Get contact database |
+| `get_contact_groups` | List contact folders |
 | `get_user_assignments` | Get tasks assigned to user |
 
 ### Tags
@@ -251,19 +247,15 @@ Subsequent Runs:
 
 | Tool | Description |
 | ------ | ------------- |
-| `get_activity_log` | Get activity/event log |
-| `get_recent_activity` | Get recent activity |
-| `get_project_activity` | Get project activity |
+| `get_activity_log` | Get activity/event log with event type breakdown |
 | `get_user_activity` | Get user's activity |
 
 ### System
 
 | Tool | Description |
 | ------ | ------------- |
-| `get_account_info` | Get account information |
-| `health_check` | Check server health |
-| `get_current_user_info` | Get detailed user info |
-| `get_api_status` | Get API status |
+| `health_check` | Check server health and API status |
+| `get_webhooks` | List configured webhooks (requires `administrative` scope) |
 
 ## MCP Resources
 
@@ -279,11 +271,11 @@ Resources allow Claude to directly access and analyze files:
 
 ```python
 # In your MCP client or skill:
-# 1. Get task with images
-task = await get_task_with_comments_and_files(task_id="12345")
+# 1. Get task discussion with files
+discussion = await get_task_discussion(task_id="12345")
 
 # 2. For each image file, access via resource
-for file in task["images"]:
+for file in discussion.get("images", []):
     # Claude can read this resource and analyze the image
     image_content = await read_resource(file["resource_uri"])
 ```
@@ -393,7 +385,8 @@ worksection-mcp/
 │       ├── client/              # API client
 │       ├── tools/               # MCP tools
 │       ├── resources/           # MCP resources
-│       └── cache/               # File caching
+│       ├── cache/               # File and session caching
+│       └── utils/               # Date formatting, response truncation
 ├── tests/                       # Test suite
 ├── data/                        # Runtime data (gitignored)
 ├── Dockerfile                   # Container build

@@ -1,9 +1,11 @@
 """Analytics and reporting MCP tools."""
 
 from datetime import UTC, datetime
+from typing import Any
 
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.mcp_protocols import ToolRegistrar
+from worksection_mcp.utils.response_utils import truncate_response
 
 
 def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
@@ -82,15 +84,19 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
         }
 
     @mcp.tool()
-    async def get_overdue_tasks(project_id: str | None = None) -> dict:
+    async def get_overdue_tasks(
+        project_id: str | None = None,
+        max_results: int = 100,
+    ) -> dict:
         """Get all overdue tasks.
 
         Args:
             project_id: Filter by project (optional)
+            max_results: Maximum number of tasks to return (default 100)
 
         Returns:
             List of overdue tasks:
-            - tasks: Overdue task list
+            - tasks: Overdue task list (truncated to max_results)
             - count: Number of overdue tasks
             - by_project: Count per project (if no project filter)
         """
@@ -99,8 +105,8 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
         else:
             tasks_data = await client.get_all_tasks(status_filter="active")
 
-        overdue_tasks = []
-        by_project = {}
+        overdue_tasks: list[dict[str, Any]] = []
+        by_project: dict[str, Any] = {}
         now = datetime.now(UTC)
 
         if isinstance(tasks_data, dict) and "data" in tasks_data:
@@ -130,9 +136,11 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
         # Sort by days overdue (most overdue first)
         overdue_tasks.sort(key=lambda x: x.get("days_overdue", 0), reverse=True)
 
+        truncated = truncate_response(overdue_tasks, max_results=max_results)
         return {
-            "tasks": overdue_tasks,
-            "count": len(overdue_tasks),
+            "tasks": truncated["items"],
+            "count": truncated["total_count"],
+            "truncated": truncated["truncated"],
             "by_project": by_project,
         }
 
@@ -140,12 +148,14 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
     async def get_tasks_by_status(
         project_id: str,
         status: str,
+        max_results: int = 100,
     ) -> dict:
         """Get tasks filtered by specific status.
 
         Args:
             project_id: The project ID
             status: Status to filter by (open, in_progress, review, done, etc.)
+            max_results: Maximum number of tasks to return (default 100)
 
         Returns:
             Tasks with the specified status
@@ -162,23 +172,27 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
             if task.get("status", "").lower() == status.lower()
         ]
 
+        truncated = truncate_response(filtered_tasks, max_results=max_results)
         return {
             "project_id": project_id,
             "status": status,
-            "tasks": filtered_tasks,
-            "count": len(filtered_tasks),
+            "tasks": truncated["items"],
+            "count": truncated["total_count"],
+            "truncated": truncated["truncated"],
         }
 
     @mcp.tool()
     async def get_tasks_by_priority(
         project_id: str,
         priority: int,
+        max_results: int = 100,
     ) -> dict:
         """Get tasks filtered by priority level.
 
         Args:
             project_id: The project ID
             priority: Priority level (typically 1-10, higher = more important)
+            max_results: Maximum number of tasks to return (default 100)
 
         Returns:
             Tasks with the specified priority
@@ -195,11 +209,13 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
             if task.get("priority") is not None and str(task.get("priority")) == str(priority)
         ]
 
+        truncated = truncate_response(filtered_tasks, max_results=max_results)
         return {
             "project_id": project_id,
             "priority": priority,
-            "tasks": filtered_tasks,
-            "count": len(filtered_tasks),
+            "tasks": truncated["items"],
+            "count": truncated["total_count"],
+            "truncated": truncated["truncated"],
         }
 
     @mcp.tool()
@@ -237,7 +253,7 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
         )
 
         # Build workload by user
-        workload = {}
+        workload: dict[str, dict[str, Any]] = {}
 
         # Initialize with all users
         if isinstance(users_data, dict) and "data" in users_data:

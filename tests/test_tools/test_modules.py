@@ -42,6 +42,9 @@ def _make_client(**overrides: Any) -> Any:
         "me": AsyncMock(return_value={"id": "u1", "name": "User"}),
         "get_user_groups": AsyncMock(return_value={"status": "ok", "data": []}),
         "get_contacts": AsyncMock(return_value={"status": "ok", "data": []}),
+        "get_contact_groups": AsyncMock(return_value={"status": "ok", "data": []}),
+        "get_files": AsyncMock(return_value={"status": "ok", "data": []}),
+        "get_webhooks": AsyncMock(return_value={"status": "ok", "data": []}),
         "get_task_tags": AsyncMock(return_value={"status": "ok", "data": []}),
         "get_task_tag_groups": AsyncMock(return_value={"status": "ok", "data": []}),
         "get_project_tags": AsyncMock(return_value={"status": "ok", "data": []}),
@@ -101,8 +104,6 @@ async def test_project_task_and_comment_tools_behavior():
     client = _make_client(
         get_task=AsyncMock(
             side_effect=[
-                {"status": "ok", "data": {"id": "t1"}},
-                {"status": "ok", "data": {"id": "t1", "files": []}},
                 {"status": "ok", "data": {"id": "t1", "text": "description"}},
             ]
         ),
@@ -128,23 +129,19 @@ async def test_project_task_and_comment_tools_behavior():
     await mcp.tools["get_project_team"]("p1")
     client.get_project.assert_awaited_with(project_id="p1", extra="users")
 
-    await mcp.tools["search_tasks"]("report", project_id="p1", status="active")
+    await mcp.tools["search_tasks"](query="report", project_id="p1", status="active")
     client.search_tasks.assert_awaited_with(
         search_query="name has 'report'",
         project_id="p1",
+        task_id=None,
         email_user_from=None,
         email_user_to=None,
         status="active",
         extra=None,
     )
 
-    combined = await mcp.tools["get_task_with_comments_and_files"]("t1")
-    assert combined["status"] == "ok"
-    assert combined["comments"][0]["id"] == "c1"
-
-    with_images = await mcp.tools["get_comments_with_images"]("t1")
-    assert with_images["total_images"] == 1
-    assert with_images["comments_with_images"][0]["id"] == "c1"
+    discussion = await mcp.tools["get_task_discussion"]("t1")
+    assert discussion["comment_count"] == 2
 
 
 @pytest.mark.asyncio
@@ -187,14 +184,17 @@ async def test_user_and_activity_tools_aggregation():
     register_user_tools(mcp, client)
     register_activity_tools(mcp, client)
 
+    # get_user_assignments now uses server-side filtering via search_tasks
+    # when email is available. Test fallback path (no email in user data).
     assignments = await mcp.tools["get_user_assignments"]("u1")
     assert assignments["task_count"] == 1
     assert assignments["tasks"][0]["id"] == "t1"
 
-    project_activity = await mcp.tools["get_project_activity"]("p1")
-    assert project_activity["event_types"] == {"task_create": 2, "task_update": 1}
+    # get_activity_log now includes event_types breakdown (consolidated from get_project_activity)
+    activity_log = await mcp.tools["get_activity_log"](project_id="p1", period="7d")
+    assert activity_log["event_types"] == {"task_create": 2, "task_update": 1}
 
-    user_activity = await mcp.tools["get_user_activity"]("u1")
+    user_activity = await mcp.tools["get_user_activity"]("u1", period="7d")
     assert len(user_activity["events"]["data"]) == 2
     assert user_activity["projects_touched"]["p1"]["event_count"] == 2
 
@@ -252,7 +252,7 @@ async def test_analytics_tools_compute_counts_and_workload():
     assert stats["completed_tasks"] == 1
     assert stats["overdue_tasks"] >= 1
 
-    overdue_tasks = await mcp.tools["get_overdue_tasks"]("p1")
+    overdue_tasks = await mcp.tools["get_overdue_tasks"](project_id="p1")
     assert overdue_tasks["count"] == 1
 
     by_status = await mcp.tools["get_tasks_by_status"]("p1", "done")
@@ -343,21 +343,16 @@ async def test_system_tools_health_and_status_paths():
     mcp = FakeMCP()
     register_system_tools(mcp, client, oauth)
 
-    account = await mcp.tools["get_account_info"]()
-    assert account["authenticated"] is True
-
     healthy = await mcp.tools["health_check"]()
     assert healthy["status"] == "healthy"
     assert healthy["token_valid"] is True
     assert healthy["api_reachable"] is True
+    assert healthy["api_base_url"].endswith("/api/oauth2")
+    assert healthy["account_url"] == "https://test.worksection.com"
 
-    current = await mcp.tools["get_current_user_info"]()
-    assert current["oauth_info"]["email"] == "u@example.com"
-    assert current["api_info"]["id"] == "u1"
-
-    status = await mcp.tools["get_api_status"]()
-    assert status["api_reachable"] is True
-    assert status["api_base_url"].endswith("/api/oauth2")
+    webhooks = await mcp.tools["get_webhooks"]()
+    client.get_webhooks.assert_awaited_once()
+    assert webhooks["status"] == "ok"
 
     failing_client = _make_client(me=AsyncMock(side_effect=RuntimeError("boom")))
     failing_mcp = FakeMCP()
@@ -366,9 +361,6 @@ async def test_system_tools_health_and_status_paths():
     unhealthy = await failing_mcp.tools["health_check"]()
     assert unhealthy["status"] == "unhealthy"
     assert "boom" in unhealthy["error"]
-
-    api_down = await failing_mcp.tools["get_api_status"]()
-    assert api_down["api_reachable"] is False
 
 
 @pytest.mark.asyncio
@@ -386,6 +378,7 @@ async def test_project_task_user_tag_and_comment_wrappers():
         me=AsyncMock(return_value={"id": "u1"}),
         get_user_groups=AsyncMock(return_value={"status": "ok", "data": [{"id": "team"}]}),
         get_contacts=AsyncMock(return_value={"status": "ok", "data": [{"id": "contact"}]}),
+        get_contact_groups=AsyncMock(return_value={"status": "ok", "data": [{"id": "cg1"}]}),
         get_task_tags=AsyncMock(return_value={"status": "ok", "data": []}),
         get_task_tag_groups=AsyncMock(return_value={"status": "ok", "data": []}),
         get_project_tags=AsyncMock(return_value={"status": "ok", "data": []}),
@@ -410,9 +403,10 @@ async def test_project_task_user_tag_and_comment_wrappers():
     await mcp.tools["get_task_subscribers"]("t1")
     await mcp.tools["get_users"](status_filter="active")
     await mcp.tools["get_user"]("u1")
-    await mcp.tools["me"]()
+    await mcp.tools["get_current_user"]()
     await mcp.tools["get_user_groups"]()
     await mcp.tools["get_contacts"]()
+    await mcp.tools["get_contact_groups"]()
     await mcp.tools["get_task_tags"](group="g", tag_type="label", access="public")
     await mcp.tools["get_task_tag_groups"](tag_type="status", access="private")
     await mcp.tools["get_project_tags"](group="g", tag_type="label", access="public")
@@ -433,9 +427,79 @@ async def test_project_task_user_tag_and_comment_wrappers():
     client.me.assert_awaited()
     client.get_user_groups.assert_awaited()
     client.get_contacts.assert_awaited()
+    client.get_contact_groups.assert_awaited()
     client.get_task_tags.assert_awaited_with(group="g", tag_type="label", access="public")
     client.get_task_tag_groups.assert_awaited_with(tag_type="status", access="private")
     client.get_project_tags.assert_awaited_with(group="g", tag_type="label", access="public")
     client.get_project_tag_groups.assert_awaited_with(tag_type="status", access="private")
     client.get_comments.assert_any_await(task_id="t1", extra="files")
     assert discussion["comment_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_activity_period_validation():
+    """Activity tools should return error dict for invalid period format."""
+    client = _make_client()
+    mcp = FakeMCP()
+    register_activity_tools(mcp, client)
+
+    result = await mcp.tools["get_activity_log"](period="invalid")
+    assert "error" in result
+
+    result2 = await mcp.tools["get_user_activity"]("u1", period="999d")
+    assert "error" in result2
+
+
+@pytest.mark.asyncio
+async def test_search_tasks_with_filter_query():
+    """search_tasks should use filter_query when provided, falling back to query."""
+    client = _make_client()
+    mcp = FakeMCP()
+    register_task_tools(mcp, client)
+
+    await mcp.tools["search_tasks"](filter_query="dateend < '2024-06-01'", project_id="p1")
+    client.search_tasks.assert_awaited_with(
+        search_query="dateend < '2024-06-01'",
+        project_id="p1",
+        task_id=None,
+        email_user_from=None,
+        email_user_to=None,
+        status=None,
+        extra=None,
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_user_assignments_server_side_filtering():
+    """get_user_assignments should use search_tasks when email is available."""
+    client = _make_client(
+        get_user=AsyncMock(
+            return_value={"status": "ok", "data": {"id": "u1", "email": "test@example.com"}}
+        ),
+        search_tasks=AsyncMock(return_value={"status": "ok", "data": [{"id": "t1"}, {"id": "t2"}]}),
+    )
+    mcp = FakeMCP()
+    register_user_tools(mcp, client)
+
+    result = await mcp.tools["get_user_assignments"]("u1")
+    assert result["task_count"] == 2
+    client.search_tasks.assert_awaited_with(email_user_to="test@example.com", status="active")
+    # Should NOT have called get_all_tasks (server-side filtering used instead)
+    client.get_all_tasks.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_new_tools_exist():
+    """New tools (get_contact_groups, get_project_files, get_webhooks) should be registered."""
+    client = _make_client()
+    mcp = FakeMCP()
+    register_user_tools(mcp, client)
+    assert "get_contact_groups" in mcp.tools
+
+    from worksection_mcp.tools.files import register_file_tools
+
+    register_file_tools(mcp, client)
+    assert "get_project_files" in mcp.tools
+
+    register_system_tools(mcp, client)
+    assert "get_webhooks" in mcp.tools

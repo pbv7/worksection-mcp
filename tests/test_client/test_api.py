@@ -377,16 +377,15 @@ async def test_project_and_task_wrappers_forward_optional_params(client):
 
 @pytest.mark.asyncio
 async def test_time_user_and_tag_wrappers_forward_params(client):
-    """Timers/costs/user/tag wrappers should build expected request params."""
+    """Costs/user/tag wrappers should build expected request params."""
     client._make_request = AsyncMock(return_value={"status": "ok", "data": []})  # type: ignore[method-assign]
 
-    await client.get_timers(project_id="p1", task_id="t1")
-    await client.get_my_timer()
     await client.get_costs_total(project_id="p1", date_start="2024-02-01", date_end="2024-02-03")
     await client.get_users(status_filter="active")
     await client.me()
     await client.get_user_groups()
     await client.get_contacts()
+    await client.get_contact_groups()
 
     await client.get_task_tags(group="main", tag_type="label", access="public")
     await client.get_task_tag_groups(tag_type="status", access="private")
@@ -397,34 +396,30 @@ async def test_time_user_and_tag_wrappers_forward_params(client):
     await client.get_project_tag_groups()  # Empty filters should pass None payload
 
     assert client._make_request.await_args_list[0].args == (
-        "get_timers",
-        {"id_project": "p1", "id_task": "t1"},
-    )
-    assert client._make_request.await_args_list[1].args == ("get_my_timer",)
-    assert client._make_request.await_args_list[2].args == (
         "get_costs_total",
         {"id_project": "p1", "datestart": "01.02.2024", "dateend": "03.02.2024"},
     )
-    assert client._make_request.await_args_list[3].args == ("get_users", {"filter": "active"})
-    assert client._make_request.await_args_list[4].args == ("me",)
-    assert client._make_request.await_args_list[5].args == ("get_user_groups",)
-    assert client._make_request.await_args_list[6].args == ("get_contacts",)
-    assert client._make_request.await_args_list[7].args == (
+    assert client._make_request.await_args_list[1].args == ("get_users", {"filter": "active"})
+    assert client._make_request.await_args_list[2].args == ("me",)
+    assert client._make_request.await_args_list[3].args == ("get_user_groups",)
+    assert client._make_request.await_args_list[4].args == ("get_contacts",)
+    assert client._make_request.await_args_list[5].args == ("get_contact_groups",)
+    assert client._make_request.await_args_list[6].args == (
         "get_task_tags",
         {"group": "main", "type": "label", "access": "public"},
     )
-    assert client._make_request.await_args_list[8].args == (
+    assert client._make_request.await_args_list[7].args == (
         "get_task_tag_groups",
         {"type": "status", "access": "private"},
     )
-    assert client._make_request.await_args_list[9].args == ("get_task_tag_groups", None)
-    assert client._make_request.await_args_list[10].args == (
+    assert client._make_request.await_args_list[8].args == ("get_task_tag_groups", None)
+    assert client._make_request.await_args_list[9].args == (
         "get_project_tags",
         {"group": "main", "type": "label", "access": "public"},
     )
-    assert client._make_request.await_args_list[11].args == ("get_project_tags", None)
-    assert client._make_request.await_args_list[12].args == (
+    assert client._make_request.await_args_list[10].args == ("get_project_tags", None)
+    assert client._make_request.await_args_list[11].args == (
         "get_project_tag_groups",
         {"type": "status", "access": "private"},
     )
-    assert client._make_request.await_args_list[13].args == ("get_project_tag_groups", None)
+    assert client._make_request.await_args_list[12].args == ("get_project_tag_groups", None)

@@ -2,6 +2,7 @@
 
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.mcp_protocols import ToolRegistrar
+from worksection_mcp.utils.date_utils import validate_period
 
 
 def register_activity_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
@@ -10,68 +11,35 @@ def register_activity_tools(mcp: ToolRegistrar, client: WorksectionClient) -> No
     @mcp.tool()
     async def get_activity_log(
         project_id: str | None = None,
-        period: str | None = None,
+        period: str = "7d",
         event_filter: str | None = None,
     ) -> dict:
         """Get activity/event log with flexible filtering.
 
+        Use this to see recent changes across all projects or within a specific
+        project. Returns an event-type breakdown for quick overview.
+
         Args:
             project_id: Filter by project (optional)
-            period: Time period for events (optional). Format:
-                - Minutes: 1m to 360m (e.g., "120m" for 2 hours)
-                - Hours: 1h to 72h (e.g., "24h" for 1 day)
-                - Days: 1d to 30d (e.g., "7d" for 1 week)
+            period: Time period for events, e.g. '7d', '24h', '120m'.
+                Minutes: 1m-360m, Hours: 1h-72h, Days: 1d-30d.
             event_filter: Filter by event type (optional)
 
         Returns:
-            Activity log entries:
-            - events: List of activity events
-            - Each event has: type, user, task/project, date, description
-        """
-        return await client.get_events(
-            project_id=project_id,
-            period=period,
-            event_filter=event_filter,
-        )
-
-    @mcp.tool()
-    async def get_recent_activity(period: str = "7d") -> dict:
-        """Get recent activity across all projects.
-
-        Args:
-            period: Time period for events (default: "7d" for 7 days).
-                Format: 1m-360m (minutes), 1h-72h (hours), 1d-30d (days)
-
-        Returns:
-            Recent activity:
-            - events: List of recent events
-            - Sorted by date (newest first)
-        """
-        return await client.get_events(period=period)
-
-    @mcp.tool()
-    async def get_project_activity(
-        project_id: str,
-        period: str | None = None,
-    ) -> dict:
-        """Get activity log for a specific project.
-
-        Args:
-            project_id: The project ID
-            period: Time period for events (optional). Format:
-                - Minutes: 1m to 360m (e.g., "120m" for 2 hours)
-                - Hours: 1h to 72h (e.g., "24h" for 1 day)
-                - Days: 1d to 30d (e.g., "7d" for 1 week)
-
-        Returns:
-            Project activity:
-            - project_id: Project ID
-            - events: Activity events
+            Activity log with event_types breakdown:
+            - data: List of activity events
             - event_types: Count by event type
         """
+        if not validate_period(period):
+            return {
+                "error": f"Invalid period format: '{period}'. "
+                "Use Nm (1-360), Nh (1-72), or Nd (1-30).",
+            }
+
         events_data = await client.get_events(
             project_id=project_id,
             period=period,
+            event_filter=event_filter,
         )
 
         # Count by event type
@@ -91,7 +59,7 @@ def register_activity_tools(mcp: ToolRegistrar, client: WorksectionClient) -> No
     @mcp.tool()
     async def get_user_activity(
         user_id: str,
-        period: str | None = None,
+        period: str = "7d",
     ) -> dict:
         """Get activity log for a specific user.
 
@@ -100,10 +68,8 @@ def register_activity_tools(mcp: ToolRegistrar, client: WorksectionClient) -> No
 
         Args:
             user_id: The user ID
-            period: Time period for events (optional). Format:
-                - Minutes: 1m to 360m (e.g., "120m" for 2 hours)
-                - Hours: 1h to 72h (e.g., "24h" for 1 day)
-                - Days: 1d to 30d (e.g., "7d" for 1 week)
+            period: Time period for events, e.g. '7d', '24h', '120m'.
+                Minutes: 1m-360m, Hours: 1h-72h, Days: 1d-30d.
 
         Returns:
             User activity:
@@ -111,11 +77,17 @@ def register_activity_tools(mcp: ToolRegistrar, client: WorksectionClient) -> No
             - events: Activity events by this user
             - projects_touched: Projects this user interacted with
         """
+        if not validate_period(period):
+            return {
+                "error": f"Invalid period format: '{period}'. "
+                "Use Nm (1-360), Nh (1-72), or Nd (1-30).",
+            }
+
         events_data = await client.get_events(period=period)
 
         # Filter by user and find unique projects
         user_events = []
-        projects_touched = {}
+        projects_touched: dict[str, dict] = {}
 
         if isinstance(events_data, dict) and "data" in events_data:
             for event in events_data["data"]:

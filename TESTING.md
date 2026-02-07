@@ -61,7 +61,7 @@ A "rich task" is a task that contains meaningful test data for comprehensive tes
 
 - ✅ **Comments** - for testing comment tools (`get_comments`, `get_task_discussion`)
 - ✅ **File attachments** - for testing file tools (`download_file`, `get_file_as_base64`, `get_all_task_attachments`)
-- ✅ **Image attachments** - for testing image tools (`list_image_attachments`, `get_comments_with_images`)
+- ✅ **Image attachments** - for testing image tools (`list_image_attachments`)
 - ✅ **DOCX/PDF files** - for testing content extraction (`get_file_content`)
 
 When you specify a rich task, the script:
@@ -113,7 +113,7 @@ Authenticating...
 ✓ Authentication successful
 
 Registering MCP tools...
-✓ Registered 50 MCP tools
+✓ Registered 46 MCP tools
 
 ================================================================================
 EXTRACTING TEST DATA
@@ -127,17 +127,17 @@ EXTRACTING TEST DATA
 TESTING ALL MCP TOOLS
 ================================================================================
 
-[1/50] ✅ get_projects
-[2/50] ✅ get_project
-[3/50] ✅ get_project_groups
+[1/46] ✅ get_projects
+[2/46] ✅ get_project
+[3/46] ✅ get_project_groups
 ...
-[50/50] ✅ health_check
+[46/46] ✅ health_check
 
 ================================================================================
 TEST SUMMARY
 ================================================================================
-Total tools: 50
-✅ Passed: 48
+Total tools: 46
+✅ Passed: 44
 ❌ Failed: 0
 ⊘ Skipped: 2
 Success rate: 100.0%
@@ -153,16 +153,16 @@ Completed at: 2026-01-28 02:35:00
 
 The test covers all tool categories:
 
-- **Projects** (4 tools) - get_projects, get_project, get_project_groups, etc.
-- **Tasks** (8 tools) - get_tasks, get_task, search_tasks, etc.
-- **Comments** (3 tools) - get_comments, get_task_discussion, etc.
-- **Files** (6 tools) - get_task_files, download_file, get_file_content, etc.
-- **Time Tracking** (4 tools) - get_costs, get_costs_total, get_user_workload, etc.
-- **Users** (6 tools) - get_users, get_user, me, etc.
-- **Tags** (6 tools) - get_task_tags, get_project_tags, search_tasks_by_tag, etc.
-- **Analytics** (5 tools) - get_project_stats, get_overdue_tasks, etc.
-- **Activity** (4 tools) - get_activity_log, get_project_activity, etc.
-- **System** (4 tools) - health_check, get_account_info, etc.
+- **Projects** (4 tools) - get_projects, get_project, get_project_groups, get_project_team
+- **Tasks** (7 tools) - get_all_tasks, get_tasks, get_task, search_tasks, get_task_subtasks, get_task_relations, get_task_subscribers
+- **Comments** (2 tools) - get_comments, get_task_discussion
+- **Files** (7 tools) - get_task_files, get_all_task_attachments, get_project_files, download_file, get_file_as_base64, get_file_content, list_image_attachments
+- **Costs** (4 tools) - get_costs, get_costs_total, get_user_workload, get_project_time_report
+- **Users** (7 tools) - get_users, get_user, get_current_user, get_user_groups, get_contacts, get_contact_groups, get_user_assignments
+- **Tags** (6 tools) - get_task_tags, get_task_tag_groups, get_project_tags, get_project_tag_groups, get_task_with_tags, search_tasks_by_tag
+- **Analytics** (5 tools) - get_project_stats, get_overdue_tasks, get_tasks_by_status, get_tasks_by_priority, get_team_workload_summary
+- **Activity** (2 tools) - get_activity_log, get_user_activity
+- **System** (2 tools) - health_check, get_webhooks
 
 ## Troubleshooting
 
@@ -258,7 +258,7 @@ Common test parameters used:
 
 - Worksection API: 1 request/second
 - Test script automatically waits 1.1 seconds between calls
-- Total test time: ~50-60 seconds for all tools
+- Total test time: ~46-55 seconds for all tools
 
 ## CI/CD Integration
 

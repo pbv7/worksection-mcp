@@ -47,7 +47,7 @@ def build_settings(temp_dir: Path, **overrides: Any) -> Settings:
         "worksection_client_secret": "test_client_secret_value_123456",
         "worksection_account_url": "https://test.worksection.com",
         "worksection_redirect_uri": "https://localhost:8080/oauth/callback",
-        "worksection_scopes": "projects_read,tasks_read,comments_read,users_read,files_read,tags_read,costs_read",
+        "worksection_scopes": "projects_read,tasks_read,costs_read,tags_read,comments_read,files_read,users_read,contacts_read",
         "oauth_callback_use_ssl": True,
         "token_storage_path": temp_dir / "tokens",
         "file_cache_path": temp_dir / "files",

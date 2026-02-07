@@ -1,5 +1,7 @@
 """Tag-related MCP tools (read-only)."""
 
+from typing import Literal
+
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.mcp_protocols import ToolRegistrar
 
@@ -14,8 +16,8 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     @mcp.tool()
     async def get_task_tags(
         group: str | None = None,
-        tag_type: str | None = None,
-        access: str | None = None,
+        tag_type: Literal["status", "label"] | None = None,
+        access: Literal["public", "private"] | None = None,
     ) -> dict:
         """Get available task tags (labels and statuses).
 
@@ -34,8 +36,8 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
 
     @mcp.tool()
     async def get_task_tag_groups(
-        tag_type: str | None = None,
-        access: str | None = None,
+        tag_type: Literal["status", "label"] | None = None,
+        access: Literal["public", "private"] | None = None,
     ) -> dict:
         """Get task tag groups.
 
@@ -59,8 +61,8 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     @mcp.tool()
     async def get_project_tags(
         group: str | None = None,
-        tag_type: str | None = None,
-        access: str | None = None,
+        tag_type: Literal["status", "label"] | None = None,
+        access: Literal["public", "private"] | None = None,
     ) -> dict:
         """Get available project tags.
 
@@ -76,8 +78,8 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
 
     @mcp.tool()
     async def get_project_tag_groups(
-        tag_type: str | None = None,
-        access: str | None = None,
+        tag_type: Literal["status", "label"] | None = None,
+        access: Literal["public", "private"] | None = None,
     ) -> dict:
         """Get project tag groups.
 
@@ -141,7 +143,6 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
             - count: Number of matches found
         """
         # Get all tasks from project with tags included
-        # The 'extra' parameter with 'tags' value tells API to include task tags
         tasks_data = await client.get_tasks(
             project_id=project_id, status_filter="all", extra="tags"
         )

@@ -38,7 +38,7 @@ class Settings(BaseSettings):
         description="OAuth2 redirect URI",
     )
     worksection_scopes: str = Field(
-        default="projects_read,tasks_read,timers_read,costs_read,comments_read,users_read",
+        default="projects_read,tasks_read,costs_read,tags_read,comments_read,files_read,users_read,contacts_read",
         description="Comma-separated OAuth2 scopes",
     )
 
@@ -268,13 +268,13 @@ class Settings(BaseSettings):
         valid_scopes = {
             "projects_read",
             "tasks_read",
-            "timers_read",
             "costs_read",
             "tags_read",
             "comments_read",
             "files_read",
             "users_read",
             "contacts_read",
+            "administrative",
         }
 
         invalid = [s for s in scopes if s not in valid_scopes]

@@ -61,11 +61,12 @@ class MCPToolTester:
     #   min_items: minimum number of items in data list (for rich task validation)
     #   min_total_files: minimum value for total_files field (for rich task validation)
     VALIDATION_RULES: ClassVar[dict[str, dict[str, Any]]] = {
-        # API status/info tools - custom structures
-        "health_check": {"required_fields": ["status"], "status_values": ["ok", "healthy"]},
-        "get_api_status": {"required_fields": ["api_base_url", "account_url"]},
-        "get_account_info": {"required_fields": ["account_url", "user"]},
-        "get_current_user_info": {"required_fields": ["oauth_info", "api_info"]},
+        # System tools
+        "health_check": {
+            "required_fields": ["status", "api_base_url", "account_url"],
+            "status_values": ["ok", "healthy"],
+        },
+        "get_webhooks": {"required_fields": ["status"], "allow_error": True},
         # List tools - expect data array
         "get_projects": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_tasks": {"required_fields": ["status", "data"], "data_is_list": True},
@@ -76,21 +77,21 @@ class MCPToolTester:
         "get_project_tag_groups": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_comments": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_contacts": {"required_fields": ["status", "data"], "data_is_list": True},
+        "get_contact_groups": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_costs": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_user_groups": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_project_groups": {"required_fields": ["status", "data"], "data_is_list": True},
-        "get_activity_log": {"required_fields": ["status", "data"], "data_is_list": True},
+        "get_project_files": {"required_fields": ["status", "data"], "data_is_list": True},
         # Single item tools - expect data object
         "get_project": {"required_fields": ["status", "data"], "data_is_dict": True},
         "get_task": {"required_fields": ["status", "data"], "data_is_dict": True},
         "get_user": {"required_fields": ["status", "data"], "data_is_dict": True},
-        "me": {"required_fields": ["status", "data"], "data_is_dict": True},
+        "get_current_user": {"required_fields": ["status", "data"], "data_is_dict": True},
         "get_project_team": {"required_fields": ["status", "data"]},
         # Task detail tools
         "get_task_subtasks": {"required_fields": ["status"]},
         "get_task_relations": {"required_fields": ["status"]},
         "get_task_subscribers": {"required_fields": ["status"]},
-        "get_task_with_comments_and_files": {"required_fields": ["status", "data"]},
         "get_task_discussion": {"required_fields": ["task_id", "comments"]},
         # Task with tags - special response format
         "get_task_with_tags": {"required_fields": ["status", "task_id", "tags", "tag_names"]},
@@ -120,7 +121,6 @@ class MCPToolTester:
             "required_fields": ["project_id", "members", "total_members"]
         },
         "get_overdue_tasks": {"required_fields": ["tasks", "count"]},
-        "get_recent_activity": {"required_fields": ["status", "data"]},
         "get_tasks_by_status": {"required_fields": ["project_id", "status", "tasks", "count"]},
         "get_tasks_by_priority": {"required_fields": ["project_id", "priority", "tasks", "count"]},
         # Time tracking tools
@@ -132,21 +132,15 @@ class MCPToolTester:
         "search_tasks_by_tag": {"required_fields": ["tag", "tasks", "count"]},
         # Tools that return status on success or error
         "get_all_tasks": {"required_fields": ["status", "data"], "data_is_list": True},
-        # Activity tools - need to check for error in nested response
-        "get_project_activity": {
-            "required_fields": ["project_id", "events"],
-            "events_status_ok": True,
-        },
+        # Activity tools
+        "get_activity_log": {"required_fields": ["project_id", "events", "event_types"]},
         "get_user_activity": {"required_fields": ["user_id", "events"], "events_has_data": True},
-        # Comments with images
-        "get_comments_with_images": {"required_fields": ["task_id", "comments_with_images"]},
     }
 
     # Enhanced validation rules when rich task is specified
     # These add min_items requirements to ensure meaningful data is returned
     RICH_TASK_VALIDATION_RULES: ClassVar[dict[str, dict[str, Any]]] = {
         "get_comments": {"min_items": 1},  # Rich task should have comments
-        "get_comments_with_images": {"min_items": 0},  # May or may not have image comments
         "get_all_task_attachments": {"min_total_files": 1},  # Rich task should have files
         "list_image_attachments": {"min_image_count": 0},  # May or may not have images
     }
@@ -167,6 +161,7 @@ class MCPToolTester:
             "task_id": None,
             "file_id": None,
             "comment_id": None,
+            "files_project_id": None,
         }
         self.mcp: FastMCP[Any] | None = None
         self.client: WorksectionClient | None = None
@@ -312,6 +307,37 @@ class MCPToolTester:
             except Exception as e:
                 self._out(f"⚠️  Failed to get task_id: {e}")
 
+        # Auto-discover a project that has files for get_project_files testing
+        try:
+            primary_pid = self.test_ids["project_id"]
+            if primary_pid:
+                files_resp = await client.get_files(project_id=primary_pid)
+                if files_resp.get("data") and len(files_resp["data"]) > 0:
+                    self.test_ids["files_project_id"] = primary_pid
+                    self._out(
+                        f"✓ files_project_id: {primary_pid} ({len(files_resp['data'])} files)"
+                    )
+
+            if not self.test_ids["files_project_id"]:
+                projects = await client.get_projects()
+                for project in projects.get("data", []):
+                    pid = project["id"]
+                    if pid == primary_pid:
+                        continue  # Already checked
+                    files_resp = await client.get_files(project_id=pid)
+                    if files_resp.get("data") and len(files_resp["data"]) > 0:
+                        self.test_ids["files_project_id"] = pid
+                        self._out(
+                            f"✓ files_project_id: {pid} ({project.get('name', '?')}, "
+                            f"{len(files_resp['data'])} files)"
+                        )
+                        break
+
+            if not self.test_ids["files_project_id"]:
+                self._out("⚠️  No project with files found for get_project_files test")
+        except Exception as e:
+            self._out(f"⚠️  Failed to discover files_project_id: {e}")
+
         self._out()
 
     def validate_response(self, tool_name: str, response: Any) -> tuple[bool, list[str], list[str]]:
@@ -320,8 +346,8 @@ class MCPToolTester:
         Returns:
             Tuple of (is_valid, passed_checks, failed_checks)
         """
-        passed = []
-        failed = []
+        passed: list[str] = []
+        failed: list[str] = []
 
         # Get validation rules for this tool
         rules = self.VALIDATION_RULES.get(tool_name, {}).copy()
@@ -329,6 +355,20 @@ class MCPToolTester:
         # Add rich task validation rules if rich_task is specified
         if self.rich_task and tool_name in self.RICH_TASK_VALIDATION_RULES:
             rules.update(self.RICH_TASK_VALIDATION_RULES[tool_name])
+
+        # If allow_error is set and response has status="error", treat as graceful error
+        is_error_response = (
+            rules.get("allow_error")
+            and isinstance(response, dict)
+            and response.get("status") == "error"
+        )
+        if is_error_response:
+            passed.append("graceful error response")
+            if "error" in response:
+                passed.append(f"has error message: {str(response['error'])[:80]}")
+            if "hint" in response:
+                passed.append("has hint")
+            return True, passed, failed
 
         # If no specific rules, use generic validation
         if not rules:
@@ -555,7 +595,6 @@ class MCPToolTester:
                 "get_task_subtasks",
                 "get_task_relations",
                 "get_task_subscribers",
-                "get_task_with_comments_and_files",
                 "get_task_discussion",
                 "get_task_with_tags",
             ]:
@@ -592,6 +631,11 @@ class MCPToolTester:
         elif tool_name in ["get_task_files", "list_image_attachments", "get_all_task_attachments"]:
             if self.test_ids["task_id"]:
                 params["task_id"] = self.test_ids["task_id"]
+        elif tool_name == "get_project_files":
+            if self.test_ids.get("files_project_id"):
+                params["project_id"] = self.test_ids["files_project_id"]
+            elif self.test_ids["project_id"]:
+                params["project_id"] = self.test_ids["project_id"]
 
         # Timer tools
         if (
@@ -614,17 +658,14 @@ class MCPToolTester:
 
         # Activity tools
         if "activity" in tool_name or "event" in tool_name:
-            if tool_name == "get_project_activity":
+            if tool_name == "get_activity_log":
+                params["period"] = "7d"
                 if self.test_ids["project_id"]:
                     params["project_id"] = self.test_ids["project_id"]
-                params["period"] = "7d"  # Required parameter
-            elif tool_name == "get_activity_log":
-                # Activity log requires a period parameter
-                params["period"] = "7d"
             elif tool_name == "get_user_activity":
                 if self.test_ids["user_id"]:
                     params["user_id"] = self.test_ids["user_id"]
-                params["period"] = "7d"  # Required for meaningful data
+                params["period"] = "7d"
 
         # Analytics tools
         if (

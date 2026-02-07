@@ -12,8 +12,7 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     @mcp.tool()
     async def get_all_tasks(
         status_filter: Literal["active", "done", "all"] | None = None,
-        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
-        | None = None,
+        extra: str | None = None,
     ) -> dict:
         """Get all tasks across all projects.
 
@@ -22,13 +21,9 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
                 - active: Only incomplete tasks (default)
                 - done: Only completed tasks
                 - all: All tasks
-            extra: Additional data to include:
-                - text: Full task description
-                - files: Attached files
-                - comments: Task comments
-                - relations: Related/dependent tasks
-                - subtasks: Subtask list
-                - subscribers: Task watchers
+            extra: Additional data to include. Valid values:
+                text, files, comments, relations, subtasks, subscribers.
+                Example: 'text' or 'text,files' for multiple.
 
         Returns:
             List of tasks with their details:
@@ -43,15 +38,15 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     async def get_tasks(
         project_id: str,
         status_filter: Literal["active", "done", "all"] | None = None,
-        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
-        | None = None,
+        extra: str | None = None,
     ) -> dict:
         """Get tasks for a specific project.
 
         Args:
             project_id: The project ID to get tasks from
             status_filter: Filter by status (active, done, all)
-            extra: Additional data to include
+            extra: Additional data to include. Valid values:
+                text, files, comments, relations, subtasks, subscribers.
 
         Returns:
             List of tasks in the specified project
@@ -63,14 +58,15 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     @mcp.tool()
     async def get_task(
         task_id: str,
-        extra: Literal["text", "files", "comments", "relations", "subtasks", "subscribers"]
-        | None = None,
+        extra: str | None = None,
     ) -> dict:
         """Get detailed information about a specific task.
 
         Args:
             task_id: The unique identifier of the task
-            extra: Additional data to include
+            extra: Additional data to include. Valid values:
+                text, files, comments, relations, subtasks, subscribers.
+                Example: 'text' or 'text,files' for multiple.
 
         Returns:
             Complete task details including:
@@ -84,34 +80,46 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
 
     @mcp.tool()
     async def search_tasks(
-        query: str,
+        query: str | None = None,
+        filter_query: str | None = None,
         project_id: str | None = None,
+        task_id: str | None = None,
         assignee_email: str | None = None,
         author_email: str | None = None,
         status: Literal["active", "done"] | None = None,
-        extra: Literal["text", "html", "files"] | None = None,
+        extra: str | None = None,
     ) -> dict:
-        """Search for tasks by name.
+        """Search for tasks using name search or raw query syntax.
 
-        Uses Worksection's search query syntax to find tasks matching the query.
+        Provide 'query' for simple name search, or 'filter_query' for advanced
+        Worksection query syntax. filter_query takes precedence when both provided.
 
         Args:
-            query: Text to search for in task names
-            project_id: Project ID to scope the search (recommended for better results)
+            query: Simple text to search for in task names
+            filter_query: Raw Worksection query, e.g. "name has 'Report' and dateend < '2024-06-01'".
+                Fields: name, dateadd, datestart, dateend, dateclose.
+                Operators: =, has, >, <, >=, <=, !=, in. Logic: and, or.
+            project_id: Project ID to scope the search
+            task_id: Task ID to scope the search
             assignee_email: Filter by assignee email
             author_email: Filter by task author email
             status: Filter by task state (active=incomplete, done=completed)
             extra: Additional data to include (text, html, files)
 
         Returns:
-            List of tasks matching the search query
+            List of tasks matching the search criteria
         """
-        # Build the filter query - search by task name
-        filter_query = f"name has '{query}'"
+        if filter_query:
+            search_filter = filter_query
+        elif query:
+            search_filter = f"name has '{query}'"
+        else:
+            search_filter = None
 
         return await client.search_tasks(
-            search_query=filter_query,
+            search_query=search_filter,
             project_id=project_id,
+            task_id=task_id,
             email_user_from=author_email,
             email_user_to=assignee_email,
             status=status,
@@ -158,30 +166,3 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
             - subscribers: Array of user objects watching this task
         """
         return await client.get_task(task_id=task_id, extra="subscribers")
-
-    @mcp.tool()
-    async def get_task_with_comments_and_files(task_id: str) -> dict:
-        """Get task with all comments and file attachments.
-
-        This is useful for generating reports that need the full context
-        of a task including all discussion and attached screenshots.
-
-        Args:
-            task_id: The task ID
-
-        Returns:
-            Complete task with:
-            - Task details
-            - All comments with their content
-            - All attached files with metadata
-        """
-        # Get task with both comments and files
-        task_data = await client.get_task(task_id=task_id, extra="text")
-        comments_data = await client.get_comments(task_id=task_id, extra="files")
-
-        return {
-            "status": "ok",
-            "data": task_data.get("data") if isinstance(task_data, dict) else task_data,
-            "task": task_data,
-            "comments": comments_data.get("data", []) if isinstance(comments_data, dict) else [],
-        }

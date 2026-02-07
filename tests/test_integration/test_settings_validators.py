@@ -56,6 +56,12 @@ def test_credentials_scope_port_and_positive_validators(tmp_path):
     with pytest.raises(ValidationError, match="minimum 16"):
         Settings.model_validate(short_secret)
 
+    # timers_read is no longer a valid scope
+    invalid_scopes_timer = _base_kwargs(tmp_path)
+    invalid_scopes_timer["worksection_scopes"] = "projects_read,timers_read"
+    with pytest.raises(ValidationError, match="Invalid scopes"):
+        Settings.model_validate(invalid_scopes_timer)
+
     invalid_scopes = _base_kwargs(tmp_path)
     invalid_scopes["worksection_scopes"] = "projects_read,invalid_scope"
     with pytest.raises(ValidationError, match="Invalid scopes"):

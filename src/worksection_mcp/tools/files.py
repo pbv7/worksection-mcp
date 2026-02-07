@@ -52,6 +52,32 @@ def register_file_tools(
         }
 
     @mcp.tool()
+    async def get_project_files(
+        project_id: str | None = None,
+        task_id: str | None = None,
+    ) -> dict:
+        """List all files in a project or task.
+
+        Includes Files section uploads, description attachments, and comment files.
+        Unlike get_task_files (which uses extra=files), this calls the dedicated
+        get_files API endpoint for broader coverage.
+
+        Args:
+            project_id: Project ID (at least one of project_id or task_id required)
+            task_id: Task ID (at least one of project_id or task_id required)
+
+        Returns:
+            List of files with metadata:
+            - id: File ID (use with download_file)
+            - name: File name
+            - size: File size
+            - date_added: Upload date
+        """
+        if not project_id and not task_id:
+            return {"error": "At least one of project_id or task_id is required."}
+        return await client.get_files(project_id=project_id, task_id=task_id)
+
+    @mcp.tool()
     async def get_task_files(task_id: str) -> dict:
         """Get all files attached to a task.
 

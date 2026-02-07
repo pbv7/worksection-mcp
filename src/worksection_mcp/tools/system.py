@@ -4,6 +4,7 @@ import logging
 from typing import Any, Protocol
 
 from worksection_mcp.client import WorksectionClient
+from worksection_mcp.client.api import WorksectionAPIError
 from worksection_mcp.mcp_protocols import ToolRegistrar
 
 logger = logging.getLogger(__name__)
@@ -27,35 +28,11 @@ def register_system_tools(
     """Register system and account tools with the MCP server."""
 
     @mcp.tool()
-    async def get_account_info() -> dict:
-        """Get information about the Worksection account.
-
-        Returns account information derived from the current user's data,
-        as the Worksection API doesn't provide a dedicated account endpoint.
-
-        Returns:
-            Account information:
-            - account_url: Worksection account URL
-            - user: Current user info (name, role, department)
-            - authenticated: Whether authenticated successfully
-        """
-        # Get user info which includes account details
-        user_info = await client.me()
-
-        return {
-            "account_url": client.settings.worksection_account_url,
-            "user": user_info,
-            "authenticated": bool(user_info),
-        }
-
-    @mcp.tool()
     async def health_check() -> dict:
-        """Check the health status of the MCP server.
+        """Check the health status of the MCP server and API connectivity.
 
-        Verifies:
-        - OAuth token validity
-        - API connectivity
-        - Current user authentication
+        Verifies OAuth token validity, API reachability, and returns
+        useful connection metadata.
 
         Returns:
             Health status:
@@ -63,6 +40,9 @@ def register_system_tools(
             - token_valid: Whether OAuth token is valid
             - api_reachable: Whether API is reachable
             - user: Current authenticated user info
+            - api_base_url: Base URL for API requests
+            - account_url: Worksection account URL
+            - rate_limit: Rate limit info
         """
         status = "healthy"
         token_valid = False
@@ -89,61 +69,33 @@ def register_system_tools(
             "token_valid": token_valid,
             "api_reachable": api_reachable,
             "user": user_info,
+            "api_base_url": client.settings.api_base_url,
+            "account_url": client.settings.worksection_account_url,
+            "rate_limit": "1 request/second (adaptive)",
             "error": error,
         }
 
     @mcp.tool()
-    async def get_current_user_info() -> dict:
-        """Get comprehensive info about the authenticated user.
+    async def get_webhooks() -> dict:
+        """List all configured webhooks for the Worksection account.
 
-        This combines OAuth user info with Worksection account data.
-
-        Returns:
-            Current user information:
-            - id: User ID
-            - email: Email address
-            - name: Full name
-            - account_url: Worksection account URL
-            - permissions: User permissions/role
-        """
-        # Get basic info from OAuth resource endpoint
-        if oauth:
-            oauth_info = await oauth.get_user_info()
-        else:
-            oauth_info = {}
-
-        # Get detailed info from API
-        api_info = await client.me()
-
-        return {
-            "oauth_info": oauth_info,
-            "api_info": api_info,
-        }
-
-    @mcp.tool()
-    async def get_api_status() -> dict:
-        """Get API status and rate limit information.
+        Note: This endpoint requires the 'administrative' scope which must
+        be manually added to WORKSECTION_SCOPES in your configuration.
 
         Returns:
-            API status:
-            - api_base_url: Base URL for API requests
-            - account_url: Worksection account URL
-            - rate_limit: Current rate limit settings
-            - max_results: Maximum results per response
-            - api_reachable: Whether API is responding
+            List of webhooks:
+            - id: Webhook ID
+            - url: Callback URL
+            - events: Subscribed event types
         """
-        # Test API connectivity
-        api_reachable = False
         try:
-            await client.me()
-            api_reachable = True
-        except Exception:
-            logger.debug("API unreachable during status check", exc_info=True)
-
-        return {
-            "api_base_url": client.settings.api_base_url,
-            "account_url": client.settings.worksection_account_url,
-            "rate_limit": "1 request/second",
-            "max_results": "10,000 items per response",
-            "api_reachable": api_reachable,
-        }
+            return await client.get_webhooks()
+        except WorksectionAPIError as e:
+            error_msg = str(e)
+            result: dict[str, Any] = {"status": "error", "error": error_msg}
+            if "permissions" in error_msg.lower() or "administrative" in error_msg.lower():
+                result["hint"] = (
+                    "Add 'administrative' to WORKSECTION_SCOPES in your configuration "
+                    "to use this endpoint."
+                )
+            return result

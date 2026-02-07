@@ -49,7 +49,7 @@ def register_user_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         return await client.get_user(user_id=user_id)
 
     @mcp.tool()
-    async def me() -> dict:
+    async def get_current_user() -> dict:
         """Get information about the current authenticated user.
 
         Returns:
@@ -90,8 +90,23 @@ def register_user_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         return await client.get_contacts()
 
     @mcp.tool()
+    async def get_contact_groups() -> dict:
+        """List all contact folders in the Worksection account.
+
+        Returns both preset system folders and custom folders.
+
+        Returns:
+            List of contact groups/folders:
+            - id: Group ID
+            - name: Folder name
+        """
+        return await client.get_contact_groups()
+
+    @mcp.tool()
     async def get_user_assignments(user_id: str) -> dict:
-        """Get tasks assigned to a specific user.
+        """Get active tasks assigned to a specific user.
+
+        Uses server-side filtering via search_tasks API for efficiency.
 
         Args:
             user_id: The user ID
@@ -102,18 +117,27 @@ def register_user_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
             - tasks: List of assigned tasks
             - task_count: Total number of assigned tasks
         """
-        # Get user info
+        # Get user info (includes email needed for search)
         user_data = await client.get_user(user_id=user_id)
 
-        # Get all tasks and filter by assignee
-        all_tasks = await client.get_all_tasks(status_filter="active")
+        # Extract email for server-side filtering
+        email = None
+        if isinstance(user_data, dict) and "data" in user_data:
+            email = user_data["data"].get("email")
 
-        assigned_tasks = []
-        if isinstance(all_tasks, dict) and "data" in all_tasks:
-            for task in all_tasks["data"]:
-                user_to = task.get("user_to", {})
-                if user_to.get("id") == user_id:
-                    assigned_tasks.append(task)
+        if email:
+            # Use server-side filtering via search_tasks
+            tasks_data = await client.search_tasks(email_user_to=email, status="active")
+            assigned_tasks = tasks_data.get("data", []) if isinstance(tasks_data, dict) else []
+        else:
+            # Fallback: fetch all active tasks and filter client-side
+            all_tasks = await client.get_all_tasks(status_filter="active")
+            assigned_tasks = []
+            if isinstance(all_tasks, dict) and "data" in all_tasks:
+                for task in all_tasks["data"]:
+                    user_to = task.get("user_to", {})
+                    if user_to.get("id") == user_id:
+                        assigned_tasks.append(task)
 
         return {
             "user_id": user_id,

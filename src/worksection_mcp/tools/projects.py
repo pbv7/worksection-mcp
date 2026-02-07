@@ -12,7 +12,7 @@ def register_project_tools(mcp: ToolRegistrar, client: WorksectionClient) -> Non
     @mcp.tool()
     async def get_projects(
         status_filter: Literal["active", "archive", "all"] | None = None,
-        extra: Literal["text", "options", "users"] | None = None,
+        extra: str | None = None,
     ) -> dict:
         """Get all projects from Worksection.
 
@@ -21,10 +21,8 @@ def register_project_tools(mcp: ToolRegistrar, client: WorksectionClient) -> Non
                 - active: Only active projects (default)
                 - archive: Only archived projects
                 - all: All projects
-            extra: Additional data to include:
-                - text: Include project description
-                - options: Include project options/settings
-                - users: Include project team members
+            extra: Additional data to include. Valid values:
+                text, options, users. Example: 'text' or 'text,users'.
 
         Returns:
             Dictionary containing list of projects with their details:
@@ -39,13 +37,14 @@ def register_project_tools(mcp: ToolRegistrar, client: WorksectionClient) -> Non
     @mcp.tool()
     async def get_project(
         project_id: str,
-        extra: Literal["text", "options", "users"] | None = None,
+        extra: str | None = None,
     ) -> dict:
         """Get detailed information about a specific project.
 
         Args:
             project_id: The unique identifier of the project
-            extra: Additional data to include (text, options, users)
+            extra: Additional data to include. Valid values:
+                text, options, users. Example: 'text' or 'text,users'.
 
         Returns:
             Complete project details including:

@@ -1,19 +1,11 @@
-"""Time tracking MCP tools."""
+"""Cost and time tracking MCP tools."""
 
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.mcp_protocols import ToolRegistrar
 
 
 def register_timer_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
-    """Register time tracking tools with the MCP server.
-
-    Note: Timer-specific tools (get_timers, get_my_timer) have been removed
-    because Worksection API doesn't provide a timers_read scope. Only cost/time
-    tracking tools that use the costs_read scope are available.
-    """
-
-    # NOTE: get_timers and get_my_timer removed - no timers_read scope available
-    # The Worksection API only provides costs_read scope for time tracking data
+    """Register cost and time tracking tools with the MCP server."""
 
     @mcp.tool()
     async def get_costs(

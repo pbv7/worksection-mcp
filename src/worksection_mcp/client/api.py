@@ -1,10 +1,13 @@
 """Worksection API client."""
 
+from __future__ import annotations
+
 import logging
 from typing import Any, Protocol, cast
 
 import httpx
 
+from worksection_mcp.cache.session_cache import SessionCache
 from worksection_mcp.client.rate_limiter import AdaptiveRateLimiter
 from worksection_mcp.config import Settings
 from worksection_mcp.utils.date_utils import format_date_for_api
@@ -47,6 +50,7 @@ class WorksectionClient:
         self.settings = settings
         self.rate_limiter = AdaptiveRateLimiter(requests_per_second=1.0)
         self._http_client: httpx.AsyncClient | None = None
+        self.cache = SessionCache()
 
     async def _get_http_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
@@ -69,6 +73,7 @@ class WorksectionClient:
         action: str,
         params: dict[str, Any] | None = None,
         method: str = "GET",
+        use_cache: bool = False,
     ) -> dict[str, Any]:
         """Make an API request to Worksection.
 
@@ -76,6 +81,7 @@ class WorksectionClient:
             action: API action name (e.g., 'get_projects')
             params: Additional query parameters
             method: HTTP method
+            use_cache: Check/store in session cache
 
         Returns:
             API response data
@@ -83,6 +89,15 @@ class WorksectionClient:
         Raises:
             WorksectionAPIError: If request fails
         """
+        # Check cache
+        cache_key = ""
+        if use_cache:
+            frozen = frozenset((params or {}).items())
+            cache_key = f"{action}:{frozen}"
+            cached = await self.cache.get(cache_key)
+            if cached is not None:
+                return cast(dict[str, Any], cached)
+
         # Ensure we have a valid token
         token = await self.oauth.get_valid_token()
 
@@ -134,6 +149,10 @@ class WorksectionClient:
                         data.get("error_description", data["error"]),
                         response=data,
                     )
+
+                # Store in cache
+                if use_cache and cache_key:
+                    await self.cache.set(cache_key, data)
 
                 return data
 
@@ -314,7 +333,7 @@ class WorksectionClient:
 
     async def search_tasks(
         self,
-        search_query: str,
+        search_query: str | None = None,
         project_id: str | None = None,
         task_id: str | None = None,
         email_user_from: str | None = None,
@@ -338,7 +357,9 @@ class WorksectionClient:
         Returns:
             Search results
         """
-        params = {"filter": search_query}
+        params: dict[str, str] = {}
+        if search_query:
+            params["filter"] = search_query
         if project_id:
             params["id_project"] = project_id
         if task_id:
@@ -414,38 +435,33 @@ class WorksectionClient:
             self.rate_limiter.record_success()
             return response.content
 
-    # ==========================================================================
-    # Time Tracking API
-    # ==========================================================================
-
-    async def get_timers(
+    async def get_files(
         self,
         project_id: str | None = None,
         task_id: str | None = None,
     ) -> dict[str, Any]:
-        """Get active timers.
+        """Get files from a project or task.
+
+        Returns files from the Files section, project/task descriptions,
+        and comments.
 
         Args:
-            project_id: Filter by project
-            task_id: Filter by task
+            project_id: Project ID
+            task_id: Task ID
 
         Returns:
-            Timers data
+            Files data
         """
-        params = {}
+        params: dict[str, str] = {}
         if project_id:
             params["id_project"] = project_id
         if task_id:
             params["id_task"] = task_id
-        return await self._make_request("get_timers", params)
+        return await self._make_request("get_files", params)
 
-    async def get_my_timer(self) -> dict[str, Any]:
-        """Get current user's active timer.
-
-        Returns:
-            Timer data
-        """
-        return await self._make_request("get_my_timer")
+    # ==========================================================================
+    # Costs API
+    # ==========================================================================
 
     async def get_costs(
         self,
@@ -592,6 +608,14 @@ class WorksectionClient:
         """
         return await self._make_request("get_contacts")
 
+    async def get_contact_groups(self) -> dict:
+        """Get contact folders/groups.
+
+        Returns:
+            Contact groups data
+        """
+        return await self._make_request("get_contact_groups")
+
     # ==========================================================================
     # Tags API (Read-only)
     # ==========================================================================
@@ -724,6 +748,12 @@ class WorksectionClient:
     # System API
     # ==========================================================================
 
-    # Note: get_account API action is not available in Worksection API
-    # Account information can be obtained from the 'me' endpoint which includes
-    # user role, department, and account URL in the response.
+    async def get_webhooks(self) -> dict:
+        """Get configured webhooks.
+
+        Requires the 'administrative' scope.
+
+        Returns:
+            Webhooks data
+        """
+        return await self._make_request("get_webhooks")
