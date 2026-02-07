@@ -570,6 +570,59 @@ The server now validates all configuration at startup using Pydantic. If you see
 - Increase `MAX_FILE_SIZE_MB` environment variable
 - Default limit: 10MB
 
+### API Constraints & Limitations
+
+#### Worksection API Design
+
+##### No Pagination Support
+
+Most Worksection API endpoints return complete datasets without pagination:
+
+- `get_users` - Returns ALL users in a single call
+- `get_events` - Returns ALL events for the specified period
+- `get_projects` - Returns ALL projects
+- `get_all_tasks` - Returns ALL tasks across all projects
+- `get_tasks` - Returns ALL tasks for a project
+- `get_project_groups` - Returns ALL project folders
+
+**Impact**: For large datasets, responses can exceed MCP's 1MB limit.
+
+**Solution**: Tools with high data volume apply client-side truncation:
+
+- `get_activity_log` - Default `max_results: 100`, default period `1d` (configurable)
+- `get_user_activity` - Default `max_results: 100`, default period `1d` (configurable)
+
+Truncated responses include metadata: `total_count`, `returned_count`, `truncated` (boolean).
+
+##### Elevated Scope Requirements
+
+Some endpoints require the `administrative` scope:
+
+- `get_webhooks` - Webhook management
+- Other administrative operations
+
+Add `administrative` to `WORKSECTION_SCOPES` in `.env` to enable these tools.
+
+#### MCP Protocol Constraints
+
+##### Response Size Limit: 1MB
+
+Error: `"Tool result is too large. Maximum size is 1MB."`
+
+The Model Context Protocol enforces a 1MB maximum response size. This server handles
+large responses automatically through client-side truncation with configurable limits.
+
+#### Network & Security
+
+##### Default Binding: 127.0.0.1
+
+By default, the MCP server binds to `127.0.0.1` (localhost only) for security.
+
+**Docker Deployment**: Set `MCP_SERVER_HOST=0.0.0.0` in docker-compose to make the
+server accessible from the network.
+
+See `.env.example` for configuration details
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.

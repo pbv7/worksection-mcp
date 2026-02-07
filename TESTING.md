@@ -251,7 +251,7 @@ Common test parameters used:
 | Search tools | `query` | `"test"` | Fixed test query |
 | Filter tools | `status` | `"open"` | Fixed test value |
 | Date tools | `date_start` | `"2024-01-01"` | Fixed test date |
-| Activity tools | `period` | `"7d"` | Fixed 7-day period |
+| Activity tools | `period` | `"1d"` | Default 1-day period (configurable) |
 | All tasks tool | `filter` | `"active"` | Filter to avoid "Too many tasks" error |
 
 ## Rate Limiting

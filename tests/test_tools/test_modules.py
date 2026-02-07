@@ -193,9 +193,12 @@ async def test_user_and_activity_tools_aggregation():
     # get_activity_log now includes event_types breakdown (consolidated from get_project_activity)
     activity_log = await mcp.tools["get_activity_log"](project_id="p1", period="7d")
     assert activity_log["event_types"] == {"task_create": 2, "task_update": 1}
+    assert activity_log["total_count"] == 3
+    assert len(activity_log["events"]) == 3
 
     user_activity = await mcp.tools["get_user_activity"]("u1", period="7d")
-    assert len(user_activity["events"]["data"]) == 2
+    assert len(user_activity["events"]) == 2
+    assert user_activity["total_count"] == 2
     assert user_activity["projects_touched"]["p1"]["event_count"] == 2
 
 
