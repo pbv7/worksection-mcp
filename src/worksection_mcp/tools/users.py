@@ -15,6 +15,8 @@ def register_user_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     ) -> dict:
         """Get all users in the Worksection account.
 
+        Note: Returns ALL users in a single call (pagination not supported by API).
+
         Args:
             status_filter: Filter by status:
                 - active: Only active users (default)
