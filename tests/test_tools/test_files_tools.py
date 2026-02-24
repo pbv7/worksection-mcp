@@ -70,7 +70,7 @@ async def test_download_and_attachment_tools(tmp_path):
     attachments = await mcp.tools["get_all_task_attachments"]("t1")
     assert attachments["total_files"] == 3
 
-    images = await mcp.tools["list_image_attachments"]("t1")
+    images = await mcp.tools["list_image_attachments"](task_id="t1")
     assert images["image_count"] == 2
     assert {image["source"] for image in images["images"]} == {"task", "comment"}
 

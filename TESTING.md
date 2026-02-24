@@ -113,7 +113,7 @@ Authenticating...
 ✓ Authentication successful
 
 Registering MCP tools...
-✓ Registered 46 MCP tools
+✓ Registered 48 MCP tools
 
 ================================================================================
 EXTRACTING TEST DATA
@@ -127,17 +127,17 @@ EXTRACTING TEST DATA
 TESTING ALL MCP TOOLS
 ================================================================================
 
-[1/46] ✅ get_projects
-[2/46] ✅ get_project
-[3/46] ✅ get_project_groups
+[1/48] ✅ get_projects
+[2/48] ✅ get_project
+[3/48] ✅ get_project_groups
 ...
-[46/46] ✅ health_check
+[48/48] ✅ health_check
 
 ================================================================================
 TEST SUMMARY
 ================================================================================
-Total tools: 46
-✅ Passed: 44
+Total tools: 48
+✅ Passed: 46
 ❌ Failed: 0
 ⊘ Skipped: 2
 Success rate: 100.0%
@@ -157,7 +157,7 @@ The test covers all tool categories:
 - **Tasks** (7 tools) - get_all_tasks, get_tasks, get_task, search_tasks, get_task_subtasks, get_task_relations, get_task_subscribers
 - **Comments** (2 tools) - get_comments, get_task_discussion
 - **Files** (7 tools) - get_task_files, get_all_task_attachments, get_project_files, download_file, get_file_as_base64, get_file_content, list_image_attachments
-- **Costs** (4 tools) - get_costs, get_costs_total, get_user_workload, get_project_time_report
+- **Costs & Timers** (6 tools) - get_costs, get_costs_total, get_user_workload, get_project_time_report, get_timers, get_my_timer
 - **Users** (7 tools) - get_users, get_user, get_current_user, get_user_groups, get_contacts, get_contact_groups, get_user_assignments
 - **Tags** (6 tools) - get_task_tags, get_task_tag_groups, get_project_tags, get_project_tag_groups, get_task_with_tags, search_tasks_by_tag
 - **Analytics** (5 tools) - get_project_stats, get_overdue_tasks, get_tasks_by_status, get_tasks_by_priority, get_team_workload_summary
@@ -249,7 +249,7 @@ Common test parameters used:
 | User tools | `user_id` | `"555235"` | Current authenticated user |
 | File tools | `file_id` | `"345678"` | First file in rich task or task |
 | Search tools | `query` | `"test"` | Fixed test query |
-| Filter tools | `status` | `"open"` | Fixed test value |
+| Filter tools | `status` | `"active"` | Fixed test value |
 | Date tools | `date_start` | `"2024-01-01"` | Fixed test date |
 | Activity tools | `period` | `"1d"` | Default 1-day period (configurable) |
 | All tasks tool | `filter` | `"active"` | Filter to avoid "Too many tasks" error |
@@ -258,7 +258,7 @@ Common test parameters used:
 
 - Worksection API: 1 request/second
 - Test script automatically waits 1.1 seconds between calls
-- Total test time: ~46-55 seconds for all tools
+- Total test time: typically ~55-70 seconds for all tools (depends on API latency and retries)
 
 ## CI/CD Integration
 

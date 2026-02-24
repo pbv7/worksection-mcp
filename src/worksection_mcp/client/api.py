@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Protocol, cast
 
@@ -433,7 +434,25 @@ class WorksectionClient:
                 )
 
             self.rate_limiter.record_success()
-            return response.content
+            payload = response.content
+
+            # Detect API error responses disguised as file downloads.
+            # Small JSON payloads with status=error indicate the file
+            # could not be retrieved (e.g., not found, access denied).
+            if len(payload) < 8192 and payload.lstrip().startswith(b"{"):
+                try:
+                    parsed = json.loads(payload)
+                    if isinstance(parsed, dict) and parsed.get("status") == "error":
+                        msg = parsed.get("message") or parsed.get("msg")
+                        if isinstance(msg, str) and msg.strip():
+                            raise WorksectionAPIError(
+                                f"File download error: {msg}",
+                                response=parsed,
+                            )
+                except json.JSONDecodeError, UnicodeDecodeError:
+                    pass  # Not JSON — return as normal file content
+
+            return payload
 
     async def get_files(
         self,
@@ -720,7 +739,6 @@ class WorksectionClient:
         self,
         project_id: str | None = None,
         period: str | None = None,
-        event_filter: str | None = None,
     ) -> dict:
         """Get activity/event log.
 
@@ -730,7 +748,6 @@ class WorksectionClient:
                 - Minutes: 1m to 360m (e.g., "120m" for 2 hours)
                 - Hours: 1h to 72h (e.g., "24h" for 1 day)
                 - Days: 1d to 30d (e.g., "7d" for 1 week)
-            event_filter: Filter by event type
 
         Returns:
             Events data
@@ -740,9 +757,27 @@ class WorksectionClient:
             params["id_project"] = project_id
         if period:
             params["period"] = period
-        if event_filter:
-            params["filter"] = event_filter
         return await self._make_request("get_events", params)
+
+    # ==========================================================================
+    # Timers API
+    # ==========================================================================
+
+    async def get_timers(self) -> dict[str, Any]:
+        """Get all running timers.
+
+        Returns:
+            Timers data with list of active timers
+        """
+        return await self._make_request("get_timers", method="POST")
+
+    async def get_my_timer(self) -> dict[str, Any]:
+        """Get current user's timer.
+
+        Returns:
+            Current user's timer data
+        """
+        return await self._make_request("get_my_timer", method="POST")
 
     # ==========================================================================
     # System API

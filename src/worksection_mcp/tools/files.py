@@ -239,25 +239,57 @@ def register_file_tools(
         return result
 
     @mcp.tool()
-    async def list_image_attachments(task_id: str) -> dict:
-        """List all image attachments for a task (including comments).
+    async def list_image_attachments(
+        task_id: str | None = None,
+        project_id: str | None = None,
+    ) -> dict:
+        """List all image attachments for a task or project.
 
         Filters to only image files (jpg, png, gif, webp, etc.)
         for easy access to screenshots and visual content.
 
+        Exactly one of task_id or project_id must be provided.
+
         Args:
-            task_id: The task ID
+            task_id: The task ID (gets images from task and its comments)
+            project_id: The project ID (gets images from project files)
 
         Returns:
             List of image files:
             - images: Array of image file metadata
-            - Each with: id, name, resource_uri, source (task/comment)
+            - Each with: id, name, resource_uri, source (task/comment/project)
         """
-        all_attachments = await _get_all_task_attachments_internal(task_id)
+        if task_id and project_id:
+            raise ValueError("Provide either task_id or project_id, not both")
+        if not task_id and not project_id:
+            raise ValueError("Either task_id or project_id is required")
 
         image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
-
         images = []
+
+        if project_id:
+            # Get project files and filter to images
+            files_data = await client.get_files(project_id=project_id)
+            if isinstance(files_data, dict) and "data" in files_data:
+                for file in files_data["data"]:
+                    name = file.get("name", "")
+                    if any(name.lower().endswith(ext) for ext in image_extensions):
+                        images.append(
+                            {
+                                "id": file.get("id"),
+                                "name": name,
+                                "resource_uri": f"worksection://file/{file.get('id')}",
+                                "source": "project",
+                            }
+                        )
+            return {
+                "project_id": project_id,
+                "images": images,
+                "image_count": len(images),
+            }
+
+        # task_id is guaranteed non-None here (validated above, project_id returned early)
+        all_attachments = await _get_all_task_attachments_internal(str(task_id))
 
         # Check task files
         for file in all_attachments.get("task_files", []):

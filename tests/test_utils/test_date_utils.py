@@ -1,6 +1,12 @@
 """Tests for date utilities."""
 
-from worksection_mcp.utils.date_utils import format_date_for_api, validate_period
+import pytest
+
+from worksection_mcp.utils.date_utils import (
+    format_date_for_api,
+    validate_date_range,
+    validate_period,
+)
 
 
 class TestFormatDateForApi:
@@ -85,3 +91,44 @@ class TestValidatePeriod:
         assert validate_period("invalid") is False
         assert validate_period("3 days") is False
         assert validate_period("-1d") is False
+
+
+class TestValidateDateRange:
+    """Tests for validate_date_range function."""
+
+    def test_valid_iso_dates(self):
+        """Valid ISO date range should not raise."""
+        validate_date_range("2024-01-01", "2024-12-31")
+
+    def test_valid_api_dates(self):
+        """Valid DD.MM.YYYY date range should not raise."""
+        validate_date_range("01.01.2024", "31.12.2024")
+
+    def test_none_dates_ok(self):
+        """None dates should not raise."""
+        validate_date_range(None, None)
+        validate_date_range("2024-01-01", None)
+        validate_date_range(None, "2024-12-31")
+
+    def test_same_date_ok(self):
+        """Same start and end date should not raise."""
+        validate_date_range("2024-06-15", "2024-06-15")
+
+    def test_start_after_end_raises(self):
+        """Start date after end date should raise ValueError."""
+        with pytest.raises(ValueError, match="must not be after"):
+            validate_date_range("2024-12-31", "2024-01-01")
+
+    def test_invalid_format_raises(self):
+        """Invalid date format should raise ValueError."""
+        with pytest.raises(ValueError, match="Invalid date format"):
+            validate_date_range("2024/01/15", "2024-12-31")
+
+    def test_impossible_date_raises(self):
+        """Impossible date (e.g., Feb 30) should raise ValueError."""
+        with pytest.raises(ValueError, match=r"must be in range|day is out of range"):
+            validate_date_range("2024-02-30", "2024-12-31")
+
+    def test_mixed_formats_ok(self):
+        """Mixed ISO and DD.MM.YYYY should work."""
+        validate_date_range("2024-01-01", "31.12.2024")

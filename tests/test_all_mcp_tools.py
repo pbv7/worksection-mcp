@@ -53,11 +53,14 @@ class MCPToolTester:
     # Validation rules for tool responses
     # Each rule can have:
     #   required_fields: list of fields that must exist
+    #   any_of_fields: at least one of these fields must exist
     #   status_values: valid values for status field
     #   data_is_list: data field must be a list
     #   data_is_dict: data field must be a dict
+    #   field_is_list: list of root fields that must be lists
+    #   field_is_dict: list of root fields that must be dicts
+    #   field_values: dict of field -> allowed values
     #   min_size: minimum value for size_bytes field
-    #   any_of_fields: at least one of these fields must exist
     #   min_items: minimum number of items in data list (for rich task validation)
     #   min_total_files: minimum value for total_files field (for rich task validation)
     VALIDATION_RULES: ClassVar[dict[str, dict[str, Any]]] = {
@@ -75,7 +78,10 @@ class MCPToolTester:
         "get_task_tag_groups": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_project_tags": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_project_tag_groups": {"required_fields": ["status", "data"], "data_is_list": True},
-        "get_comments": {"required_fields": ["status", "data"], "data_is_list": True},
+        "get_comments": {
+            "required_fields": ["status", "data", "total_count", "returned_count", "truncated"],
+            "data_is_list": True,
+        },
         "get_contacts": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_contact_groups": {"required_fields": ["status", "data"], "data_is_list": True},
         "get_costs": {"required_fields": ["status", "data"], "data_is_list": True},
@@ -114,7 +120,10 @@ class MCPToolTester:
         },
         "get_task_files": {"required_fields": ["status"]},
         "get_all_task_attachments": {"required_fields": ["task_id", "total_files"]},
-        "list_image_attachments": {"required_fields": ["task_id", "image_count"]},
+        "list_image_attachments": {
+            "required_fields": ["image_count"],
+            "any_of_fields": ["task_id", "project_id"],
+        },
         # Analytics tools - expect computed fields
         "get_project_stats": {"required_fields": ["project_id"]},
         "get_team_workload_summary": {
@@ -126,15 +135,54 @@ class MCPToolTester:
         # Time tracking tools
         "get_costs_total": {"required_fields": ["project_id"]},
         "get_user_workload": {"required_fields": ["user_id"]},
-        "get_project_time_report": {"required_fields": ["project_id"]},
+        "get_project_time_report": {
+            "required_fields": ["project_id", "totals", "entries"],
+            "field_is_dict": ["totals", "entries"],
+        },
+        # Timer tools
+        "get_timers": {"required_fields": ["status"]},
+        "get_my_timer": {"required_fields": ["status"]},
         # Search tools
-        "search_tasks": {"required_fields": ["status", "data"], "data_is_list": True},
+        "search_tasks": {
+            "required_fields": ["status", "data", "total_count", "returned_count", "truncated"],
+            "data_is_list": True,
+        },
         "search_tasks_by_tag": {"required_fields": ["tag", "tasks", "count"]},
         # Tools that return status on success or error
         "get_all_tasks": {"required_fields": ["status", "data"], "data_is_list": True},
         # Activity tools
-        "get_activity_log": {"required_fields": ["project_id", "events", "event_types"]},
-        "get_user_activity": {"required_fields": ["user_id", "events"], "events_has_data": True},
+        "get_activity_log": {
+            "required_fields": [
+                "project_id",
+                "events",
+                "event_types",
+                "total_count",
+                "returned_count",
+                "truncated",
+                "truncation_reason",
+            ],
+            "field_is_list": ["events"],
+            "field_is_dict": ["event_types"],
+            "field_values": {
+                "truncation_reason": ["none", "max_results", "size_cap", "both"],
+            },
+        },
+        "get_user_activity": {
+            "required_fields": [
+                "user_id",
+                "events",
+                "projects_touched",
+                "total_count",
+                "returned_count",
+                "truncated",
+                "truncation_reason",
+            ],
+            "field_is_list": ["events"],
+            "field_is_dict": ["projects_touched"],
+            "field_values": {
+                "truncation_reason": ["none", "max_results", "size_cap", "both"],
+            },
+        },
     }
 
     # Enhanced validation rules when rich task is specified
@@ -209,6 +257,23 @@ class MCPToolTester:
         # Get all registered tools (returns dict of tool_name -> Tool object)
         tools_dict = await mcp.get_tools()
         self._out(f"✓ Registered {len(tools_dict)} MCP tools\n")
+
+        # Guard against drift between registered tools and validation rules
+        registered_tools = set(tools_dict.keys())
+        validation_tools = set(self.VALIDATION_RULES.keys())
+        missing_rules = sorted(registered_tools - validation_tools)
+        extra_rules = sorted(validation_tools - registered_tools)
+        if missing_rules or extra_rules:
+            self._out("✗ Tool/validation rule mismatch detected:")
+            if missing_rules:
+                self._out(f"  Missing validation rules: {', '.join(missing_rules)}")
+            if extra_rules:
+                self._out(f"  Extra validation rules: {', '.join(extra_rules)}")
+            raise RuntimeError(
+                "Validation rules are out of sync with registered MCP tools. "
+                "Update VALIDATION_RULES in tests/test_all_mcp_tools.py"
+            )
+        self._out("✓ Tool registry matches validation rules\n")
 
         # Store tool names
         self.tool_functions = {name: name for name in tools_dict}
@@ -398,6 +463,17 @@ class MCPToolTester:
                 else:
                     failed.append(f"missing '{field}'")
 
+        # Check any_of_fields
+        if "any_of_fields" in rules:
+            if isinstance(response, dict):
+                present = [field for field in rules["any_of_fields"] if field in response]
+                if present:
+                    passed.append(f"has one of {rules['any_of_fields']}: {', '.join(present)}")
+                else:
+                    failed.append(f"missing all of {rules['any_of_fields']}")
+            else:
+                failed.append("response is not dict for any_of_fields check")
+
         # Check status values
         if "status_values" in rules and isinstance(response, dict):
             status = response.get("status")
@@ -430,6 +506,33 @@ class MCPToolTester:
                 passed.append("data is dict")
             else:
                 failed.append(f"data is not dict: {type(data).__name__}")
+
+        # Check root fields are lists
+        if "field_is_list" in rules and isinstance(response, dict):
+            for field in rules["field_is_list"]:
+                value = response.get(field)
+                if isinstance(value, list):
+                    passed.append(f"'{field}' is list ({len(value)} items)")
+                else:
+                    failed.append(f"'{field}' is not list: {type(value).__name__}")
+
+        # Check root fields are dicts
+        if "field_is_dict" in rules and isinstance(response, dict):
+            for field in rules["field_is_dict"]:
+                value = response.get(field)
+                if isinstance(value, dict):
+                    passed.append(f"'{field}' is dict")
+                else:
+                    failed.append(f"'{field}' is not dict: {type(value).__name__}")
+
+        # Check fields against allowed values
+        if "field_values" in rules and isinstance(response, dict):
+            for field, allowed_values in rules["field_values"].items():
+                value = response.get(field)
+                if value in allowed_values:
+                    passed.append(f"{field}='{value}'")
+                else:
+                    failed.append(f"{field}='{value}' not in {allowed_values}")
 
         # Check minimum size (for file downloads)
         if "min_size" in rules and isinstance(response, dict):
@@ -480,18 +583,6 @@ class MCPToolTester:
                     failed.append(f"events.status='error': {error_msg}")
                 else:
                     passed.append(f"events.status='{events_status}'")
-
-        # Check events has data (for get_user_activity)
-        if rules.get("events_has_data") and isinstance(response, dict):
-            events = response.get("events", {})
-            if isinstance(events, dict):
-                data = events.get("data", [])
-                if isinstance(data, list) and len(data) > 0:
-                    passed.append(f"events.data has {len(data)} items")
-                elif isinstance(data, list):
-                    passed.append("events.data is list (empty)")
-                else:
-                    failed.append("events.data is not a list")
 
         return len(failed) == 0, passed, failed
 
@@ -628,9 +719,16 @@ class MCPToolTester:
             if not self.test_ids["file_id"]:
                 return None  # Skip if no file available
             params["file_id"] = self.test_ids["file_id"]
-        elif tool_name in ["get_task_files", "list_image_attachments", "get_all_task_attachments"]:
+        elif tool_name in ["get_task_files", "get_all_task_attachments"]:
             if self.test_ids["task_id"]:
                 params["task_id"] = self.test_ids["task_id"]
+        elif tool_name == "list_image_attachments":
+            if self.test_ids["task_id"]:
+                params["task_id"] = self.test_ids["task_id"]
+            elif self.test_ids.get("files_project_id"):
+                params["project_id"] = self.test_ids["files_project_id"]
+            elif self.test_ids["project_id"]:
+                params["project_id"] = self.test_ids["project_id"]
         elif tool_name == "get_project_files":
             if self.test_ids.get("files_project_id"):
                 params["project_id"] = self.test_ids["files_project_id"]
@@ -659,13 +757,13 @@ class MCPToolTester:
         # Activity tools
         if "activity" in tool_name or "event" in tool_name:
             if tool_name == "get_activity_log":
-                params["period"] = "7d"
+                params["period"] = "1d"
                 if self.test_ids["project_id"]:
                     params["project_id"] = self.test_ids["project_id"]
             elif tool_name == "get_user_activity":
                 if self.test_ids["user_id"]:
                     params["user_id"] = self.test_ids["user_id"]
-                params["period"] = "7d"
+                params["period"] = "1d"
 
         # Analytics tools
         if (

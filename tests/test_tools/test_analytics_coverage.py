@@ -126,10 +126,10 @@ class TestTeamWorkloadTimeParsing:
                 return_value={
                     "status": "ok",
                     "data": [
-                        {"user": {"id": "u1"}, "time": "2:15"},  # 135 minutes
-                        {"user": {"id": "u1"}, "time": "30"},  # 30 minutes (string int)
-                        {"user": {"id": "u1"}, "time": 45},  # 45 minutes (int)
-                        {"user": {"id": "u1"}, "time": "bad"},  # 0 minutes (unparseable)
+                        {"user_from": {"id": "u1"}, "time": "2:15"},  # 135 minutes
+                        {"user_from": {"id": "u1"}, "time": "30"},  # 30 minutes (string int)
+                        {"user_from": {"id": "u1"}, "time": 45},  # 45 minutes (int)
+                        {"user_from": {"id": "u1"}, "time": "bad"},  # 0 minutes (unparseable)
                     ],
                 }
             ),

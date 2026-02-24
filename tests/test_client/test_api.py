@@ -253,7 +253,7 @@ async def test_search_tasks_and_events_params(client):
         status="active",
         extra="text",
     )
-    await client.get_events(project_id="p1", period="7d", event_filter="task_create")
+    await client.get_events(project_id="p1", period="7d")
 
     assert client._make_request.await_args_list[0].args == (
         "search_tasks",
@@ -269,7 +269,7 @@ async def test_search_tasks_and_events_params(client):
     )
     assert client._make_request.await_args_list[1].args == (
         "get_events",
-        {"id_project": "p1", "period": "7d", "filter": "task_create"},
+        {"id_project": "p1", "period": "7d"},
     )
 
 
@@ -423,3 +423,136 @@ async def test_time_user_and_tag_wrappers_forward_params(client):
         {"type": "status", "access": "private"},
     )
     assert client._make_request.await_args_list[12].args == ("get_project_tag_groups", None)
+
+
+@pytest.mark.asyncio
+async def test_timer_methods(client):
+    """Timer methods should call POST with correct action names."""
+    client._make_request = AsyncMock(return_value={"status": "ok", "data": []})  # type: ignore[method-assign]
+
+    await client.get_timers()
+    await client.get_my_timer()
+
+    assert client._make_request.await_args_list[0].args == ("get_timers",)
+    assert client._make_request.await_args_list[0].kwargs == {"method": "POST"}
+    assert client._make_request.await_args_list[1].args == ("get_my_timer",)
+    assert client._make_request.await_args_list[1].kwargs == {"method": "POST"}
+
+
+@pytest.mark.asyncio
+async def test_download_file_detects_api_error_json(client):
+    """download_file should raise WorksectionAPIError when API returns error JSON."""
+    limiter = DummyLimiter()
+    client.rate_limiter = limiter
+
+    error_json = b'{"status":"error","msg":"File not found"}'
+    http_client = AsyncMock()
+    http_client.get = AsyncMock(return_value=httpx.Response(200, content=error_json))
+    client._get_http_client = AsyncMock(return_value=http_client)  # type: ignore[method-assign]
+
+    with pytest.raises(WorksectionAPIError, match="File not found"):
+        await client.download_file("file-1")
+
+
+@pytest.mark.asyncio
+async def test_download_file_detects_api_error_with_whitespace(client):
+    """download_file should handle leading whitespace in error JSON."""
+    limiter = DummyLimiter()
+    client.rate_limiter = limiter
+
+    error_json = b'  {"status":"error","message":"Access denied"}'
+    http_client = AsyncMock()
+    http_client.get = AsyncMock(return_value=httpx.Response(200, content=error_json))
+    client._get_http_client = AsyncMock(return_value=http_client)  # type: ignore[method-assign]
+
+    with pytest.raises(WorksectionAPIError, match="Access denied"):
+        await client.download_file("file-1")
+
+
+@pytest.mark.asyncio
+async def test_download_file_passes_valid_small_json(client):
+    """download_file should return valid small JSON files unchanged."""
+    limiter = DummyLimiter()
+    client.rate_limiter = limiter
+
+    valid_json = b'{"status":"ok","data":[]}'
+    http_client = AsyncMock()
+    http_client.get = AsyncMock(return_value=httpx.Response(200, content=valid_json))
+    client._get_http_client = AsyncMock(return_value=http_client)  # type: ignore[method-assign]
+
+    result = await client.download_file("file-1")
+    assert result == valid_json
+
+
+@pytest.mark.asyncio
+async def test_download_file_passes_binary_content(client):
+    """download_file should return binary content unchanged."""
+    limiter = DummyLimiter()
+    client.rate_limiter = limiter
+
+    binary = b"\x89PNG\r\n\x1a\nimagedata"
+    http_client = AsyncMock()
+    http_client.get = AsyncMock(return_value=httpx.Response(200, content=binary))
+    client._get_http_client = AsyncMock(return_value=http_client)  # type: ignore[method-assign]
+
+    result = await client.download_file("file-1")
+    assert result == binary
+
+
+@pytest.mark.asyncio
+async def test_download_file_passes_large_json(client):
+    """download_file should skip JSON parsing for payloads > 8KB."""
+    limiter = DummyLimiter()
+    client.rate_limiter = limiter
+
+    # Large JSON payload that happens to have status=error
+    large_json = b'{"status":"error","msg":"big"}' + b"x" * 9000
+    http_client = AsyncMock()
+    http_client.get = AsyncMock(return_value=httpx.Response(200, content=large_json))
+    client._get_http_client = AsyncMock(return_value=http_client)  # type: ignore[method-assign]
+
+    result = await client.download_file("file-1")
+    assert result == large_json
+
+
+@pytest.mark.asyncio
+async def test_download_file_no_msg_field_returns_bytes(client):
+    """download_file should return bytes when status=error but no msg/message field."""
+    limiter = DummyLimiter()
+    client.rate_limiter = limiter
+
+    error_json = b'{"status":"error","data":[]}'
+    http_client = AsyncMock()
+    http_client.get = AsyncMock(return_value=httpx.Response(200, content=error_json))
+    client._get_http_client = AsyncMock(return_value=http_client)  # type: ignore[method-assign]
+
+    result = await client.download_file("file-1")
+    assert result == error_json
+
+
+@pytest.mark.asyncio
+async def test_download_file_empty_msg_returns_bytes(client):
+    """download_file should return bytes when msg is empty string."""
+    limiter = DummyLimiter()
+    client.rate_limiter = limiter
+
+    error_json = b'{"status":"error","msg":""}'
+    http_client = AsyncMock()
+    http_client.get = AsyncMock(return_value=httpx.Response(200, content=error_json))
+    client._get_http_client = AsyncMock(return_value=http_client)  # type: ignore[method-assign]
+
+    result = await client.download_file("file-1")
+    assert result == error_json
+
+
+@pytest.mark.asyncio
+async def test_get_events_only_sends_period_and_project(client):
+    """get_events should only send period and id_project params to the API."""
+    client._make_request = AsyncMock(return_value={"status": "ok", "data": []})  # type: ignore[method-assign]
+
+    await client.get_events(project_id="p1", period="7d")
+
+    client._make_request.assert_awaited_once_with(
+        "get_events",
+        {"id_project": "p1", "period": "7d"},
+    )

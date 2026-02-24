@@ -1,9 +1,12 @@
 """Task-related MCP tools."""
 
+import logging
 from typing import Literal
 
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.mcp_protocols import ToolRegistrar
+
+logger = logging.getLogger(__name__)
 
 
 def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
@@ -42,6 +45,10 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
     ) -> dict:
         """Get tasks for a specific project.
 
+        Note: The Worksection API has a known issue where status_filter='done'
+        combined with project_id may return incomplete results. When this
+        combination is used, the tool fetches all tasks and filters client-side.
+
         Args:
             project_id: The project ID to get tasks from
             status_filter: Filter by status (active, done, all)
@@ -51,6 +58,20 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         Returns:
             List of tasks in the specified project
         """
+        # Workaround: status_filter='done' + project_id returns incomplete results
+        if status_filter == "done":
+            logger.warning(
+                "Using client-side filtering for status_filter='done' + project_id=%s "
+                "(known API compatibility issue)",
+                project_id,
+            )
+            result = await client.get_tasks(project_id=project_id, status_filter="all", extra=extra)
+            if isinstance(result, dict) and "data" in result:
+                result["data"] = [
+                    t for t in result["data"] if t.get("status") in ("done", "closed", "completed")
+                ]
+            return result
+
         return await client.get_tasks(
             project_id=project_id, status_filter=status_filter, extra=extra
         )
@@ -88,6 +109,7 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         author_email: str | None = None,
         status: Literal["active", "done"] | None = None,
         extra: str | None = None,
+        max_results: int | None = 100,
     ) -> dict:
         """Search for tasks using name search or raw query syntax.
 
@@ -105,10 +127,17 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
             author_email: Filter by task author email
             status: Filter by task state (active=incomplete, done=completed)
             extra: Additional data to include (text, html, files)
+            max_results: Maximum number of results to return (default 100).
+                None = no truncation. Must be positive if set.
 
         Returns:
-            List of tasks matching the search criteria
+            Search results with truncation metadata:
+            - status, data: API response (data truncated to max_results)
+            - total_count, returned_count, truncated: Truncation metadata
         """
+        if max_results is not None and max_results <= 0:
+            raise ValueError("max_results must be a positive integer")
+
         if filter_query:
             search_filter = filter_query
         elif query:
@@ -116,7 +145,7 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         else:
             search_filter = None
 
-        return await client.search_tasks(
+        result = await client.search_tasks(
             search_query=search_filter,
             project_id=project_id,
             task_id=task_id,
@@ -125,6 +154,23 @@ def register_task_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
             status=status,
             extra=extra,
         )
+
+        # Apply truncation if max_results is set
+        if isinstance(result, dict) and "data" in result:
+            data = result["data"]
+            total = len(data) if isinstance(data, list) else 0
+            if max_results is not None and isinstance(data, list):
+                truncated_data = data[:max_results]
+                result["data"] = truncated_data
+                result["total_count"] = total
+                result["returned_count"] = len(truncated_data)
+                result["truncated"] = total > max_results
+            else:
+                result["total_count"] = total
+                result["returned_count"] = total
+                result["truncated"] = False
+
+        return result
 
     @mcp.tool()
     async def get_task_subtasks(task_id: str) -> dict:

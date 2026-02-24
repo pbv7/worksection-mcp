@@ -19,7 +19,10 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         tag_type: Literal["status", "label"] | None = None,
         access: Literal["public", "private"] | None = None,
     ) -> dict:
-        """Get available task tags (labels and statuses).
+        """Get ALL available task tags in the system (labels and statuses).
+
+        Note: Returns all tags defined in the workspace, not tags assigned to a
+        specific task. Use get_task_with_tags() to see tags on a specific task.
 
         Args:
             group: Filter by tag group name or ID (optional)
@@ -39,7 +42,7 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         tag_type: Literal["status", "label"] | None = None,
         access: Literal["public", "private"] | None = None,
     ) -> dict:
-        """Get task tag groups.
+        """Get ALL task tag groups defined in the system.
 
         Args:
             tag_type: Filter by type - 'status' or 'label' (optional)
@@ -64,7 +67,10 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         tag_type: Literal["status", "label"] | None = None,
         access: Literal["public", "private"] | None = None,
     ) -> dict:
-        """Get available project tags.
+        """Get ALL available project tags in the system.
+
+        Note: Returns all project tags defined in the workspace, not tags
+        assigned to a specific project.
 
         Args:
             group: Filter by tag group name or ID (optional)
@@ -81,7 +87,7 @@ def register_tag_tools(mcp: ToolRegistrar, client: WorksectionClient) -> None:
         tag_type: Literal["status", "label"] | None = None,
         access: Literal["public", "private"] | None = None,
     ) -> dict:
-        """Get project tag groups.
+        """Get ALL project tag groups defined in the system.
 
         Args:
             tag_type: Filter by type - 'status' or 'label' (optional)

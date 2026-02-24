@@ -37,8 +37,8 @@ and process image attachments.
 git clone https://github.com/pbv7/worksection-mcp.git
 cd worksection-mcp
 
-# Install dependencies with uv
-uv sync
+# Install dependencies with uv (always use --frozen to respect lockfile)
+uv sync --frozen --extra dev
 
 # Copy environment template
 cp .env.example .env
@@ -199,9 +199,9 @@ Subsequent Runs:
 | `download_file` | Download and cache a file |
 | `get_file_as_base64` | Download file as base64 encoded string |
 | `get_file_content` | Extract text content from files |
-| `list_image_attachments` | List all image files for a task |
+| `list_image_attachments` | List image files for a task or project |
 
-### Costs
+### Costs & Timers
 
 | Tool | Description |
 | ------ | ------------- |
@@ -209,6 +209,8 @@ Subsequent Runs:
 | `get_costs_total` | Get aggregated costs |
 | `get_user_workload` | Get user's time entries |
 | `get_project_time_report` | Get project time report |
+| `get_timers` | Get all currently running timers |
+| `get_my_timer` | Get current user's running timer |
 
 ### Users & Teams
 
@@ -247,8 +249,13 @@ Subsequent Runs:
 
 | Tool | Description |
 | ------ | ------------- |
-| `get_activity_log` | Get activity/event log with event type breakdown |
-| `get_user_activity` | Get user's activity |
+| `get_activity_log` | Get activity/event log with auto-size truncation and event type breakdown |
+| `get_user_activity` | Get user's activity with auto-size truncation |
+
+Activity tools default to returning as many events as fit under MCP's 1MB response
+limit (with ~150KB safety margin, no fixed default cap). Set `max_results` explicitly to control truncation.
+Truncation metadata (`total_count`, `returned_count`, `truncated`, `truncation_reason`)
+is always included.
 
 ### System
 
@@ -349,8 +356,8 @@ npx @modelcontextprotocol/inspector http://localhost:8000/sse
 ### Setup Development Environment
 
 ```bash
-# Install with dev dependencies
-uv sync --all-extras
+# Install with dev dependencies (use --frozen, never uv pip install)
+uv sync --frozen --extra dev
 
 # Run tests
 uv run pytest
@@ -589,10 +596,15 @@ Most Worksection API endpoints return complete datasets without pagination:
 
 **Solution**: Tools with high data volume apply client-side truncation:
 
-- `get_activity_log` - Default `max_results: 100`, default period `1d` (configurable)
-- `get_user_activity` - Default `max_results: 100`, default period `1d` (configurable)
+- `get_activity_log` - Auto-size truncation to fit under 1MB, default period `1d`
+- `get_user_activity` - Auto-size truncation to fit under 1MB, default period `1d`
+- `search_tasks` / `get_comments` - Default `max_results: 100` (configurable)
 
-Truncated responses include metadata: `total_count`, `returned_count`, `truncated` (boolean).
+Truncated responses include metadata: `total_count`, `returned_count`, `truncated`,
+`truncation_reason`.
+
+For a comprehensive list of API limitations and workarounds, see
+**[docs/API-LIMITATIONS.md](docs/API-LIMITATIONS.md)**.
 
 ##### Elevated Scope Requirements
 

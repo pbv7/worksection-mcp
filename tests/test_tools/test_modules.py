@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -51,7 +51,9 @@ def _make_client(**overrides: Any) -> Any:
         "get_project_tag_groups": AsyncMock(return_value={"status": "ok", "data": []}),
         "get_events": AsyncMock(return_value={"status": "ok", "data": []}),
         "get_costs": AsyncMock(return_value={"status": "ok", "data": []}),
-        "get_costs_total": AsyncMock(return_value={"status": "ok", "data": {"total": 0}}),
+        "get_costs_total": AsyncMock(return_value={"status": "ok", "total": {"time": "0:00"}}),
+        "get_timers": AsyncMock(return_value={"status": "ok", "data": []}),
+        "get_my_timer": AsyncMock(return_value={"status": "ok", "data": {}}),
     }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
@@ -151,17 +153,17 @@ async def test_user_and_activity_tools_aggregation():
         "status": "ok",
         "data": [
             {
-                "type": "task_create",
+                "object": {"type": "task"},
                 "user_from": {"id": "u1"},
                 "project": {"id": "p1", "name": "Alpha"},
             },
             {
-                "type": "task_update",
+                "object": {"type": "comment"},
                 "user_from": {"id": "u1"},
                 "project": {"id": "p1", "name": "Alpha"},
             },
             {
-                "type": "task_create",
+                "object": {"type": "task"},
                 "user_from": {"id": "u2"},
                 "project": {"id": "p2", "name": "Beta"},
             },
@@ -192,13 +194,16 @@ async def test_user_and_activity_tools_aggregation():
 
     # get_activity_log now includes event_types breakdown (consolidated from get_project_activity)
     activity_log = await mcp.tools["get_activity_log"](project_id="p1", period="7d")
-    assert activity_log["event_types"] == {"task_create": 2, "task_update": 1}
+    assert activity_log["event_types"] == {"task": 2, "comment": 1}
     assert activity_log["total_count"] == 3
     assert len(activity_log["events"]) == 3
+    assert activity_log["truncation_reason"] == "none"
 
     user_activity = await mcp.tools["get_user_activity"]("u1", period="7d")
     assert len(user_activity["events"]) == 2
     assert user_activity["total_count"] == 2
+    assert user_activity["returned_count"] == 2
+    assert user_activity["truncation_reason"] == "none"
     assert user_activity["projects_touched"]["p1"]["event_count"] == 2
 
 
@@ -243,7 +248,7 @@ async def test_analytics_tools_compute_counts_and_workload():
             }
         ),
         get_costs=AsyncMock(
-            return_value={"status": "ok", "data": [{"user": {"id": "u1"}, "time": "1:30"}]}
+            return_value={"status": "ok", "data": [{"user_from": {"id": "u1"}, "time": "1:30"}]}
         ),
     )
 
@@ -307,7 +312,7 @@ async def test_tag_tools_and_timer_tools():
                 ],
             }
         ),
-        get_costs_total=AsyncMock(return_value={"status": "ok", "summary": {"total_time": 135}}),
+        get_costs_total=AsyncMock(return_value={"status": "ok", "total": {"time": "2:15"}}),
     )
 
     mcp = FakeMCP()
@@ -323,7 +328,7 @@ async def test_tag_tools_and_timer_tools():
 
     totals = await mcp.tools["get_costs_total"]("p1", "2024-01-01", "2024-01-31")
     assert totals["project_id"] == "p1"
-    assert totals["summary"]["total_time"] == 135
+    assert totals["total"]["time"] == "2:15"
 
     user_workload = await mcp.tools["get_user_workload"]("u1", "2024-01-01", "2024-01-31")
     assert user_workload["total_time_minutes"] == 135
@@ -420,7 +425,8 @@ async def test_project_task_user_tag_and_comment_wrappers():
     client.get_project.assert_any_await(project_id="p1", extra="text")
     client.get_project_groups.assert_awaited_once()
     client.get_all_tasks.assert_awaited_with(status_filter="active", extra="text")
-    client.get_tasks.assert_any_await(project_id="p1", status_filter="done", extra="comments")
+    # status_filter='done' workaround: tool fetches with 'all' and filters client-side
+    client.get_tasks.assert_any_await(project_id="p1", status_filter="all", extra="comments")
     client.get_task.assert_any_await(task_id="t1", extra="files")
     client.get_task.assert_any_await(task_id="t1", extra="subtasks")
     client.get_task.assert_any_await(task_id="t1", extra="relations")
@@ -493,7 +499,7 @@ async def test_get_user_assignments_server_side_filtering():
 
 @pytest.mark.asyncio
 async def test_new_tools_exist():
-    """New tools (get_contact_groups, get_project_files, get_webhooks) should be registered."""
+    """New tools (get_contact_groups, get_project_files, get_webhooks, timers) should be registered."""
     client = _make_client()
     mcp = FakeMCP()
     register_user_tools(mcp, client)
@@ -506,3 +512,145 @@ async def test_new_tools_exist():
 
     register_system_tools(mcp, client)
     assert "get_webhooks" in mcp.tools
+
+    register_timer_tools(mcp, client)
+    assert "get_timers" in mcp.tools
+    assert "get_my_timer" in mcp.tools
+
+
+@pytest.mark.asyncio
+async def test_timer_tools_call_client():
+    """Timer tools should call corresponding client methods."""
+    client = _make_client(
+        get_timers=AsyncMock(
+            return_value={
+                "status": "ok",
+                "data": [
+                    {
+                        "id": "1",
+                        "time": "01:30:00",
+                        "user_from": {"id": "u1"},
+                        "task": {"id": "t1"},
+                    }
+                ],
+            }
+        ),
+        get_my_timer=AsyncMock(
+            return_value={"status": "ok", "data": {"time": 5400, "task": {"id": "t1"}}}
+        ),
+    )
+    mcp = FakeMCP()
+    register_timer_tools(mcp, client)
+
+    timers = await mcp.tools["get_timers"]()
+    assert timers["status"] == "ok"
+    assert len(timers["data"]) == 1
+    client.get_timers.assert_awaited_once()
+
+    my_timer = await mcp.tools["get_my_timer"]()
+    assert my_timer["status"] == "ok"
+    assert my_timer["data"]["time"] == 5400
+    client.get_my_timer.assert_awaited_once()
+
+
+# --- Activity truncation tests (mock-based) ---
+
+
+def _make_events(count: int, event_type: str = "task") -> dict:
+    """Create a fake events payload with the given count."""
+    return {
+        "status": "ok",
+        "data": [
+            {
+                "object": {"type": event_type},
+                "user_from": {"id": "u1"},
+                "project": {"id": "p1", "name": "Alpha"},
+            }
+            for _ in range(count)
+        ],
+    }
+
+
+def _make_mixed_events(type_counts: dict[str, int]) -> dict:
+    """Create events payload with mixed types."""
+    events = [
+        {
+            "object": {"type": etype},
+            "user_from": {"id": "u1"},
+            "project": {"id": "p1", "name": "Alpha"},
+        }
+        for etype, count in type_counts.items()
+        for _ in range(count)
+    ]
+    return {"status": "ok", "data": events}
+
+
+@pytest.mark.asyncio
+async def test_activity_truncation_size_cap_only():
+    """Size-cap truncation should set truncation_reason='size_cap'."""
+    client = _make_client(get_events=AsyncMock(return_value=_make_events(10)))
+    mcp = FakeMCP()
+    register_activity_tools(mcp, client)
+
+    with patch("worksection_mcp.tools.activity.truncate_to_size") as mock_truncate:
+        # Simulate size-cap truncation keeping only 5 items
+        mock_truncate.side_effect = lambda data, **_kw: (data[:5], True)
+        result = await mcp.tools["get_activity_log"](period="1d")
+
+    assert result["total_count"] == 10
+    assert result["returned_count"] == 5
+    assert result["truncated"] is True
+    assert result["truncation_reason"] == "size_cap"
+    assert sum(result["event_types"].values()) == 10
+
+
+@pytest.mark.asyncio
+async def test_activity_truncation_both_max_results_and_size_cap():
+    """Both max_results and size-cap should set truncation_reason='both'."""
+    client = _make_client(get_events=AsyncMock(return_value=_make_events(10)))
+    mcp = FakeMCP()
+    register_activity_tools(mcp, client)
+
+    with patch("worksection_mcp.tools.activity.truncate_to_size") as mock_truncate:
+        # max_results=3 trims to 3, then size-cap further trims to 2
+        mock_truncate.side_effect = lambda data, **_kw: (data[:2], True)
+        result = await mcp.tools["get_activity_log"](period="1d", max_results=3)
+
+    assert result["total_count"] == 10
+    assert result["returned_count"] == 2
+    assert result["truncated"] is True
+    assert result["truncation_reason"] == "both"
+    assert sum(result["event_types"].values()) == 10
+
+
+@pytest.mark.asyncio
+async def test_activity_no_truncation():
+    """No truncation should set truncation_reason='none'."""
+    client = _make_client(get_events=AsyncMock(return_value=_make_events(150)))
+    mcp = FakeMCP()
+    register_activity_tools(mcp, client)
+
+    # No mock — use real truncate_to_size (150 small events won't exceed 850KB)
+    result = await mcp.tools["get_activity_log"](period="1d")
+
+    assert result["total_count"] == 150
+    assert result["returned_count"] == 150
+    assert result["truncated"] is False
+    assert result["truncation_reason"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_activity_event_types_computed_pre_truncation():
+    """event_types should reflect the full set, not the truncated subset."""
+    client = _make_client(
+        get_events=AsyncMock(return_value=_make_mixed_events({"task": 6, "comment": 4}))
+    )
+    mcp = FakeMCP()
+    register_activity_tools(mcp, client)
+
+    with patch("worksection_mcp.tools.activity.truncate_to_size") as mock_truncate:
+        mock_truncate.side_effect = lambda data, **_kw: (data[:3], True)
+        result = await mcp.tools["get_activity_log"](period="1d")
+
+    assert result["event_types"] == {"task": 6, "comment": 4}
+    assert result["returned_count"] == 3

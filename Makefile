@@ -83,4 +83,4 @@ clean:
 # Install dependencies
 install:
 	@echo "Installing dependencies with uv..."
-	uv sync
+	uv sync --frozen --extra dev

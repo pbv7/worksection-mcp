@@ -280,7 +280,7 @@ def register_analytics_tools(mcp: ToolRegistrar, client: WorksectionClient) -> N
         # Add time data
         if isinstance(costs_data, dict) and "data" in costs_data:
             for entry in costs_data["data"]:
-                user = entry.get("user", {})
+                user = entry.get("user_from", {})
                 user_id = user.get("id")
                 if user_id in workload:
                     time_val = entry.get("time", 0)

@@ -1,6 +1,7 @@
 """Date and period utilities for Worksection API."""
 
 import re
+from datetime import date
 
 
 def format_date_for_api(date_str: str | None) -> str | None:
@@ -78,3 +79,54 @@ def validate_period(period: str) -> bool:
     max_values = {"m": 360, "h": 72, "d": 30}
     max_val = max_values.get(unit)
     return max_val is not None and 1 <= value <= max_val
+
+
+def _parse_date(date_str: str) -> date:
+    """Parse a date string in ISO or DD.MM.YYYY format.
+
+    Args:
+        date_str: Date string
+
+    Returns:
+        Parsed date
+
+    Raises:
+        ValueError: If the date format is invalid or the date is not real
+    """
+    # Try ISO format first (YYYY-MM-DD)
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+        year, month, day = (int(p) for p in date_str.split("-"))
+        return date(year, month, day)
+
+    # Try DD.MM.YYYY format
+    if re.match(r"^\d{2}\.\d{2}\.\d{4}$", date_str):
+        parts = date_str.split(".")
+        return date(int(parts[2]), int(parts[1]), int(parts[0]))
+
+    raise ValueError(f"Invalid date format: '{date_str}'. Use YYYY-MM-DD or DD.MM.YYYY.")
+
+
+def validate_date_range(
+    date_start: str | None = None,
+    date_end: str | None = None,
+) -> None:
+    """Validate a date range: format, reality, and start <= end.
+
+    Args:
+        date_start: Start date (optional)
+        date_end: End date (optional)
+
+    Raises:
+        ValueError: If dates are invalid or start > end
+    """
+    parsed_start = None
+    parsed_end = None
+
+    if date_start:
+        parsed_start = _parse_date(date_start)
+
+    if date_end:
+        parsed_end = _parse_date(date_end)
+
+    if parsed_start and parsed_end and parsed_start > parsed_end:
+        raise ValueError(f"date_start ({date_start}) must not be after date_end ({date_end})")

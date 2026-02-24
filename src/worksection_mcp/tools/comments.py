@@ -11,23 +11,44 @@ def register_comment_tools(mcp: ToolRegistrar, client: WorksectionClient) -> Non
     async def get_comments(
         task_id: str,
         include_files: bool = False,
+        max_results: int | None = 100,
     ) -> dict:
         """Get all comments for a task.
 
         Args:
             task_id: The task ID to get comments for
             include_files: Whether to include file attachments in response
+            max_results: Maximum number of comments to return (default 100).
+                None = no truncation. Must be positive if set.
 
         Returns:
-            List of comments with:
-            - id: Comment ID
-            - text: Comment content
-            - date_added: When comment was posted
-            - user_from: Who posted the comment
-            - files: Attached files (if include_files=True)
+            List of comments with truncation metadata:
+            - status, data: API response (data truncated to max_results)
+            - total_count, returned_count, truncated: Truncation metadata
+            - Each comment has: id, text, date_added, user_from, files
         """
+        if max_results is not None and max_results <= 0:
+            raise ValueError("max_results must be a positive integer")
+
         extra = "files" if include_files else None
-        return await client.get_comments(task_id=task_id, extra=extra)
+        result = await client.get_comments(task_id=task_id, extra=extra)
+
+        # Apply truncation
+        if isinstance(result, dict) and "data" in result:
+            data = result["data"]
+            total = len(data) if isinstance(data, list) else 0
+            if max_results is not None and isinstance(data, list):
+                truncated_data = data[:max_results]
+                result["data"] = truncated_data
+                result["total_count"] = total
+                result["returned_count"] = len(truncated_data)
+                result["truncated"] = total > max_results
+            else:
+                result["total_count"] = total
+                result["returned_count"] = total
+                result["truncated"] = False
+
+        return result
 
     @mcp.tool()
     async def get_task_discussion(task_id: str) -> dict:
