@@ -606,6 +606,10 @@ Truncated responses include metadata: `total_count`, `returned_count`, `truncate
 For a comprehensive list of API limitations and workarounds, see
 **[docs/API-LIMITATIONS.md](docs/API-LIMITATIONS.md)**.
 
+For a client-facing summary of practical coverage, constraints, and expected
+`PASS`/`PARTIAL` semantics, see
+**[docs/CLIENT-CAPABILITIES.md](docs/CLIENT-CAPABILITIES.md)**.
+
 ##### Elevated Scope Requirements
 
 Some endpoints require the `administrative` scope:

@@ -31,6 +31,10 @@ The test script:
 3. **Tests all tools** - Runs every MCP tool with appropriate parameters
 4. **Shows results** - Clear pass/fail output with summary
 
+For client-facing interpretation of expected platform limits (for example why
+some scenarios are valid `PARTIAL` in ws-test reruns), see
+[`docs/CLIENT-CAPABILITIES.md`](docs/CLIENT-CAPABILITIES.md).
+
 ## Configuration
 
 ### Project Selection

@@ -20,11 +20,18 @@ The API may return incomplete results when combining `status_filter='done'`
 with `project_id`. The `get_tasks` tool works around this by fetching all
 tasks and filtering client-side when this combination is used.
 
-## `filter_query` Single-Condition Limitation
+## `filter_query` Supported-Field Limitation
 
-The `search_tasks` API's `filter` parameter works best with single conditions.
-Complex multi-condition queries using `and`/`or` may not behave as expected.
-For complex filtering, prefer client-side filtering after fetching results.
+The `search_tasks` API `filter` parameter supports complex logical expressions,
+but only for documented fields. Not every task field is queryable in this
+grammar.
+
+For example, expressions using `name`, `project`, and date fields may work,
+while expressions using unsupported fields such as `priority` can fail with an
+API validation error.
+
+Use dedicated tools for those fields (for example `get_tasks_by_priority`) or
+apply client-side filtering after retrieval.
 
 ## User Filtering in Costs/Events
 
