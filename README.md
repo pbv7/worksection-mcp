@@ -62,6 +62,7 @@ WORKSECTION_ACCOUNT_URL=https://yourcompany.worksection.com
 WORKSECTION_REDIRECT_URI=https://localhost:8080/oauth/callback
 MCP_SERVER_HOST=127.0.0.1
 MCP_SERVER_PORT=8000
+MCP_TRANSPORT=streamable-http
 LOG_LEVEL=INFO
 ```
 
@@ -309,9 +310,9 @@ for file in discussion.get("images", []):
 | `FILE_CACHE_RETENTION_HOURS` | Cache retention | `24` |
 | `MAX_FILE_SIZE_MB` | Max cached file size | `10` |
 | `MCP_SERVER_NAME` | Server name | `worksection` |
-| `MCP_SERVER_HOST` | SSE bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
+| `MCP_SERVER_HOST` | HTTP bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
 | `MCP_SERVER_PORT` | Server port | `8000` |
-| `MCP_TRANSPORT` | Transport type (`sse`/`stdio`) | `sse` |
+| `MCP_TRANSPORT` | Transport type (`streamable-http`/`sse`/`stdio`) | `streamable-http` |
 | `LOG_LEVEL` | Logging level | `INFO` |
 | `ENVIRONMENT` | Environment name | `development` |
 
@@ -348,7 +349,7 @@ For interactive testing:
 uv run worksection-mcp
 
 # In another terminal, start the MCP Inspector
-npx @modelcontextprotocol/inspector http://localhost:8000/sse
+npx @modelcontextprotocol/inspector http://localhost:8000/mcp
 ```
 
 ## Development

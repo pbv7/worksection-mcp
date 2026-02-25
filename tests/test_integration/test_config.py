@@ -113,11 +113,19 @@ class TestSettings:
 
     def test_default_values(self, temp_data_dir):
         """Test default values are set."""
-        settings = Settings.model_validate(_settings_kwargs(temp_data_dir))
+
+        class SettingsWithoutEnv(Settings):
+            model_config = SettingsConfigDict(
+                env_file=None,
+                case_sensitive=False,
+                extra="ignore",
+            )
+
+        settings = SettingsWithoutEnv.model_validate(_settings_kwargs(temp_data_dir))
 
         assert settings.mcp_server_host == "127.0.0.1"
         assert settings.mcp_server_port == 8000
-        assert settings.mcp_transport == "sse"
+        assert settings.mcp_transport == "streamable-http"
         assert settings.log_level == "INFO"
         assert settings.environment == "development"
         assert settings.oauth_callback_port == 8080

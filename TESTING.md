@@ -141,14 +141,10 @@ TESTING ALL MCP TOOLS
 TEST SUMMARY
 ================================================================================
 Total tools: 48
-✅ Passed: 46
+✅ Passed: 48
 ❌ Failed: 0
-⊘ Skipped: 2
+⊘ Skipped: 0
 Success rate: 100.0%
-
-⊘ SKIPPED TOOLS:
-  • download_file - No test data available
-  • get_file_as_base64 - No test data available
 
 Completed at: 2026-01-28 02:35:00
 ```
@@ -220,7 +216,7 @@ To test individual tools manually, use the MCP Inspector:
 uv run worksection-mcp
 
 # In another terminal
-npx @modelcontextprotocol/inspector http://localhost:8000/sse
+npx @modelcontextprotocol/inspector http://localhost:8000/mcp
 ```
 
 Or use the Python client directly:

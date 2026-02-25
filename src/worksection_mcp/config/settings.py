@@ -105,14 +105,14 @@ class Settings(BaseSettings):
     )
     mcp_server_host: str = Field(
         default="127.0.0.1",
-        description="Server host for SSE transport (0.0.0.0 for LAN access, 127.0.0.1 for local only)",
+        description="Server host for HTTP transports (0.0.0.0 for LAN access, 127.0.0.1 for local only)",
     )
     mcp_server_port: int = Field(
         default=8000,
-        description="Server port for SSE transport",
+        description="Server port for HTTP transports",
     )
-    mcp_transport: Literal["sse", "stdio"] = Field(
-        default="sse",
+    mcp_transport: Literal["streamable-http", "sse", "stdio"] = Field(
+        default="streamable-http",
         description="MCP transport type",
     )
 

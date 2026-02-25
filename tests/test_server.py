@@ -103,13 +103,29 @@ def test_get_mcp_is_lazy_and_cached(monkeypatch):
 
 
 def test_server_main_selects_transport(monkeypatch, tmp_path):
-    """main should call FastMCP.run with stdio or sse transport based on settings."""
+    """main should call FastMCP.run with the configured transport."""
     settings = build_settings(tmp_path, mcp_transport="stdio")
     stdio_server = SimpleNamespace(run=MagicMock())
     monkeypatch.setattr(server_module, "get_settings", lambda: settings)
     monkeypatch.setattr(server_module, "create_server", lambda _settings: stdio_server)
     server_module.main()
     stdio_server.run.assert_called_once_with(transport="stdio")
+
+    streamable_http_settings = build_settings(
+        tmp_path,
+        mcp_transport="streamable-http",
+        mcp_server_host="127.0.0.1",
+        mcp_server_port=9000,
+    )
+    streamable_http_server = SimpleNamespace(run=MagicMock())
+    monkeypatch.setattr(server_module, "get_settings", lambda: streamable_http_settings)
+    monkeypatch.setattr(server_module, "create_server", lambda _settings: streamable_http_server)
+    server_module.main()
+    streamable_http_server.run.assert_called_once_with(
+        transport="streamable-http",
+        host="127.0.0.1",
+        port=9000,
+    )
 
     sse_settings = build_settings(
         tmp_path,

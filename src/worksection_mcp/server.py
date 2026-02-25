@@ -1,5 +1,6 @@
 """Worksection MCP Server - Main entry point."""
 
+import asyncio
 import logging
 import sys
 from contextlib import asynccontextmanager
@@ -104,9 +105,19 @@ def create_server(settings: Settings | None = None) -> FastMCP:
 
         # Clean up resources
         if _client:
-            await _client.close()
+            try:
+                await _client.close()
+            except asyncio.CancelledError:
+                logger.debug("Shutdown cancelled while closing Worksection client")
+            except Exception:
+                logger.exception("Error while closing Worksection client")
         if _file_cache:
-            await _file_cache.close()
+            try:
+                await _file_cache.close()
+            except asyncio.CancelledError:
+                logger.debug("Shutdown cancelled while closing file cache")
+            except Exception:
+                logger.exception("Error while closing file cache")
 
         logger.info("Worksection MCP server stopped")
 
@@ -168,16 +179,26 @@ def main():
     logger.info(f"Transport: {settings.mcp_transport}")
     logger.info(f"Port: {settings.mcp_server_port}")
 
-    if settings.mcp_transport == "stdio":
-        # Run with stdio transport (for local MCP clients)
-        server.run(transport="stdio")
-    else:
-        # Run with SSE transport (for HTTP access)
-        server.run(
-            transport="sse",
-            host=settings.mcp_server_host,
-            port=settings.mcp_server_port,
-        )
+    try:
+        if settings.mcp_transport == "stdio":
+            # Run with stdio transport (for local MCP clients)
+            server.run(transport="stdio")
+        elif settings.mcp_transport == "streamable-http":
+            # Run with streamable HTTP transport (recommended network mode)
+            server.run(
+                transport="streamable-http",
+                host=settings.mcp_server_host,
+                port=settings.mcp_server_port,
+            )
+        else:
+            # Run with legacy SSE transport (backward compatibility)
+            server.run(
+                transport="sse",
+                host=settings.mcp_server_host,
+                port=settings.mcp_server_port,
+            )
+    except KeyboardInterrupt:
+        logger.info("Shutdown requested by user (Ctrl+C)")
 
 
 if __name__ == "__main__":
