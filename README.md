@@ -1,5 +1,7 @@
 # Worksection MCP Server
 
+[![CI](https://github.com/pbv7/worksection-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/pbv7/worksection-mcp/actions/workflows/ci.yml)
+
 A multi-tenant MCP (Model Context Protocol) server for
 [Worksection](https://worksection.com) project management platform,
 built with FastMCP 2.0.
