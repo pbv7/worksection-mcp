@@ -1,6 +1,7 @@
 # Worksection MCP Server
 
 [![CI](https://github.com/pbv7/worksection-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/pbv7/worksection-mcp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/pbv7/worksection-mcp/graph/badge.svg)](https://codecov.io/gh/pbv7/worksection-mcp)
 
 A multi-tenant MCP (Model Context Protocol) server for
 [Worksection](https://worksection.com) project management platform,
