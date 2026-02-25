@@ -222,6 +222,14 @@ class MCPToolTester:
         """Write a single line of human-readable output."""
         sys.stdout.write(f"{message}\n")
 
+    async def _get_registered_tools(self) -> dict[str, Any]:
+        """Return registered tools keyed by tool name."""
+        if self.mcp is None:
+            raise RuntimeError("MCP server is not initialized. Call setup() first.")
+
+        tools = await self.mcp.list_tools()
+        return {tool.name: tool for tool in tools}
+
     async def setup(self) -> int:
         """Initialize MCP server and components."""
         self._out("=" * 80)
@@ -255,7 +263,7 @@ class MCPToolTester:
         self.mcp = mcp
 
         # Get all registered tools (returns dict of tool_name -> Tool object)
-        tools_dict = await mcp.get_tools()
+        tools_dict = await self._get_registered_tools()
         self._out(f"✓ Registered {len(tools_dict)} MCP tools\n")
 
         # Guard against drift between registered tools and validation rules
@@ -605,7 +613,7 @@ class MCPToolTester:
 
         try:
             # Get tools dict
-            tools = await self.mcp.get_tools()
+            tools = await self._get_registered_tools()
             tool = tools.get(tool_name)
 
             if not tool:
@@ -788,7 +796,7 @@ class MCPToolTester:
         self._out()
 
         # Get tools dict
-        tools_dict = await self.mcp.get_tools()
+        tools_dict = await self._get_registered_tools()
         tool_names = sorted(tools_dict.keys())
         total_tools = len(tool_names)
 

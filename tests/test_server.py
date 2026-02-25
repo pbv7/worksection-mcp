@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import runpy
 from types import SimpleNamespace
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -67,7 +68,7 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     monkeypatch.setattr(server_module, "register_all_tools", register_tools)
     monkeypatch.setattr(server_module, "register_file_resources", register_resources)
 
-    mcp = server_module.create_server(settings)
+    mcp = cast(FakeFastMCP, server_module.create_server(settings))
     assert isinstance(mcp, FakeFastMCP)
     assert mcp.name == settings.mcp_server_name
     assert mcp.instructions is not None

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -64,7 +64,7 @@ async def test_validation_errors_logged_but_do_not_block_startup(monkeypatch, tm
     _patch_server_deps(monkeypatch)
 
     # create_server should succeed despite validation failures
-    mcp = server_module.create_server(settings)
+    mcp = cast(FakeFastMCP, server_module.create_server(settings))
     assert isinstance(mcp, FakeFastMCP)
 
 
@@ -92,7 +92,7 @@ async def test_lifespan_propagates_auth_failure(monkeypatch, tmp_path):
     )
     _patch_server_deps(monkeypatch, oauth=failing_oauth)
 
-    mcp = server_module.create_server(settings)
+    mcp = cast(FakeFastMCP, server_module.create_server(settings))
     assert isinstance(mcp, FakeFastMCP)
 
     with pytest.raises(RuntimeError, match="OAuth flow failed"):

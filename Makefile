@@ -1,4 +1,4 @@
-.PHONY: help format lint lint-docs test typecheck typecheck-mypy typecheck-pyright check clean install
+.PHONY: help format lint lint-docs test typecheck typecheck-mypy typecheck-pyright check clean install deps-upgrade deps-upgrade-runtime deps-upgrade-dev
 
 # Default target - show help
 help:
@@ -16,6 +16,7 @@ help:
 	@echo "  make check           - Run all checks (format, lint, lint-docs, typecheck, test)"
 	@echo "  make clean           - Remove generated files and caches"
 	@echo "  make install         - Install dependencies with uv"
+	@echo "  make deps-upgrade    - Upgrade runtime+dev dependency bounds, relock, sync, and run checks"
 	@echo ""
 	@echo "Common workflows:"
 	@echo "  make format lint-fix - Format and auto-fix linting issues"
@@ -84,3 +85,21 @@ clean:
 install:
 	@echo "Installing dependencies with uv..."
 	uv sync --frozen --extra dev
+
+# Dependency upgrade workflow
+deps-upgrade-runtime:
+	@echo "Upgrading runtime dependency bounds..."
+	uv add --upgrade --bounds lower --no-sync \
+		httpx pydantic pydantic-settings cryptography aiosqlite pillow \
+		python-dotenv python-docx openpyxl python-pptx pypdf
+
+deps-upgrade-dev:
+	@echo "Upgrading dev dependency bounds..."
+	uv add --optional dev --upgrade --bounds lower --no-sync \
+		pytest pytest-asyncio pytest-cov respx ruff mypy pyright
+
+deps-upgrade: deps-upgrade-runtime deps-upgrade-dev
+	@echo "Relocking and syncing dependencies..."
+	uv lock --upgrade
+	uv sync --frozen --extra dev
+	$(MAKE) check
