@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 import ssl
 from collections.abc import Callable
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -110,7 +111,8 @@ class CallbackHandler(BaseHTTPRequestHandler):
         except TypeError, ValueError:
             message = str(fmt)
 
-        logger.debug("Callback server: %s", message)
+        safe_message = re.sub(r"code=[^&\s]+", "code=[REDACTED]", message)
+        logger.debug("Callback server: %s", safe_message)
 
     def do_GET(self):
         """Handle GET request (OAuth callback)."""

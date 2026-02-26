@@ -49,6 +49,9 @@ cp .env.example .env
 # Edit .env with your credentials
 # Then validate your configuration
 uv run python scripts/validate_config.py
+
+# Restrict permissions on the data directory (tokens, keys, certs)
+mkdir -p data && chmod 700 data
 ```
 
 ### Configuration
