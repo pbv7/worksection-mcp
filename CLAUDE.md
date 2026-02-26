@@ -41,7 +41,7 @@ uv add --optional dev <pkg>    # add dev dep
 - Registers resources via `register_file_resources(mcp, client, file_cache)`
 - Uses a FastMCP **lifespan context manager** for startup/shutdown (auth on startup, cleanup on shutdown)
 
-Transport is selected at runtime from `MCP_TRANSPORT` env var: `streamable-http` (default), `sse`, or `stdio`.
+Transport is selected at runtime from `MCP_TRANSPORT` env var: `streamable-http` (default) or `stdio`.
 
 ### Adding a Tool
 

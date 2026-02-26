@@ -197,13 +197,7 @@ def main():
                 uvicorn_config={"timeout_graceful_shutdown": 5},
             )
         else:
-            # Run with legacy SSE transport (backward compatibility)
-            server.run(
-                transport="sse",
-                host=settings.mcp_server_host,
-                port=settings.mcp_server_port,
-                uvicorn_config={"timeout_graceful_shutdown": 5},
-            )
+            raise ValueError(f"Unsupported transport: {settings.mcp_transport}")
     except KeyboardInterrupt:
         logger.info("Shutdown requested by user (Ctrl+C)")
 

@@ -12,7 +12,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - LOG_LEVEL=INFO
-      - MCP_TRANSPORT=sse
+      - MCP_TRANSPORT=streamable-http
       - MCP_SERVER_HOST=${MCP_SERVER_HOST:-0.0.0.0}
     volumes:
       # Use named volumes for persistent data
