@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-26
+
 ### Removed
 
 - Drop legacy SSE transport support; only `streamable-http` and `stdio` are accepted
@@ -80,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker support with multi-stage production build
 - Full test coverage with pytest
 
+[0.4.0]: https://github.com/pbv7/worksection-mcp/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/pbv7/worksection-mcp/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/pbv7/worksection-mcp/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/pbv7/worksection-mcp/compare/v0.1.0...v0.2.0
