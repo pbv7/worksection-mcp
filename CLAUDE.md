@@ -87,6 +87,17 @@ Tests use `pytest-asyncio` (`asyncio_mode = "auto"`). Shared fixtures are in `te
 (mock settings, mock OAuth, mock client, sample data). HTTP calls are mocked with `respx`.
 The `pyproject.toml` `addopts` automatically adds `--cov` and `-v` to every run.
 
+## Release Flow
+
+To cut a release:
+
+1. **`pyproject.toml`** — bump `version = "x.y.z"`
+2. **`CHANGELOG.md`** — rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD`
+3. Commit: `chore(release): bump to vx.y.z`
+4. Tag: `git tag vx.y.z && git push origin vx.y.z`
+
+Pushing the tag triggers `release.yml` which builds the package and creates a GitHub Release with auto-generated notes and `dist/*` assets attached.
+
 ## CI Workflows
 
 | Workflow | Trigger | Checks |
