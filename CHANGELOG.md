@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Drop legacy SSE transport support; only `streamable-http` and `stdio` are accepted
+
 ### Fixed
 
 - Set graceful shutdown timeout to 5s for HTTP transports to eliminate `CancelledError` tracebacks on Ctrl+C
