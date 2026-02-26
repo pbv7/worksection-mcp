@@ -92,9 +92,10 @@ The `pyproject.toml` `addopts` automatically adds `--cov` and `-v` to every run.
 To cut a release:
 
 1. **`pyproject.toml`** — bump `version = "x.y.z"`
-2. **`CHANGELOG.md`** — rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD`
-3. Commit: `chore(release): bump to vx.y.z`
-4. Tag: `git tag vx.y.z && git push origin vx.y.z`
+2. **`CHANGELOG.md`** — rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD`; add comparison link at bottom
+3. **`SECURITY.md`** — update Supported Versions table on minor/major bumps (e.g. `0.3.x` → `0.4.x`)
+4. Commit: `chore(release): bump to vx.y.z`
+5. Tag: `git tag vx.y.z && git push origin vx.y.z`
 
 Pushing the tag triggers `release.yml` which builds the package and creates a GitHub Release with auto-generated notes and `dist/*` assets attached.
 
