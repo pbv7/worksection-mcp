@@ -52,8 +52,8 @@ COPY --from=builder /app/src /app/src
 
 # Create data directories with restricted permissions
 RUN mkdir -p /app/data/tokens /app/data/files /app/data/certs && \
-    chown -R mcp:mcp /app && \
-    chmod 700 /app/data
+    chown -R mcp:mcp /app/data && \
+    chmod -R 700 /app/data
 
 # Set environment
 ENV PATH="/app/.venv/bin:$PATH"
