@@ -141,10 +141,11 @@ class OAuth2Manager:
         if "access_token" not in response_data:
             error = response_data.get("error", "invalid_response")
             error_desc = response_data.get("error_description", "No access_token in response")
-            safe_keys = {
-                k: v for k, v in response_data.items() if k not in {"access_token", "refresh_token"}
+            safe_data = {
+                k: "[REDACTED]" if k in {"access_token", "refresh_token"} else v
+                for k, v in response_data.items()
             }
-            logger.warning("Token refresh response missing access_token: %s", safe_keys)
+            logger.warning("Token refresh response missing access_token: %s", safe_data)
             raise OAuth2Error(f"Token refresh failed: {error} - {error_desc}")
 
         return response_data
