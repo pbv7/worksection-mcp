@@ -5,7 +5,7 @@
 
 A multi-tenant MCP (Model Context Protocol) server for
 [Worksection](https://worksection.com) project management platform,
-built with FastMCP 2.0.
+built with [FastMCP](https://github.com/jlowin/fastmcp).
 
 Provides **comprehensive read-only tools** for data access,
 enabling AI assistants like Claude to generate reports, analyze project data,
