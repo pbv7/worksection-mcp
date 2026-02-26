@@ -14,6 +14,8 @@ from worksection_mcp.config import Settings
 
 logger = logging.getLogger(__name__)
 
+_SENSITIVE_TOKEN_KEYS = {"access_token", "refresh_token"}
+
 
 class OAuth2Error(Exception):
     """OAuth2 authentication error."""
@@ -142,7 +144,7 @@ class OAuth2Manager:
             error = response_data.get("error", "invalid_response")
             error_desc = response_data.get("error_description", "No access_token in response")
             safe_data = {
-                k: "[REDACTED]" if k in {"access_token", "refresh_token"} else v
+                k: "[REDACTED]" if k in _SENSITIVE_TOKEN_KEYS else v
                 for k, v in response_data.items()
             }
             logger.warning("Token refresh response missing access_token: %s", safe_data)
