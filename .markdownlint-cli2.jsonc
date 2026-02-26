@@ -7,6 +7,9 @@
       "code_blocks": false,
       "headings": false,
       "tables": false
+    },
+    "MD024": {
+      "siblings_only": true
     }
   }
 }

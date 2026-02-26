@@ -20,9 +20,9 @@ make typecheck       # mypy + pyright
 # Tests
 make test            # pytest with coverage (HTML + term)
 make test-fast       # pytest without coverage
-uv run pytest tests/test_tools/test_analytics.py              # single file
-uv run pytest tests/test_server.py::test_create_server_wires_dependencies_and_lifecycle  # single test
-uv run pytest -k "oauth"                                       # pattern match
+uv run pytest tests/test_tools/test_analytics.py         # single file
+uv run pytest tests/test_server.py::test_create_server   # single test
+uv run pytest -k "oauth"                                 # pattern match
 
 # Always use uv, never pip
 uv sync --frozen --extra dev   # install
@@ -35,6 +35,7 @@ uv add --optional dev <pkg>    # add dev dep
 ### Server Startup
 
 `server.py:create_server()` is the composition root. It wires all singletons:
+
 - `OAuth2Manager` → `WorksectionClient` → `FileCache`
 - Registers tools via `register_all_tools(mcp, client, oauth, file_cache)`
 - Registers resources via `register_file_resources(mcp, client, file_cache)`
@@ -44,17 +45,20 @@ Transport is selected at runtime from `MCP_TRANSPORT` env var: `streamable-http`
 
 ### Adding a Tool
 
-All tools live in `src/worksection_mcp/tools/`. Each module exports a `register_*_tools(mcp, client)` function. Tools are registered with `@mcp.tool()` decorator inside that function.
+All tools live in `src/worksection_mcp/tools/`. Each module exports a `register_*_tools(mcp, client)`
+function. Tools are registered with `@mcp.tool()` decorator inside that function.
 
 1. Add the tool function to the appropriate module in `tools/`
 2. Add the corresponding API method to `client/api.py` if needed
-3. `tools/__init__.py:register_all_tools()` calls all registrar functions — no changes needed there unless adding a new module
+3. `tools/__init__.py:register_all_tools()` calls all registrar functions —
+   no changes needed there unless adding a new module
 
 The `ToolRegistrar` protocol in `mcp_protocols.py` enables testing tools without a real FastMCP instance.
 
 ### API Client
 
 `client/api.py:WorksectionClient` wraps all Worksection API calls. Every request:
+
 1. Acquires the adaptive rate limiter (`client/rate_limiter.py`) — base 1 req/sec
 2. Gets a valid token via `oauth.get_valid_token()` (refreshes automatically)
 3. Checks session cache if `use_cache=True`
@@ -62,26 +66,33 @@ The `ToolRegistrar` protocol in `mcp_protocols.py` enables testing tools without
 
 ### Authentication
 
-`auth/oauth2.py:OAuth2Manager` handles the full OAuth2 flow. `ensure_authenticated()` is called at lifespan startup. Tokens are Fernet-encrypted at rest in `./data/tokens/tokens.enc`. SSL certs for the callback server are auto-generated in `./data/certs/`.
+`auth/oauth2.py:OAuth2Manager` handles the full OAuth2 flow. `ensure_authenticated()` is called at
+lifespan startup. Tokens are Fernet-encrypted at rest in `./data/tokens/tokens.enc`. SSL certs for
+the callback server are auto-generated in `./data/certs/`.
 
 ### Resources
 
-`resources/files.py` registers `worksection://file/{file_id}` and `worksection://task/{task_id}/context`. Files are cached to disk with SQLite metadata in `./data/files/`. Text files return `text`, binary files return base64 `blob`.
+`resources/files.py` registers `worksection://file/{file_id}` and `worksection://task/{task_id}/context`.
+Files are cached to disk with SQLite metadata in `./data/files/`. Text files return `text`, binary
+files return base64 `blob`.
 
 ### Configuration
 
-`config/settings.py` uses Pydantic Settings. All config comes from `.env`. Validation runs at startup — missing or malformed values raise immediately with clear messages.
+`config/settings.py` uses Pydantic Settings. All config comes from `.env`. Validation runs at startup —
+missing or malformed values raise immediately with clear messages.
 
 ### Testing
 
-Tests use `pytest-asyncio` (`asyncio_mode = "auto"`). Shared fixtures are in `tests/conftest.py` (mock settings, mock OAuth, mock client, sample data). HTTP calls are mocked with `respx`. The `pyproject.toml` `addopts` automatically adds `--cov` and `-v` to every run.
+Tests use `pytest-asyncio` (`asyncio_mode = "auto"`). Shared fixtures are in `tests/conftest.py`
+(mock settings, mock OAuth, mock client, sample data). HTTP calls are mocked with `respx`.
+The `pyproject.toml` `addopts` automatically adds `--cov` and `-v` to every run.
 
 ## CI Workflows
 
 | Workflow | Trigger | Checks |
-|----------|---------|--------|
-| `ci.yml` | push/PR to main | format, lint, typecheck (mypy+pyright), pytest + Codecov upload |
-| `docs.yml` | push/PR to main (`.md` files only) | markdownlint-cli2 |
+| --- | --- | --- |
+| `ci.yml` | push/PR to main | format, lint, typecheck (mypy+pyright), pytest + Codecov |
+| `docs.yml` | push/PR to main (`.md` only) | markdownlint-cli2 |
 | `codeql.yml` | push/PR to main + weekly | CodeQL security analysis |
 | `release.yml` | push to main | Release automation |
 
