@@ -14,10 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs workflow for markdown linting (`.md` files only)
 - CODEOWNERS with `@pbv7` as owner of all files
 - CLAUDE.md with development guidance for Claude Code
+- SECURITY.md with vulnerability reporting policy, scope, and deployment assumptions
 
 ### Changed
 
 - markdownlint config: allow duplicate headings in changelog (`MD024` siblings_only)
+- README: add `mkdir -p data && chmod 700 data` step to quick start
+
+### Security
+
+- Redact OAuth2 authorization codes from callback server debug logs
+- Redact token values in refresh-failure warning logs (keys preserved, values replaced with `[REDACTED]`)
+- Set `umask(0o077)` in `main()` so all runtime-created files get mode 600 and directories mode 700
+- Docker: scope `chown` to `/app/data` only; apply `chmod -R 700` recursively; add `data/certs` directory
 
 ## [0.3.0] - 2025-06-15
 

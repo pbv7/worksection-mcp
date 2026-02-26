@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 import ssl
 from collections.abc import Callable
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -9,6 +10,8 @@ from threading import Thread
 from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger(__name__)
+
+_REDACT_CODE_RE = re.compile(r"code=[^&\s]+")
 
 type CallbackHandlerFn = Callable[[str | None, str | None], None]
 
@@ -110,7 +113,8 @@ class CallbackHandler(BaseHTTPRequestHandler):
         except TypeError, ValueError:
             message = str(fmt)
 
-        logger.debug("Callback server: %s", message)
+        safe_message = _REDACT_CODE_RE.sub("code=[REDACTED]", message)
+        logger.debug("Callback server: %s", safe_message)
 
     def do_GET(self):
         """Handle GET request (OAuth callback)."""

@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import sys
 from contextlib import asynccontextmanager
 
@@ -172,6 +173,10 @@ mcp = None  # Will be set lazily when get_mcp() is called
 
 def main():
     """Main entry point for the MCP server."""
+    # Restrict permissions on all runtime-created files (tokens, keys, certs, cache).
+    # Files: 600 (-rw-------), directories: 700 (drwx------).
+    os.umask(0o077)
+
     settings = get_settings()
     server = create_server(settings)
 
