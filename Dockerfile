@@ -61,13 +61,13 @@ ENV PYTHONPATH="/app/src"
 ENV PYTHONUNBUFFERED=1
 
 # Default environment variables (can be overridden)
-ENV MCP_TRANSPORT=sse
+ENV MCP_TRANSPORT=streamable-http
 ENV MCP_SERVER_PORT=8000
 ENV LOG_LEVEL=INFO
 ENV TOKEN_STORAGE_PATH=/app/data/tokens
 ENV FILE_CACHE_PATH=/app/data/files
 
-# Expose port for SSE transport
+# Expose port for HTTP transport
 EXPOSE 8000
 
 # Switch to non-root user

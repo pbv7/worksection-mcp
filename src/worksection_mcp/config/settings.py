@@ -111,7 +111,7 @@ class Settings(BaseSettings):
         default=8000,
         description="Server port for HTTP transports",
     )
-    mcp_transport: Literal["streamable-http", "sse", "stdio"] = Field(
+    mcp_transport: Literal["streamable-http", "stdio"] = Field(
         default="streamable-http",
         description="MCP transport type",
     )

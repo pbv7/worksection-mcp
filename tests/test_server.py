@@ -128,22 +128,13 @@ def test_server_main_selects_transport(monkeypatch, tmp_path):
         uvicorn_config={"timeout_graceful_shutdown": 5},
     )
 
-    sse_settings = build_settings(
-        tmp_path,
-        mcp_transport="sse",
-        mcp_server_host="127.0.0.1",
-        mcp_server_port=9000,
-    )
-    sse_server = SimpleNamespace(run=MagicMock())
-    monkeypatch.setattr(server_module, "get_settings", lambda: sse_settings)
-    monkeypatch.setattr(server_module, "create_server", lambda _settings: sse_server)
-    server_module.main()
-    sse_server.run.assert_called_once_with(
-        transport="sse",
-        host="127.0.0.1",
-        port=9000,
-        uvicorn_config={"timeout_graceful_shutdown": 5},
-    )
+
+def test_invalid_transport_rejected(tmp_path):
+    """Pydantic should reject unsupported transport values."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        build_settings(tmp_path, mcp_transport="sse")
 
 
 def test_package_entrypoints_delegate_to_server(monkeypatch):

@@ -318,7 +318,7 @@ for file in discussion.get("images", []):
 | `MCP_SERVER_NAME` | Server name | `worksection` |
 | `MCP_SERVER_HOST` | HTTP bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
 | `MCP_SERVER_PORT` | Server port | `8000` |
-| `MCP_TRANSPORT` | Transport type (`streamable-http`/`sse`/`stdio`) | `streamable-http` |
+| `MCP_TRANSPORT` | Transport type (`streamable-http`/`stdio`) | `streamable-http` |
 | `LOG_LEVEL` | Logging level | `INFO` |
 | `ENVIRONMENT` | Environment name | `development` |
 
