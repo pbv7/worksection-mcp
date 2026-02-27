@@ -1,6 +1,6 @@
 [project]
 name = "worksection-mcp"
-version = "0.4.0"
+version = "0.5.0"
 description = "Multi-tenant MCP server for Worksection with comprehensive read-only tools for data access and reporting"
 readme = "README.md"
 authors = [
