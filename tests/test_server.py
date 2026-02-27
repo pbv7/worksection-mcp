@@ -14,6 +14,7 @@ from tests.helpers import build_settings
 from worksection_mcp import get_mcp as package_get_mcp
 from worksection_mcp import main as package_main
 from worksection_mcp import server as server_module
+from worksection_mcp.logging_config import build_logging_dict
 
 
 class FakeFastMCP:
@@ -105,7 +106,7 @@ def test_get_mcp_is_lazy_and_cached(monkeypatch):
 def test_server_main_selects_transport(monkeypatch, tmp_path):
     """main should call FastMCP.run with the configured transport."""
     settings = build_settings(tmp_path, mcp_transport="stdio")
-    stdio_server = SimpleNamespace(run=MagicMock())
+    stdio_server = SimpleNamespace(run=MagicMock(), _log_config={})
     monkeypatch.setattr(server_module, "get_settings", lambda: settings)
     monkeypatch.setattr(server_module, "create_server", lambda _settings: stdio_server)
     server_module.main()
@@ -117,7 +118,8 @@ def test_server_main_selects_transport(monkeypatch, tmp_path):
         mcp_server_host="127.0.0.1",
         mcp_server_port=9000,
     )
-    streamable_http_server = SimpleNamespace(run=MagicMock())
+    log_config = build_logging_dict(streamable_http_settings)
+    streamable_http_server = SimpleNamespace(run=MagicMock(), _log_config=log_config)
     monkeypatch.setattr(server_module, "get_settings", lambda: streamable_http_settings)
     monkeypatch.setattr(server_module, "create_server", lambda _settings: streamable_http_server)
     server_module.main()
@@ -128,7 +130,7 @@ def test_server_main_selects_transport(monkeypatch, tmp_path):
     assert call_kwargs["port"] == 9000
     assert call_kwargs["uvicorn_config"]["timeout_graceful_shutdown"] == 5
     assert call_kwargs["uvicorn_config"]["access_log"] is True
-    assert "log_config" in call_kwargs["uvicorn_config"]
+    assert call_kwargs["uvicorn_config"]["log_config"] is log_config
 
 
 def test_request_log_mode_off_disables_access_log(monkeypatch, tmp_path):
@@ -140,7 +142,8 @@ def test_request_log_mode_off_disables_access_log(monkeypatch, tmp_path):
         mcp_server_port=9001,
         request_log_mode="OFF",
     )
-    off_server = SimpleNamespace(run=MagicMock())
+    off_log_config = build_logging_dict(off_settings)
+    off_server = SimpleNamespace(run=MagicMock(), _log_config=off_log_config)
     monkeypatch.setattr(server_module, "get_settings", lambda: off_settings)
     monkeypatch.setattr(server_module, "create_server", lambda _settings: off_server)
     server_module.main()

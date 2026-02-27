@@ -12,7 +12,6 @@ from worksection_mcp.cache import FileCache
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.config import Settings, get_settings
 from worksection_mcp.logging_config import (
-    build_logging_dict,
     configure_logging,
     is_access_log_enabled,
 )
@@ -61,8 +60,9 @@ def create_server(settings: Settings | None = None) -> FastMCP:
     if settings is None:
         settings = get_settings()
 
-    # Configure unified logging pipeline for app + FastMCP + Uvicorn + httpx
-    configure_logging(settings)
+    # Configure unified logging pipeline for app + FastMCP + Uvicorn + httpx.
+    # Stash the dict so main() can pass it to Uvicorn without rebuilding.
+    mcp_log_config = configure_logging(settings)
 
     # Ensure directories exist
     settings.ensure_directories()
@@ -169,6 +169,7 @@ Rate limited to 1 request/second per Worksection API limits.
     # Register file resources
     register_file_resources(mcp, _client, _file_cache)
 
+    mcp._log_config = mcp_log_config  # type: ignore[attr-defined]
     return mcp
 
 
@@ -196,7 +197,7 @@ def main():
 
     settings = get_settings()
     server = create_server(settings)
-    uvicorn_log_config = build_logging_dict(settings)
+    uvicorn_log_config = server._log_config  # type: ignore[attr-defined]
     access_log_enabled = is_access_log_enabled(settings.request_log_mode)
 
     logger.info("Starting Worksection MCP server...")
