@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Centralized logging configuration module for app, FastMCP, Uvicorn, and httpx
+- New runtime logging settings: `LOG_USE_COLORS` and `REQUEST_LOG_MODE` (`INFO`/`DEBUG`/`OFF`)
+- Test coverage for logging configuration, request-log-mode behavior, and config-validator output
+
+### Changed
+
+- Unified log line format across server components: `%(asctime)s | %(levelname)s | %(name)s | %(message)s`
+- Uvicorn now runs with explicit `log_config` and `access_log` derived from `REQUEST_LOG_MODE`
+- Configuration docs and `.env.example` updated for new logging controls
+- `scripts/validate_config.py` now displays logging controls in the configuration summary
+- `scripts/validate_config.py` now uses TTY-safe ANSI colors for headings/status output, with plain-text fallback (`NO_COLOR`/non-TTY)
+
+### Security
+
+- Startup authentication log now records only user `id` and `name` instead of full user payload
+
 ## [0.4.0] - 2026-02-26
 
 ### Removed

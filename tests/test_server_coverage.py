@@ -64,7 +64,8 @@ async def test_validation_errors_logged_but_do_not_block_startup(monkeypatch, tm
     _patch_server_deps(monkeypatch)
 
     # create_server should succeed despite validation failures
-    mcp = cast(FakeFastMCP, server_module.create_server(settings))
+    server, _log_config = server_module.create_server(settings)
+    mcp = cast(FakeFastMCP, server)
     assert isinstance(mcp, FakeFastMCP)
 
 
@@ -92,7 +93,8 @@ async def test_lifespan_propagates_auth_failure(monkeypatch, tmp_path):
     )
     _patch_server_deps(monkeypatch, oauth=failing_oauth)
 
-    mcp = cast(FakeFastMCP, server_module.create_server(settings))
+    server, _log_config = server_module.create_server(settings)
+    mcp = cast(FakeFastMCP, server)
     assert isinstance(mcp, FakeFastMCP)
 
     with pytest.raises(RuntimeError, match="OAuth flow failed"):

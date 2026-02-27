@@ -3,8 +3,8 @@
 import asyncio
 import logging
 import os
-import sys
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -12,15 +12,13 @@ from worksection_mcp.auth import OAuth2Manager
 from worksection_mcp.cache import FileCache
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.config import Settings, get_settings
+from worksection_mcp.logging_config import (
+    configure_logging,
+    is_access_log_enabled,
+)
 from worksection_mcp.resources import register_file_resources
 from worksection_mcp.tools import register_all_tools
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stderr)],
-)
 logger = logging.getLogger(__name__)
 
 
@@ -30,22 +28,43 @@ _client: WorksectionClient | None = None
 _file_cache: FileCache | None = None
 
 
-def create_server(settings: Settings | None = None) -> FastMCP:
+def _format_authenticated_user(user_info: object) -> str:
+    """Return a safe, compact user summary for logs."""
+    if not isinstance(user_info, dict):
+        return "id=unknown name=unknown"
+
+    profile = user_info.get("data")
+    if not isinstance(profile, dict):
+        profile = user_info
+
+    user_id = profile.get("id", "unknown")
+    name = profile.get("name")
+    if not isinstance(name, str) or not name.strip():
+        first_name = profile.get("first_name", "")
+        last_name = profile.get("last_name", "")
+        name = f"{first_name} {last_name}".strip() or "unknown"
+
+    return f"id={user_id} name={name}"
+
+
+def create_server(
+    settings: Settings | None = None,
+) -> tuple[FastMCP, dict[str, Any]]:
     """Create and configure the MCP server.
 
     Args:
         settings: Optional settings override (uses get_settings() if None)
 
     Returns:
-        Configured FastMCP server instance
+        Tuple of (configured FastMCP server, logging dictConfig for Uvicorn)
     """
     global _oauth, _client, _file_cache
 
     if settings is None:
         settings = get_settings()
 
-    # Configure logging level
-    logging.getLogger().setLevel(getattr(logging, settings.log_level))
+    # Configure unified logging pipeline for app + FastMCP + Uvicorn + httpx
+    log_config = configure_logging(settings)
 
     # Ensure directories exist
     settings.ensure_directories()
@@ -93,7 +112,7 @@ def create_server(settings: Settings | None = None) -> FastMCP:
             # Ensure we have valid authentication
             await _oauth.ensure_authenticated()
             user_info = await _client.me()
-            logger.info(f"Authenticated as: {user_info}")
+            logger.info("Authenticated as: %s", _format_authenticated_user(user_info))
             logger.info("Worksection MCP server ready!")
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
@@ -152,7 +171,7 @@ Rate limited to 1 request/second per Worksection API limits.
     # Register file resources
     register_file_resources(mcp, _client, _file_cache)
 
-    return mcp
+    return mcp, log_config
 
 
 # Lazy server instance
@@ -163,7 +182,7 @@ def get_mcp() -> FastMCP:
     """Get or create the MCP server instance."""
     global _mcp
     if _mcp is None:
-        _mcp = create_server()
+        _mcp, _ = create_server()
     return _mcp
 
 
@@ -178,7 +197,8 @@ def main():
     os.umask(0o077)
 
     settings = get_settings()
-    server = create_server(settings)
+    server, uvicorn_log_config = create_server(settings)
+    access_log_enabled = is_access_log_enabled(settings.request_log_mode)
 
     logger.info("Starting Worksection MCP server...")
     logger.info(f"Transport: {settings.mcp_transport}")
@@ -194,7 +214,11 @@ def main():
                 transport="streamable-http",
                 host=settings.mcp_server_host,
                 port=settings.mcp_server_port,
-                uvicorn_config={"timeout_graceful_shutdown": 5},
+                uvicorn_config={
+                    "timeout_graceful_shutdown": 5,
+                    "log_config": uvicorn_log_config,
+                    "access_log": access_log_enabled,
+                },
             )
         else:
             raise ValueError(f"Unsupported transport: {settings.mcp_transport}")

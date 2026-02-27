@@ -135,3 +135,17 @@ def test_cached_settings_singleton_behavior(monkeypatch, tmp_path):
     first = get_settings()
     second = get_settings()
     assert first is second
+
+
+def test_request_log_mode_validation_and_logging_defaults(tmp_path):
+    """Request log mode should validate values, and log color default should be enabled."""
+    settings = build_settings(tmp_path)
+    assert settings.log_use_colors is True
+    assert settings.request_log_mode == "INFO"
+
+    for mode in ("INFO", "DEBUG", "OFF"):
+        normalized = build_settings(tmp_path, request_log_mode=mode.lower())
+        assert normalized.request_log_mode == mode
+
+    with pytest.raises(ValidationError):
+        build_settings(tmp_path, request_log_mode="TRACE")
