@@ -73,6 +73,14 @@ def test_log_use_colors_is_tty_safe(tmp_path):
     assert color_off_config["formatters"]["standard"]["use_colors"] is False
 
 
+def test_no_color_env_overrides_log_use_colors(tmp_path, monkeypatch):
+    """NO_COLOR env var should disable colors even when LOG_USE_COLORS is true."""
+    monkeypatch.setenv("NO_COLOR", "")
+    settings = build_settings(tmp_path, log_use_colors=True)
+    config = build_logging_dict(settings, stderr_isatty=True)
+    assert config["formatters"]["standard"]["use_colors"] is False
+
+
 def test_color_level_formatter_colors_level_name_only():
     """Formatter should colorize level names and leave record state unchanged."""
     formatter = ColorLevelFormatter(fmt="%(levelname)s|%(message)s", use_colors=True)

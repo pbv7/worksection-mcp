@@ -69,7 +69,8 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     monkeypatch.setattr(server_module, "register_all_tools", register_tools)
     monkeypatch.setattr(server_module, "register_file_resources", register_resources)
 
-    mcp = cast(FakeFastMCP, server_module.create_server(settings))
+    server, _log_config = server_module.create_server(settings)
+    mcp = cast(FakeFastMCP, server)
     assert isinstance(mcp, FakeFastMCP)
     assert mcp.name == settings.mcp_server_name
     assert mcp.instructions is not None
@@ -91,7 +92,7 @@ def test_get_mcp_is_lazy_and_cached(monkeypatch):
 
     def fake_create_server():
         created.append("created")
-        return {"name": "server"}
+        return {"name": "server"}, {}
 
     monkeypatch.setattr(server_module, "create_server", fake_create_server)
     server_module._mcp = None
@@ -99,16 +100,16 @@ def test_get_mcp_is_lazy_and_cached(monkeypatch):
     first = server_module.get_mcp()
     second = server_module.get_mcp()
 
-    assert first == second == {"name": "server"}
+    assert first == second == {"name": "server"}  # type: ignore[comparison-overlap]
     assert len(created) == 1
 
 
 def test_server_main_selects_transport(monkeypatch, tmp_path):
     """main should call FastMCP.run with the configured transport."""
     settings = build_settings(tmp_path, mcp_transport="stdio")
-    stdio_server = SimpleNamespace(run=MagicMock(), _log_config={})
+    stdio_server = SimpleNamespace(run=MagicMock())
     monkeypatch.setattr(server_module, "get_settings", lambda: settings)
-    monkeypatch.setattr(server_module, "create_server", lambda _settings: stdio_server)
+    monkeypatch.setattr(server_module, "create_server", lambda _settings: (stdio_server, {}))
     server_module.main()
     stdio_server.run.assert_called_once_with(transport="stdio")
 
@@ -119,9 +120,13 @@ def test_server_main_selects_transport(monkeypatch, tmp_path):
         mcp_server_port=9000,
     )
     log_config = build_logging_dict(streamable_http_settings)
-    streamable_http_server = SimpleNamespace(run=MagicMock(), _log_config=log_config)
+    streamable_http_server = SimpleNamespace(run=MagicMock())
     monkeypatch.setattr(server_module, "get_settings", lambda: streamable_http_settings)
-    monkeypatch.setattr(server_module, "create_server", lambda _settings: streamable_http_server)
+    monkeypatch.setattr(
+        server_module,
+        "create_server",
+        lambda _settings: (streamable_http_server, log_config),
+    )
     server_module.main()
     streamable_http_server.run.assert_called_once()
     call_kwargs = streamable_http_server.run.call_args.kwargs
@@ -143,9 +148,13 @@ def test_request_log_mode_off_disables_access_log(monkeypatch, tmp_path):
         request_log_mode="OFF",
     )
     off_log_config = build_logging_dict(off_settings)
-    off_server = SimpleNamespace(run=MagicMock(), _log_config=off_log_config)
+    off_server = SimpleNamespace(run=MagicMock())
     monkeypatch.setattr(server_module, "get_settings", lambda: off_settings)
-    monkeypatch.setattr(server_module, "create_server", lambda _settings: off_server)
+    monkeypatch.setattr(
+        server_module,
+        "create_server",
+        lambda _settings: (off_server, off_log_config),
+    )
     server_module.main()
     off_call_kwargs = off_server.run.call_args.kwargs
     assert off_call_kwargs["uvicorn_config"]["access_log"] is False

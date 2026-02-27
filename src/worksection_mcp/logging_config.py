@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import logging.config
+import os
 import sys
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -50,6 +51,8 @@ class ColorLevelFormatter(logging.Formatter):
 
 
 def _should_use_colors(settings: Settings, stderr_isatty: bool | None = None) -> bool:
+    if os.getenv("NO_COLOR") is not None:
+        return False
     if not settings.log_use_colors:
         return False
 

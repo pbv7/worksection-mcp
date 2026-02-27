@@ -4,6 +4,7 @@ import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastmcp import FastMCP
 
@@ -46,23 +47,24 @@ def _format_authenticated_user(user_info: object) -> str:
     return f"id={user_id} name={name}"
 
 
-def create_server(settings: Settings | None = None) -> FastMCP:
+def create_server(
+    settings: Settings | None = None,
+) -> tuple[FastMCP, dict[str, Any]]:
     """Create and configure the MCP server.
 
     Args:
         settings: Optional settings override (uses get_settings() if None)
 
     Returns:
-        Configured FastMCP server instance
+        Tuple of (configured FastMCP server, logging dictConfig for Uvicorn)
     """
     global _oauth, _client, _file_cache
 
     if settings is None:
         settings = get_settings()
 
-    # Configure unified logging pipeline for app + FastMCP + Uvicorn + httpx.
-    # Stash the dict so main() can pass it to Uvicorn without rebuilding.
-    mcp_log_config = configure_logging(settings)
+    # Configure unified logging pipeline for app + FastMCP + Uvicorn + httpx
+    log_config = configure_logging(settings)
 
     # Ensure directories exist
     settings.ensure_directories()
@@ -169,8 +171,7 @@ Rate limited to 1 request/second per Worksection API limits.
     # Register file resources
     register_file_resources(mcp, _client, _file_cache)
 
-    mcp._log_config = mcp_log_config  # type: ignore[attr-defined]
-    return mcp
+    return mcp, log_config
 
 
 # Lazy server instance
@@ -181,7 +182,7 @@ def get_mcp() -> FastMCP:
     """Get or create the MCP server instance."""
     global _mcp
     if _mcp is None:
-        _mcp = create_server()
+        _mcp, _ = create_server()
     return _mcp
 
 
@@ -196,8 +197,7 @@ def main():
     os.umask(0o077)
 
     settings = get_settings()
-    server = create_server(settings)
-    uvicorn_log_config = server._log_config  # type: ignore[attr-defined]
+    server, uvicorn_log_config = create_server(settings)
     access_log_enabled = is_access_log_enabled(settings.request_log_mode)
 
     logger.info("Starting Worksection MCP server...")

@@ -36,7 +36,7 @@ _ANSI_RESET = "\033[0m"
 
 def _supports_color() -> bool:
     """Return whether stdout likely supports ANSI colors."""
-    if os.getenv("NO_COLOR"):
+    if os.getenv("NO_COLOR") is not None:
         return False
     term = os.getenv("TERM", "")
     if term == "dumb":
@@ -126,12 +126,11 @@ def main():
             line = f"{key:30s}: {result}"
             if result.startswith("✗"):
                 out(line, color="red")
+                all_passed = False
             elif result.startswith("✓"):
                 out(line, color="green")
             else:
                 out(line)
-            if result.startswith("✗"):
-                all_passed = False
 
         out()
 
