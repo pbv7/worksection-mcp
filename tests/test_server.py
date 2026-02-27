@@ -121,12 +121,31 @@ def test_server_main_selects_transport(monkeypatch, tmp_path):
     monkeypatch.setattr(server_module, "get_settings", lambda: streamable_http_settings)
     monkeypatch.setattr(server_module, "create_server", lambda _settings: streamable_http_server)
     server_module.main()
-    streamable_http_server.run.assert_called_once_with(
-        transport="streamable-http",
-        host="127.0.0.1",
-        port=9000,
-        uvicorn_config={"timeout_graceful_shutdown": 5},
+    streamable_http_server.run.assert_called_once()
+    call_kwargs = streamable_http_server.run.call_args.kwargs
+    assert call_kwargs["transport"] == "streamable-http"
+    assert call_kwargs["host"] == "127.0.0.1"
+    assert call_kwargs["port"] == 9000
+    assert call_kwargs["uvicorn_config"]["timeout_graceful_shutdown"] == 5
+    assert call_kwargs["uvicorn_config"]["access_log"] is True
+    assert "log_config" in call_kwargs["uvicorn_config"]
+
+
+def test_request_log_mode_off_disables_access_log(monkeypatch, tmp_path):
+    """REQUEST_LOG_MODE=OFF should disable Uvicorn access logging."""
+    off_settings = build_settings(
+        tmp_path,
+        mcp_transport="streamable-http",
+        mcp_server_host="127.0.0.1",
+        mcp_server_port=9001,
+        request_log_mode="OFF",
     )
+    off_server = SimpleNamespace(run=MagicMock())
+    monkeypatch.setattr(server_module, "get_settings", lambda: off_settings)
+    monkeypatch.setattr(server_module, "create_server", lambda _settings: off_server)
+    server_module.main()
+    off_call_kwargs = off_server.run.call_args.kwargs
+    assert off_call_kwargs["uvicorn_config"]["access_log"] is False
 
 
 def test_invalid_transport_rejected(tmp_path):
@@ -160,3 +179,22 @@ def test_resources_and_package_exports():
 
     package_module = importlib.import_module("worksection_mcp")
     assert package_module.__all__ == ["__version__", "get_mcp", "main"]
+
+
+def test_format_authenticated_user_logs_only_id_and_name():
+    """Auth user log summary should avoid sensitive fields like email."""
+    user_payload = {
+        "status": "ok",
+        "data": {
+            "id": "555235",
+            "name": "Bohdan Potishuk",
+            "email": "bogdan@atollholding.com.ua",
+            "avatar": "https://example.com/avatar.jpg",
+        },
+    }
+
+    summary = server_module._format_authenticated_user(user_payload)
+    assert "id=555235" in summary
+    assert "name=Bohdan Potishuk" in summary
+    assert "email" not in summary
+    assert "avatar" not in summary

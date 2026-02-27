@@ -70,6 +70,9 @@ MCP_SERVER_HOST=127.0.0.1
 MCP_SERVER_PORT=8000
 MCP_TRANSPORT=streamable-http
 LOG_LEVEL=INFO
+LOG_USE_COLORS=true
+REQUEST_LOG_MODE=INFO
+FASTMCP_SHOW_SERVER_BANNER=false
 ```
 
 ### Running the Server
@@ -319,7 +322,10 @@ for file in discussion.get("images", []):
 | `MCP_SERVER_HOST` | HTTP bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
 | `MCP_SERVER_PORT` | Server port | `8000` |
 | `MCP_TRANSPORT` | Transport type (`streamable-http`/`stdio`) | `streamable-http` |
-| `LOG_LEVEL` | Logging level | `INFO` |
+| `LOG_LEVEL` | Global logging level for app/server components | `INFO` |
+| `LOG_USE_COLORS` | Colorize log levels when output is a TTY | `true` |
+| `REQUEST_LOG_MODE` | Request/access log verbosity (`INFO`/`DEBUG`/`OFF`) for `uvicorn.access` and `httpx` | `INFO` |
+| `FASTMCP_SHOW_SERVER_BANNER` | Show FastMCP startup banner in logs | `true` |
 | `ENVIRONMENT` | Environment name | `development` |
 
 ## Testing
@@ -496,6 +502,7 @@ The validator performs comprehensive checks in 3 steps:
 
 - Shows all loaded settings
 - Displays derived values (API URLs)
+- Includes logging controls (`LOG_LEVEL`, `LOG_USE_COLORS`, `REQUEST_LOG_MODE`)
 - Helps verify environment variables are set correctly
 
 #### Step 3: External Resource Checks

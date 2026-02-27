@@ -121,6 +121,14 @@ class Settings(BaseSettings):
         default="INFO",
         description="Logging level",
     )
+    log_use_colors: bool = Field(
+        default=True,
+        description="Enable ANSI colors for log level names when output is a TTY",
+    )
+    request_log_mode: Literal["INFO", "DEBUG", "OFF"] = Field(
+        default="INFO",
+        description="Verbosity for request/access logs from Uvicorn and httpx",
+    )
     environment: Literal["development", "staging", "production"] = Field(
         default="development",
         description="Runtime environment",
@@ -172,6 +180,14 @@ class Settings(BaseSettings):
                 f"Expected format: https://yourcompany.worksection.com"
             )
 
+        return v
+
+    @field_validator("request_log_mode", mode="before")
+    @classmethod
+    def normalize_request_log_mode(cls, v):
+        """Normalize request log mode to uppercase for env compatibility."""
+        if isinstance(v, str):
+            return v.upper()
         return v
 
     @field_validator(

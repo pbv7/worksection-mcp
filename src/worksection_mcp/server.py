@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import os
-import sys
 from contextlib import asynccontextmanager
 
 from fastmcp import FastMCP
@@ -12,15 +11,14 @@ from worksection_mcp.auth import OAuth2Manager
 from worksection_mcp.cache import FileCache
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.config import Settings, get_settings
+from worksection_mcp.logging_config import (
+    build_logging_dict,
+    configure_logging,
+    is_access_log_enabled,
+)
 from worksection_mcp.resources import register_file_resources
 from worksection_mcp.tools import register_all_tools
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stderr)],
-)
 logger = logging.getLogger(__name__)
 
 
@@ -28,6 +26,25 @@ logger = logging.getLogger(__name__)
 _oauth: OAuth2Manager | None = None
 _client: WorksectionClient | None = None
 _file_cache: FileCache | None = None
+
+
+def _format_authenticated_user(user_info: object) -> str:
+    """Return a safe, compact user summary for logs."""
+    if not isinstance(user_info, dict):
+        return "id=unknown name=unknown"
+
+    profile = user_info.get("data")
+    if not isinstance(profile, dict):
+        profile = user_info
+
+    user_id = profile.get("id", "unknown")
+    name = profile.get("name")
+    if not isinstance(name, str) or not name.strip():
+        first_name = profile.get("first_name", "")
+        last_name = profile.get("last_name", "")
+        name = f"{first_name} {last_name}".strip() or "unknown"
+
+    return f"id={user_id} name={name}"
 
 
 def create_server(settings: Settings | None = None) -> FastMCP:
@@ -44,8 +61,8 @@ def create_server(settings: Settings | None = None) -> FastMCP:
     if settings is None:
         settings = get_settings()
 
-    # Configure logging level
-    logging.getLogger().setLevel(getattr(logging, settings.log_level))
+    # Configure unified logging pipeline for app + FastMCP + Uvicorn + httpx
+    configure_logging(settings)
 
     # Ensure directories exist
     settings.ensure_directories()
@@ -93,7 +110,7 @@ def create_server(settings: Settings | None = None) -> FastMCP:
             # Ensure we have valid authentication
             await _oauth.ensure_authenticated()
             user_info = await _client.me()
-            logger.info(f"Authenticated as: {user_info}")
+            logger.info("Authenticated as: %s", _format_authenticated_user(user_info))
             logger.info("Worksection MCP server ready!")
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
@@ -179,6 +196,8 @@ def main():
 
     settings = get_settings()
     server = create_server(settings)
+    uvicorn_log_config = build_logging_dict(settings)
+    access_log_enabled = is_access_log_enabled(settings.request_log_mode)
 
     logger.info("Starting Worksection MCP server...")
     logger.info(f"Transport: {settings.mcp_transport}")
@@ -194,7 +213,11 @@ def main():
                 transport="streamable-http",
                 host=settings.mcp_server_host,
                 port=settings.mcp_server_port,
-                uvicorn_config={"timeout_graceful_shutdown": 5},
+                uvicorn_config={
+                    "timeout_graceful_shutdown": 5,
+                    "log_config": uvicorn_log_config,
+                    "access_log": access_log_enabled,
+                },
             )
         else:
             raise ValueError(f"Unsupported transport: {settings.mcp_transport}")
