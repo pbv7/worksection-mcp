@@ -22,6 +22,7 @@ and process image attachments.
   and attachments
 - **Rate Limiting** - Built-in 1 req/sec throttling per Worksection API limits
 - **File Caching** - Local cache for downloaded attachments
+- **Large Response Offloading** - Oversized tool responses are offloaded to disk; clients read them back in bounded chunks via helper tools
 - **Production Ready** - Docker containerization with multi-stage builds
 - **Extensible** - Clean architecture for adding custom tools
 
@@ -274,6 +275,16 @@ is always included.
 | `health_check` | Check server health and API status |
 | `get_webhooks` | List configured webhooks (requires `administrative` scope) |
 
+### Large Response Helpers
+
+When a tool response exceeds `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES`, it is offloaded to disk and
+replaced with a compact envelope. Use these tools to inspect and read the offloaded content:
+
+| Tool | Description |
+| ------ | ------------- |
+| `get_offloaded_response_info` | Inspect metadata (size, SHA-256, MIME type) for an offloaded response |
+| `read_offloaded_response_text` | Read offloaded text/JSON content in bounded chunks (`offset` + `max_bytes`) |
+
 ## MCP Resources
 
 Resources allow Claude to directly access and analyze files:
@@ -283,6 +294,7 @@ Resources allow Claude to directly access and analyze files:
 | `worksection://file/{file_id}` | Access file for vision analysis |
 | `worksection://task/{task_id}/context` | Get full task context with attachments |
 | `worksection://cache/stats` | Get file cache statistics |
+| `worksection://offload/{response_id}` | Preview an offloaded large tool response |
 
 ### Using Resources for Image Analysis
 
@@ -318,6 +330,13 @@ for file in discussion.get("images", []):
 | `FILE_CACHE_PATH` | File cache directory | `./data/files` |
 | `FILE_CACHE_RETENTION_HOURS` | Cache retention | `24` |
 | `MAX_FILE_SIZE_MB` | Max cached file size | `10` |
+| `LARGE_RESPONSE_OFFLOAD_ENABLED` | Offload oversized MCP tool responses | `true` |
+| `LARGE_RESPONSE_OFFLOAD_PATH` | Offloaded response directory | `./data/offload` |
+| `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES` | Serialized response size above which responses are offloaded (`0` disables) | `50000` |
+| `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` | Offloaded response retention | `24` |
+| `LARGE_RESPONSE_OFFLOAD_MAX_FILES` | Max offloaded response files to retain | `100` |
+| `LARGE_RESPONSE_OFFLOAD_INCLUDE_FILE_PATH` | Include local file path in offload metadata | `true` |
+| `LARGE_RESPONSE_MAX_READ_BYTES` | Max bytes returned by offload read helper tools | `50000` |
 | `MCP_SERVER_NAME` | Server name | `worksection` |
 | `MCP_SERVER_HOST` | HTTP bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
 | `MCP_SERVER_PORT` | Server port | `8000` |
@@ -352,6 +371,12 @@ This comprehensive test script:
 
 See **[TESTING.md](TESTING.md)** for complete documentation and configuration options.
 
+To verify large response offloading against a real Worksection account:
+
+```bash
+uv run python tests/live_large_response_offload_roundtrip.py -v
+```
+
 ### Manual Testing with MCP Inspector
 
 For interactive testing:
@@ -373,22 +398,28 @@ npx @modelcontextprotocol/inspector http://localhost:8000/mcp
 uv sync --frozen --extra dev
 
 # Run tests
-uv run pytest
+make test-fast
 
 # Run with coverage
-uv run pytest --cov=worksection_mcp --cov-report=html
+make test
+
+# Plain `uv run pytest` uses the same no-coverage mode as `make test-fast`.
+# Use `make test` or `make check` when you need coverage output.
 
 # Lint code
-uv run ruff check src/
+make lint
 
 # Lint all Markdown from repo root
-npx markdownlint-cli2
+make lint-docs
 
 # Auto-fix all Markdown from repo root
 npx markdownlint-cli2 --fix
 
 # Type check
-uv run mypy src/
+make typecheck
+
+# Run the full CI-like check
+make check
 ```
 
 ### Project Structure
@@ -406,7 +437,8 @@ worksection-mcp/
 │       ├── tools/               # MCP tools
 │       ├── resources/           # MCP resources
 │       ├── cache/               # File and session caching
-│       └── utils/               # Date formatting, response truncation
+│       ├── large_response.py    # Large tool response offloading
+│       └── utils/               # Date formatting, response helpers
 ├── tests/                       # Test suite
 ├── data/                        # Runtime data (gitignored)
 ├── Dockerfile                   # Container build
@@ -608,11 +640,21 @@ Most Worksection API endpoints return complete datasets without pagination:
 
 **Impact**: For large datasets, responses can exceed MCP's 1MB limit.
 
-**Solution**: Tools with high data volume apply client-side truncation:
+**Solution**: The server uses two response-size controls:
 
-- `get_activity_log` - Auto-size truncation to fit under 1MB, default period `1d`
-- `get_user_activity` - Auto-size truncation to fit under 1MB, default period `1d`
-- `search_tasks` / `get_comments` - Default `max_results: 100` (configurable)
+- Central large-response offloading stores oversized tool results under
+  `LARGE_RESPONSE_OFFLOAD_PATH` and returns a compact metadata envelope with an
+  offload ID.
+- `get_offloaded_response_info` and `read_offloaded_response_text` let clients
+  inspect and read offloaded responses in bounded chunks.
+- The default 50 KB offload threshold and 50 KB read limit leave room for JSON
+  envelope and escaping overhead in MCP clients with strict inline response
+  limits.
+- Deployments whose MCP clients accept larger inline responses can raise
+  `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES` or `LARGE_RESPONSE_MAX_READ_BYTES`,
+  trading fewer offload/read calls for higher context and client-limit risk.
+- Selected high-volume tools still apply endpoint-specific truncation:
+  `get_activity_log`, `get_user_activity`, `search_tasks`, and `get_comments`.
 
 Truncated responses include metadata: `total_count`, `returned_count`, `truncated`,
 `truncation_reason`.
@@ -640,7 +682,8 @@ Add `administrative` to `WORKSECTION_SCOPES` in `.env` to enable these tools.
 Error: `"Tool result is too large. Maximum size is 1MB."`
 
 The Model Context Protocol enforces a 1MB maximum response size. This server handles
-large responses automatically through client-side truncation with configurable limits.
+oversized generic tool results through automatic file offloading and uses
+tool-specific truncation for selected list/search tools.
 
 #### Network & Security
 

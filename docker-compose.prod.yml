@@ -18,6 +18,7 @@ services:
       # Use named volumes for persistent data
       - token_data:/app/data/tokens
       - file_cache:/app/data/files
+      - offload_data:/app/data/offload
     restart: unless-stopped
     deploy:
       resources:
@@ -48,6 +49,8 @@ volumes:
   token_data:
     driver: local
   file_cache:
+    driver: local
+  offload_data:
     driver: local
 
 networks:

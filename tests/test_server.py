@@ -61,6 +61,8 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     file_cache = SimpleNamespace(close=AsyncMock())
     register_tools = MagicMock()
     register_resources = MagicMock()
+    register_offload_tools = MagicMock()
+    register_large_response_resources = MagicMock()
 
     monkeypatch.setattr(server_module, "FastMCP", FakeFastMCP)
     monkeypatch.setattr(server_module, "OAuth2Manager", lambda _settings: oauth)
@@ -68,6 +70,12 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     monkeypatch.setattr(server_module, "FileCache", lambda **_kwargs: file_cache)
     monkeypatch.setattr(server_module, "register_all_tools", register_tools)
     monkeypatch.setattr(server_module, "register_file_resources", register_resources)
+    monkeypatch.setattr(server_module, "register_offload_tools", register_offload_tools)
+    monkeypatch.setattr(
+        server_module,
+        "register_large_response_resources",
+        register_large_response_resources,
+    )
 
     server, _log_config = server_module.create_server(settings)
     mcp = cast(FakeFastMCP, server)
@@ -76,7 +84,9 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     assert mcp.instructions is not None
     assert "Worksection MCP Server" in mcp.instructions
     register_tools.assert_called_once()
+    register_offload_tools.assert_called_once()
     register_resources.assert_called_once()
+    register_large_response_resources.assert_called_once()
 
     async with mcp.lifespan(mcp):
         oauth.ensure_authenticated.assert_awaited_once()

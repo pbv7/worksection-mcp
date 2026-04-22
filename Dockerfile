@@ -51,7 +51,7 @@ COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src /app/src
 
 # Create data directories with restricted permissions
-RUN mkdir -p /app/data/tokens /app/data/files /app/data/certs && \
+RUN mkdir -p /app/data/tokens /app/data/files /app/data/certs /app/data/offload && \
     chown -R mcp:mcp /app/data && \
     chmod -R 700 /app/data
 
@@ -66,6 +66,10 @@ ENV MCP_SERVER_PORT=8000
 ENV LOG_LEVEL=INFO
 ENV TOKEN_STORAGE_PATH=/app/data/tokens
 ENV FILE_CACHE_PATH=/app/data/files
+ENV LARGE_RESPONSE_OFFLOAD_PATH=/app/data/offload
+ENV LARGE_RESPONSE_OFFLOAD_ENABLED=true
+ENV LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES=50000
+ENV LARGE_RESPONSE_MAX_READ_BYTES=50000
 
 # Expose port for HTTP transport
 EXPOSE 8000
