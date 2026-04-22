@@ -301,13 +301,20 @@ class Settings(BaseSettings):
     @field_validator(
         "large_response_offload_retention_hours",
         "large_response_offload_max_files",
-        "large_response_max_read_bytes",
     )
     @classmethod
     def validate_large_response_positive(cls, v: int, info) -> int:
         """Validate positive large-response settings."""
         if v <= 0:
             raise ValueError(f"{info.field_name} must be greater than 0. Current: {v}")
+        return v
+
+    @field_validator("large_response_max_read_bytes")
+    @classmethod
+    def validate_large_response_max_read_bytes(cls, v: int, info) -> int:
+        """Validate read chunks can always advance across UTF-8 characters."""
+        if v < 4:
+            raise ValueError(f"{info.field_name} must be greater than or equal to 4. Current: {v}")
         return v
 
     @field_validator("large_response_offload_threshold_bytes")

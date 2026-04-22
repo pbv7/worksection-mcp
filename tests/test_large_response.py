@@ -168,6 +168,21 @@ def test_cleanup_deletes_old_files_enforces_count_and_ignores_unowned(tmp_path):
     assert fresh_tmp.exists()
 
 
+def test_cleanup_if_due_runs_during_offload_for_long_running_servers(tmp_path):
+    store = make_store(tmp_path, threshold_bytes=5, retention_hours=1, max_files=10)
+    store.offload_dir.mkdir(parents=True)
+    stale = store.offload_dir / ("ws_response_" + "a" * 32 + ".json")
+    stale.write_text("old")
+    old_time = time.time() - 7200
+    os.utime(stale, (old_time, old_time))
+
+    metadata = store.offload_if_needed("x" * 20)
+
+    assert metadata["offloaded"] is True
+    assert not stale.exists()
+    assert store._last_cleanup_at > 0
+
+
 @pytest.mark.asyncio
 async def test_registrar_preserves_signature_and_wraps_result(tmp_path):
     fake = FakeMCP()
@@ -252,6 +267,10 @@ async def test_offload_tools_read_text_validation_and_slicing(tmp_path):
     assert await fake.tools["read_offloaded_response_text"](response_id, max_bytes=0) == {
         "error": "max_bytes must be greater than 0."
     }
+    assert await fake.tools["read_offloaded_response_text"](response_id, max_bytes=3) == {
+        "error": "max_bytes must be at least 4 to preserve UTF-8 boundaries.",
+        "min_allowed_bytes": 4,
+    }
     assert await fake.tools["read_offloaded_response_text"](response_id, max_bytes=11) == {
         "error": "max_bytes exceeds configured large_response_max_read_bytes",
         "max_allowed_bytes": 10,
@@ -273,13 +292,14 @@ async def test_offload_tools_read_text_validation_and_slicing(tmp_path):
 @pytest.mark.asyncio
 async def test_offload_tool_default_read_size_matches_safe_limit(tmp_path):
     fake = FakeMCP()
-    store = make_store(tmp_path, threshold_bytes=5, max_read_bytes=50_000)
+    store = make_store(tmp_path, threshold_bytes=5, max_read_bytes=8)
     register_offload_tools(fake, store)
 
-    metadata = store.offload_if_needed("x" * 60_000)
+    metadata = store.offload_if_needed("x" * 20)
     result = await fake.tools["read_offloaded_response_text"](metadata["id"])
 
-    assert result["returned_bytes"] == 50_000
+    assert result["requested_bytes"] == 8
+    assert result["returned_bytes"] == 8
     assert result["has_more"] is True
 
 
@@ -302,6 +322,23 @@ def test_read_text_slice_trims_to_utf8_boundary(tmp_path):
     assert result["content"] == "本"
     assert result["returned_bytes"] == 3
     assert result["has_more"] is False
+
+
+def test_read_text_slice_trims_four_byte_utf8_boundary(tmp_path):
+    store = make_store(tmp_path, threshold_bytes=5, max_read_bytes=10)
+    text = "a🙂b"
+    metadata = store.offload_if_needed(text)
+    response_id = metadata["id"]
+
+    result = store.read_text_slice(response_id, offset=0, max_bytes=4)
+    assert result["content"] == "a"
+    assert result["returned_bytes"] == 1
+    assert result["has_more"] is True
+
+    result = store.read_text_slice(response_id, offset=1, max_bytes=4)
+    assert result["content"] == "🙂"
+    assert result["returned_bytes"] == 4
+    assert result["has_more"] is True
 
 
 @pytest.mark.asyncio
@@ -363,6 +400,23 @@ def test_resource_preview_for_binary_payload_returns_base64_preview(tmp_path):
     assert result["preview_base64"]
 
 
+def test_get_payload_metadata_streams_existing_file_hash(tmp_path, monkeypatch):
+    store = make_store(tmp_path, threshold_bytes=5)
+    metadata = store.offload_if_needed("x" * 20)
+    response_id = metadata["id"]
+
+    def fail_read_bytes(self):
+        raise AssertionError(f"read_bytes should not be called for metadata: {self}")
+
+    monkeypatch.setattr(Path, "read_bytes", fail_read_bytes)
+
+    info = store.get_payload_metadata(response_id)
+
+    assert info["id"] == response_id
+    assert info["size_bytes"] == metadata["size_bytes"]
+    assert info["sha256"] == metadata["sha256"]
+
+
 def test_from_settings_uses_large_response_config(tmp_path):
     settings = build_settings(
         tmp_path,
@@ -382,6 +436,11 @@ def test_from_settings_uses_large_response_config(tmp_path):
     assert store.max_files == 3
     assert store.include_file_path is False
     assert store.max_read_bytes == 456
+
+
+def test_settings_reject_too_small_large_response_max_read_bytes(tmp_path):
+    with pytest.raises(ValueError, match="large_response_max_read_bytes"):
+        build_settings(tmp_path, large_response_max_read_bytes=3)
 
 
 def test_default_large_response_settings_use_client_safe_limits(tmp_path):

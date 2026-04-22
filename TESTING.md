@@ -196,8 +196,9 @@ The script creates a temporary offload directory, sets a 1 KB threshold, calls a
 real read-only Worksection tool, and expects an offload envelope. It then calls
 `get_offloaded_response_info` and `read_offloaded_response_text`, reassembles the
 payload in 50 KB chunks, compares the SHA-256 hash, and parses JSON payloads to
-confirm the stored content is intact. The 50 KB read size mirrors the project
-default and keeps room for JSON envelope and escaping overhead in MCP clients.
+confirm the stored content is intact. Chunk reads are UTF-8-boundary safe and
+must be at least 4 bytes. The 50 KB read size mirrors the project default and
+keeps room for JSON envelope and escaping overhead in MCP clients.
 
 This script is intentionally separate from pytest, `make test`, and `make check`
 because it requires live credentials and production Worksection data. Keeping it

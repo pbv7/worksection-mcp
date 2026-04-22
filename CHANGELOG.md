@@ -45,6 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `test_log_use_colors_is_tty_safe` now clears the `NO_COLOR` environment
   variable before the assertion to prevent false failures in environments where
   `NO_COLOR` is set globally
+- `_trim_to_utf8_boundary`: extend trim range from 3 to 4 bytes so 4-byte
+  UTF-8 sequences (e.g. emoji) are handled correctly at read boundaries
+- `read_offloaded_response_text`: default `max_bytes` now derives from the
+  configured `LARGE_RESPONSE_MAX_READ_BYTES` instead of a hardcoded value
+- `_build_metadata`: SHA-256 for existing files now streamed in 64 KB chunks
+  instead of loading the full payload into memory
+- `cleanup_if_due()` throttles offload-triggered cleanup to once per 5 minutes
+  for long-running servers; `cleanup()` reuses `mtime` from initial scan to
+  avoid a second `stat()` call per file during eviction
+- `read_text_slice` and the `LARGE_RESPONSE_MAX_READ_BYTES` settings validator
+  now reject values below 4 bytes — the minimum needed to safely advance
+  across any UTF-8 boundary
 
 ## [0.5.0] - 2026-02-27
 

@@ -283,7 +283,7 @@ replaced with a compact envelope. Use these tools to inspect and read the offloa
 | Tool | Description |
 | ------ | ------------- |
 | `get_offloaded_response_info` | Inspect metadata (size, SHA-256, MIME type) for an offloaded response |
-| `read_offloaded_response_text` | Read offloaded text/JSON content in bounded chunks (`offset` + `max_bytes`) |
+| `read_offloaded_response_text` | Read offloaded text/JSON content in bounded UTF-8-safe chunks (`offset` + `max_bytes`) |
 
 ## MCP Resources
 
@@ -336,7 +336,7 @@ for file in discussion.get("images", []):
 | `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` | Offloaded response retention | `24` |
 | `LARGE_RESPONSE_OFFLOAD_MAX_FILES` | Max offloaded response files to retain | `100` |
 | `LARGE_RESPONSE_OFFLOAD_INCLUDE_FILE_PATH` | Include local file path in offload metadata | `true` |
-| `LARGE_RESPONSE_MAX_READ_BYTES` | Max bytes returned by offload read helper tools | `50000` |
+| `LARGE_RESPONSE_MAX_READ_BYTES` | Max bytes returned by offload read helper tools (minimum `4`) | `50000` |
 | `MCP_SERVER_NAME` | Server name | `worksection` |
 | `MCP_SERVER_HOST` | HTTP bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
 | `MCP_SERVER_PORT` | Server port | `8000` |
@@ -650,6 +650,9 @@ Most Worksection API endpoints return complete datasets without pagination:
 - The default 50 KB offload threshold and 50 KB read limit leave room for JSON
   envelope and escaping overhead in MCP clients with strict inline response
   limits.
+- Offloaded files are cleaned on startup and throttled during future offloads,
+  using `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` and
+  `LARGE_RESPONSE_OFFLOAD_MAX_FILES`.
 - Deployments whose MCP clients accept larger inline responses can raise
   `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES` or `LARGE_RESPONSE_MAX_READ_BYTES`,
   trading fewer offload/read calls for higher context and client-limit risk.

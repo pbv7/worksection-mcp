@@ -46,6 +46,9 @@ PAYLOAD_FILE_RE = re.compile(r"^ws_response_[0-9a-fA-F]{32}\.(json|txt|bin)$")
 TMP_FILE_RE = re.compile(r"^ws_response_[0-9a-fA-F]{32}\.(json|txt|bin)\.tmp$")
 TMP_RETENTION_SECONDS = 3600
 RESOURCE_PREVIEW_BYTES = 1024
+MIN_TEXT_READ_BYTES = 4
+CLEANUP_INTERVAL_SECONDS = 300
+HASH_CHUNK_BYTES = 65_536
 JSON_SERIALIZATION_ERRORS = (TypeError, ValueError)
 
 
@@ -57,7 +60,7 @@ def _trim_to_utf8_boundary(data: bytes) -> bytes:
     the caller's next offset starts at a clean character boundary.
     Only called when more content follows, so the trimmed bytes are not lost.
     """
-    for trim in range(min(3, len(data))):
+    for trim in range(min(4, len(data) + 1)):
         try:
             data[: len(data) - trim].decode("utf-8")
             return data[: len(data) - trim]
@@ -125,6 +128,7 @@ class LargeResponseStore:
         self.max_files = max_files
         self.include_file_path = include_file_path
         self.max_read_bytes = max_read_bytes
+        self._last_cleanup_at = 0.0
 
     @classmethod
     def from_settings(cls, settings: Settings) -> LargeResponseStore:
@@ -165,6 +169,7 @@ class LargeResponseStore:
                     "hint": OFFLOAD_HINT,
                 }
             )
+            self.cleanup_if_due()
             return metadata
         except OSError:
             logger.exception("Could not offload oversized MCP response")
@@ -188,7 +193,8 @@ class LargeResponseStore:
         now = time.time()
         cutoff = now - (self.retention_hours * 3600)
 
-        payload_files: list[Path] = []
+        self._last_cleanup_at = now
+        payload_files: list[tuple[Path, float]] = []
         for path in self.offload_dir.iterdir():
             if path.is_file() and TMP_FILE_RE.fullmatch(path.name):
                 self._delete_if_stale_tmp(path, now)
@@ -198,25 +204,32 @@ class LargeResponseStore:
                 continue
 
             try:
-                if path.stat().st_mtime < cutoff:
+                mtime = path.stat().st_mtime
+                if mtime < cutoff:
                     path.unlink()
                 else:
-                    payload_files.append(path)
+                    payload_files.append((path, mtime))
             except OSError:
                 logger.warning("Could not clean large response file %s", path, exc_info=True)
 
-        payload_files = [path for path in payload_files if path.exists()]
         if len(payload_files) <= self.max_files:
             return
 
-        payload_files.sort(key=lambda path: path.stat().st_mtime)
-        for path in payload_files[: len(payload_files) - self.max_files]:
+        payload_files.sort(key=lambda item: item[1])
+        for path, _mtime in payload_files[: len(payload_files) - self.max_files]:
             try:
                 path.unlink()
             except OSError:
                 logger.warning(
                     "Could not remove excess large response file %s", path, exc_info=True
                 )
+
+    def cleanup_if_due(self, *, now: float | None = None) -> None:
+        """Run cleanup at most once per interval for long-running processes."""
+        current_time = time.time() if now is None else now
+        if current_time - self._last_cleanup_at < CLEANUP_INTERVAL_SECONDS:
+            return
+        self.cleanup()
 
     def get_payload_path(self, response_id: str) -> Path | None:
         """Return the stored payload path for an ID, if valid and present."""
@@ -247,6 +260,11 @@ class LargeResponseStore:
             return {"error": "offset must be greater than or equal to 0."}
         if max_bytes <= 0:
             return {"error": "max_bytes must be greater than 0."}
+        if max_bytes < MIN_TEXT_READ_BYTES:
+            return {
+                "error": f"max_bytes must be at least {MIN_TEXT_READ_BYTES} to preserve UTF-8 boundaries.",
+                "min_allowed_bytes": MIN_TEXT_READ_BYTES,
+            }
         if max_bytes > self.max_read_bytes:
             return {
                 "error": "max_bytes exceeds configured large_response_max_read_bytes",
@@ -346,17 +364,20 @@ class LargeResponseStore:
         content: bytes | None = None,
         created_at: str | None = None,
     ) -> dict[str, Any]:
-        if content is None:
-            content = path.read_bytes()
-
         stat = path.stat()
         if created_at is None:
             created_at = datetime.fromtimestamp(stat.st_mtime, UTC).isoformat()
+        if content is None:
+            size_bytes = stat.st_size
+            sha256 = self._sha256_for_path(path)
+        else:
+            size_bytes = len(content)
+            sha256 = hashlib.sha256(content).hexdigest()
 
         metadata: dict[str, Any] = {
             "id": response_id,
-            "size_bytes": len(content),
-            "sha256": hashlib.sha256(content).hexdigest(),
+            "size_bytes": size_bytes,
+            "sha256": sha256,
             "mime_type": self._mime_type_for_path(path),
             "suffix": path.suffix,
             "created_at": created_at,
@@ -366,6 +387,13 @@ class LargeResponseStore:
             metadata["file_path"] = str(path.resolve())
 
         return metadata
+
+    def _sha256_for_path(self, path: Path) -> str:
+        sha256_hash = hashlib.sha256()
+        with path.open("rb") as f:
+            for chunk in iter(lambda: f.read(HASH_CHUNK_BYTES), b""):
+                sha256_hash.update(chunk)
+        return sha256_hash.hexdigest()
 
     def _mime_type_for_path(self, path: Path) -> str:
         return SUFFIX_MIME_TYPES.get(path.suffix, "application/octet-stream")

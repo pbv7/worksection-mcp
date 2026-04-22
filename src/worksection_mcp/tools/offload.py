@@ -23,14 +23,14 @@ def register_offload_tools(mcp: ToolRegistrar, store: LargeResponseStore) -> Non
     async def read_offloaded_response_text(
         response_id: str,
         offset: int = 0,
-        max_bytes: int = 50_000,
+        max_bytes: int | None = None,
     ) -> dict:
         """Read a bounded text slice from an offloaded JSON/text response.
 
         Args:
             response_id: The offloaded response ID returned in the offload envelope.
             offset: Byte offset to start reading from.
-            max_bytes: Maximum raw bytes to read. Must not exceed configured cap.
+            max_bytes: Maximum raw bytes to read. Defaults to the configured cap.
 
         Returns:
             Text content slice and pagination metadata, or a compact error.
@@ -38,5 +38,5 @@ def register_offload_tools(mcp: ToolRegistrar, store: LargeResponseStore) -> Non
         return store.read_text_slice(
             response_id=response_id,
             offset=offset,
-            max_bytes=max_bytes,
+            max_bytes=store.max_read_bytes if max_bytes is None else max_bytes,
         )

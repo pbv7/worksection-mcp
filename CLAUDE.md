@@ -80,7 +80,8 @@ The `ToolRegistrar` protocol in `mcp_protocols.py` enables testing tools without
 
 All registered tools are automatically wrapped by `LargePayloadToolRegistrar`: responses exceeding
 `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES` are offloaded to `./data/offload/` and replaced with a
-compact metadata envelope. Clients use `read_offloaded_response_text` to read content in chunks.
+compact metadata envelope. Clients use `read_offloaded_response_text` to read content in
+UTF-8-safe chunks.
 
 ### API Client
 
@@ -112,7 +113,8 @@ small preview for an offloaded tool response. Full content is read via `read_off
 
 - `LargeResponseStore` — writes/reads/cleans offloaded files under `./data/offload/`
 - `LargePayloadToolRegistrar` — wraps `ToolRegistrar`; intercepts responses above threshold
-- Default threshold and read limit: **50,000 bytes** (validated against Claude Code's inline limit)
+- Default threshold and read limit: **50,000 bytes**; read limit must be at least 4 bytes
+- Cleanup runs on startup and is throttled during future offloads for long-running servers
 - Helper tools (`get_offloaded_response_info`, `read_offloaded_response_text`) are registered on
   raw `mcp` — never offload-wrapped — to prevent recursive offloading
 
