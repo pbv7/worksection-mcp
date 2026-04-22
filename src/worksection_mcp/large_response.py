@@ -154,6 +154,7 @@ class LargeResponseStore:
 
         try:
             self.offload_dir.mkdir(parents=True, exist_ok=True)
+            self.cleanup_if_due()
             response_id, final_path = self._write_atomic(payload)
             created_at = datetime.now(UTC).isoformat()
             metadata = self._metadata_for_path(
@@ -169,7 +170,6 @@ class LargeResponseStore:
                     "hint": OFFLOAD_HINT,
                 }
             )
-            self.cleanup_if_due()
             return metadata
         except OSError:
             logger.exception("Could not offload oversized MCP response")

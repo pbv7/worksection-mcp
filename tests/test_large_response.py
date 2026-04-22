@@ -11,8 +11,10 @@ from typing import Any, cast
 
 import pytest
 from fastmcp import FastMCP
+from pydantic_settings import SettingsConfigDict
 
 from tests.helpers import FakeMCP, build_settings
+from worksection_mcp.config import Settings
 from worksection_mcp.large_response import (
     LargePayloadToolRegistrar,
     LargeResponseStore,
@@ -181,6 +183,27 @@ def test_cleanup_if_due_runs_during_offload_for_long_running_servers(tmp_path):
     assert metadata["offloaded"] is True
     assert not stale.exists()
     assert store._last_cleanup_at > 0
+
+
+def test_cleanup_runs_before_write_when_due(tmp_path, monkeypatch):
+    store = make_store(tmp_path, threshold_bytes=5, retention_hours=1, max_files=10)
+    store.offload_dir.mkdir(parents=True)
+    stale = store.offload_dir / ("ws_response_" + "a" * 32 + ".json")
+    stale.write_text("old")
+    old_time = time.time() - 7200
+    os.utime(stale, (old_time, old_time))
+
+    original_write_atomic = store._write_atomic
+
+    def assert_cleaned_before_write(payload):
+        assert not stale.exists()
+        return original_write_atomic(payload)
+
+    monkeypatch.setattr(store, "_write_atomic", assert_cleaned_before_write)
+
+    metadata = store.offload_if_needed("x" * 20)
+
+    assert metadata["offloaded"] is True
 
 
 @pytest.mark.asyncio
@@ -444,12 +467,31 @@ def test_settings_reject_too_small_large_response_max_read_bytes(tmp_path):
 
 
 def test_default_large_response_settings_use_client_safe_limits(tmp_path):
-    settings = build_settings(tmp_path)
+    class SettingsWithoutEnv(Settings):
+        model_config = SettingsConfigDict(
+            env_file=None,
+            case_sensitive=False,
+            extra="ignore",
+        )
+
+    settings = SettingsWithoutEnv.model_validate(
+        {
+            "worksection_client_id": "test_client_id_12345",
+            "worksection_client_secret": "test_client_secret_value_123456",
+            "worksection_account_url": "https://test.worksection.com",
+            "token_storage_path": tmp_path / "tokens",
+            "file_cache_path": tmp_path / "files",
+            "oauth_ssl_cert_path": tmp_path / "certs" / "callback.crt",
+            "oauth_ssl_key_path": tmp_path / "certs" / "callback.key",
+        }
+    )
 
     assert settings.large_response_offload_threshold_bytes == 50_000
+    assert settings.large_response_offload_include_file_path is False
     assert settings.large_response_max_read_bytes == 50_000
 
     store = LargeResponseStore.from_settings(settings)
 
     assert store.threshold_bytes == 50_000
+    assert store.include_file_path is False
     assert store.max_read_bytes == 50_000

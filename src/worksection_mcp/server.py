@@ -168,7 +168,8 @@ Rate limited to 1 request/second per Worksection API limits.
         raise RuntimeError("Server dependencies are not initialized")
 
     large_response_store = LargeResponseStore.from_settings(settings)
-    large_response_store.cleanup()
+    if settings.large_response_offload_enabled:
+        large_response_store.cleanup()
     registrar = (
         LargePayloadToolRegistrar(mcp, large_response_store)
         if settings.large_response_offload_enabled

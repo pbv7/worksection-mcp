@@ -88,22 +88,41 @@ class TestSettings:
         """Test directory creation."""
         token_path = temp_data_dir / "new_tokens"
         file_path = temp_data_dir / "new_files"
+        offload_path = temp_data_dir / "new_offload"
 
         settings = Settings.model_validate(
             _settings_kwargs(
                 temp_data_dir,
                 token_storage_path=token_path,
                 file_cache_path=file_path,
+                large_response_offload_path=offload_path,
             )
         )
 
         assert not token_path.exists()
         assert not file_path.exists()
+        assert not offload_path.exists()
 
         settings.ensure_directories()
 
         assert token_path.exists()
         assert file_path.exists()
+        assert offload_path.exists()
+
+    def test_ensure_directories_skips_offload_path_when_disabled(self, temp_data_dir):
+        """Disabled offloading should not require a writable offload directory."""
+        offload_path = temp_data_dir / "disabled_offload"
+        settings = Settings.model_validate(
+            _settings_kwargs(
+                temp_data_dir,
+                large_response_offload_enabled=False,
+                large_response_offload_path=offload_path,
+            )
+        )
+
+        settings.ensure_directories()
+
+        assert not offload_path.exists()
 
     def test_max_file_size_bytes(self, temp_data_dir):
         """Test max file size conversion."""

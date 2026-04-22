@@ -123,7 +123,7 @@ class Settings(BaseSettings):
         description="Maximum number of offloaded response files to retain.",
     )
     large_response_offload_include_file_path: bool = Field(
-        default=True,
+        default=False,
         description="Include local file_path in offload metadata.",
     )
     large_response_max_read_bytes: int = Field(
@@ -402,7 +402,8 @@ class Settings(BaseSettings):
         """Create required directories if they don't exist."""
         self.token_storage_path.mkdir(parents=True, exist_ok=True)
         self.file_cache_path.mkdir(parents=True, exist_ok=True)
-        self.large_response_offload_path.mkdir(parents=True, exist_ok=True)
+        if self.large_response_offload_enabled:
+            self.large_response_offload_path.mkdir(parents=True, exist_ok=True)
         # Create SSL certificates directory
         self.oauth_ssl_cert_path.parent.mkdir(parents=True, exist_ok=True)
 

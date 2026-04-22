@@ -335,7 +335,7 @@ for file in discussion.get("images", []):
 | `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES` | Serialized response size above which responses are offloaded (`0` disables) | `50000` |
 | `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` | Offloaded response retention | `24` |
 | `LARGE_RESPONSE_OFFLOAD_MAX_FILES` | Max offloaded response files to retain | `100` |
-| `LARGE_RESPONSE_OFFLOAD_INCLUDE_FILE_PATH` | Include local file path in offload metadata | `true` |
+| `LARGE_RESPONSE_OFFLOAD_INCLUDE_FILE_PATH` | Include local file path in offload metadata | `false` |
 | `LARGE_RESPONSE_MAX_READ_BYTES` | Max bytes returned by offload read helper tools (minimum `4`) | `50000` |
 | `MCP_SERVER_NAME` | Server name | `worksection` |
 | `MCP_SERVER_HOST` | HTTP bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
@@ -647,12 +647,13 @@ Most Worksection API endpoints return complete datasets without pagination:
   offload ID.
 - `get_offloaded_response_info` and `read_offloaded_response_text` let clients
   inspect and read offloaded responses in bounded chunks.
+- Local `file_path` values are hidden by default; use `resource_uri` and helper
+  tools unless the MCP client runs with trusted local filesystem access.
 - The default 50 KB offload threshold and 50 KB read limit leave room for JSON
   envelope and escaping overhead in MCP clients with strict inline response
   limits.
-- Offloaded files are cleaned on startup and throttled during future offloads,
-  using `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` and
-  `LARGE_RESPONSE_OFFLOAD_MAX_FILES`.
+- Offloaded files are cleaned on startup and before due future offloads, using
+  `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` and `LARGE_RESPONSE_OFFLOAD_MAX_FILES`.
 - Deployments whose MCP clients accept larger inline responses can raise
   `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES` or `LARGE_RESPONSE_MAX_READ_BYTES`,
   trading fewer offload/read calls for higher context and client-limit risk.

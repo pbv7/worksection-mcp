@@ -39,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `@tool()` decorator
 - `pyproject.toml` `addopts`: coverage flags (`--cov`, `--cov-report`) moved to
   `make test` target so `make test-fast` and IDE test runners skip coverage
+- `LARGE_RESPONSE_OFFLOAD_INCLUDE_FILE_PATH` now defaults to `false`; absolute
+  server paths are no longer exposed in offload envelopes by default
+- `ensure_directories()` only creates `large_response_offload_path` when
+  `LARGE_RESPONSE_OFFLOAD_ENABLED=true`
+- Startup offload cleanup is skipped when `LARGE_RESPONSE_OFFLOAD_ENABLED=false`
 
 ### Fixed
 
@@ -57,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `read_text_slice` and the `LARGE_RESPONSE_MAX_READ_BYTES` settings validator
   now reject values below 4 bytes — the minimum needed to safely advance
   across any UTF-8 boundary
+- `cleanup_if_due()` now runs before `_write_atomic()` so stale files are
+  evicted before a new write (improves behaviour under low-disk conditions)
 
 ## [0.5.0] - 2026-02-27
 
