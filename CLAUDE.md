@@ -148,6 +148,13 @@ The `pyproject.toml` `addopts` adds `-v` only. Use `make test` or `make check` f
 - **Claude Code MCP config** goes in `~/.claude.json` (under `mcpServers`), NOT `~/.claude/settings.json`.
   The MCP dialog (`/mcp`) shows which file it reads — confirm there if tools are missing from a session.
 
+- **Never manually edit `uv.lock`**, including the `[options]` block at the top. The
+  `exclude-newer` and `exclude-newer-span = "P7D"` fields are machine-generated supply-chain
+  security controls: they prevent uv from resolving packages released less than 7 days before the
+  lock was generated (quarantine window against malicious new releases). uv recalculates them
+  automatically on every `uv lock` run. Use `uv lock` to regenerate and `uv sync --frozen` to
+  install — never touch the file by hand.
+
 ## Release Flow
 
 To cut a release:
