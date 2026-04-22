@@ -156,16 +156,28 @@ The `pyproject.toml` `addopts` adds `-v` only. Use `make test` or `make check` f
   automatically on every `uv lock` run. Use `uv lock` to regenerate and `uv sync --frozen` to
   install — never touch the file by hand.
 
+## CHANGELOG Convention
+
+All changes — features, fixes, deps, docs — go under `## [Unreleased]` as they are committed,
+regardless of whether they are part of a planned release. Do **not** write to a versioned section
+(e.g. `[0.6.0]`) until the `chore(release)` commit. The release commit is the single moment that
+promotes `[Unreleased]` to a versioned entry.
+
 ## Release Flow
 
-To cut a release:
+Releases are fully manual on `main`. CI (`release.yml`) triggers on a pushed `v*` tag, builds the
+package with `uv build`, and creates a GitHub Release with auto-generated notes and `dist/*`
+assets attached. There is no PyPI publish step.
+
+To cut a release after merging to `main`:
 
 1. **`pyproject.toml`** — bump `version = "x.y.z"`
-2. **`uv.lock`** — run `uv lock` (do not edit manually) and commit lockfile changes so the local package version matches `pyproject.toml`
-3. **`CHANGELOG.md`** — rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD`; add comparison link at bottom
-4. **`SECURITY.md`** — update Supported Versions table on minor/major bumps (e.g. `0.3.x` → `0.4.x`)
+2. **`uv.lock`** — run `uv lock` to regenerate, commit the lockfile
+3. **`CHANGELOG.md`** — rename `[Unreleased]` → `[x.y.z] - YYYY-MM-DD`; add comparison link at bottom
+4. **`SECURITY.md`** — update Supported Versions table on minor/major bumps (e.g. `0.5.x` → `0.6.x`)
 5. Commit: `chore(release): bump to vx.y.z`
-6. Tag: `git tag vx.y.z && git push origin vx.y.z`
+6. Tag and push: `git tag vx.y.z && git push origin vx.y.z`
+   — pushing the tag triggers `release.yml` automatically
 
 Pushing the tag triggers `release.yml` which builds the package and creates a GitHub Release with auto-generated notes and `dist/*` assets attached.
 
