@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-22
+
+### Added
+
+- Automatic large response offloading: tool responses exceeding
+  `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES` (default 50 KB) are written to disk
+  and replaced with a compact JSON envelope containing an ID, size, SHA-256,
+  MIME type, and `worksection://offload/` resource URI
+- `get_offloaded_response_info` tool — inspect metadata for an offloaded
+  response by ID
+- `read_offloaded_response_text` tool — read offloaded text/JSON responses in
+  configurable byte-sized chunks with `offset`/`has_more` pagination;
+  UTF-8 boundary-safe
+- `worksection://offload/{response_id}` MCP resource — returns a 1 KB preview
+  with full metadata for vision-capable clients
+- Seven new configuration settings: `LARGE_RESPONSE_OFFLOAD_ENABLED`,
+  `LARGE_RESPONSE_OFFLOAD_PATH`, `LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES`,
+  `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS`, `LARGE_RESPONSE_OFFLOAD_MAX_FILES`,
+  `LARGE_RESPONSE_OFFLOAD_INCLUDE_FILE_PATH`, `LARGE_RESPONSE_MAX_READ_BYTES`
+- Live end-to-end roundtrip test (`tests/live_large_response_offload_roundtrip.py`)
+  that authenticates against the real Worksection API, triggers offloading, and
+  verifies SHA-256 integrity across chunked reads
+- `/app/data/offload` Docker directory and `offload_data` named volume for
+  production deployments
+
+### Changed
+
+- `ToolRegistrar` protocol and `FakeMCP` test helper updated to support all
+  three `@mcp.tool()` registration forms: `tool(fn)`, `tool(name=...)`,
+  and `@tool()` decorator
+- `pyproject.toml` `addopts`: coverage flags (`--cov`, `--cov-report`) moved to
+  `make test` target so `make test-fast` and IDE test runners skip coverage
+
+### Fixed
+
+- `test_log_use_colors_is_tty_safe` now clears the `NO_COLOR` environment
+  variable before the assertion to prevent false failures in environments where
+  `NO_COLOR` is set globally
+
 ## [0.5.0] - 2026-02-27
 
 ### Added
@@ -102,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker support with multi-stage production build
 - Full test coverage with pytest
 
+[0.6.0]: https://github.com/pbv7/worksection-mcp/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/pbv7/worksection-mcp/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/pbv7/worksection-mcp/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/pbv7/worksection-mcp/compare/v0.3.0...v0.3.1
