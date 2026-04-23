@@ -14,12 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blocking the async MCP server loop
 - Binary offload resource previews now use the MCP resource `blob` key for the
   capped base64 preview, matching existing file resource conventions
+- `read_offloaded_response_text` may return fewer raw bytes than requested when
+  JSON escaping would otherwise make the serialized helper-tool response too large
 
 ### Fixed
 
 - Offloaded response reads, metadata lookups, and resource previews now return
   compact error payloads if cleanup or another process removes the file between
   ID lookup and file access
+- New offloads now enforce `LARGE_RESPONSE_OFFLOAD_MAX_FILES` immediately after
+  writing, even when full cleanup is throttled
+- Text offload resource previews now trim to a complete UTF-8 boundary before
+  decoding
 
 ## [0.6.0] - 2026-04-22
 

@@ -336,7 +336,7 @@ for file in discussion.get("images", []):
 | `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` | Offloaded response retention | `24` |
 | `LARGE_RESPONSE_OFFLOAD_MAX_FILES` | Max offloaded response files to retain | `100` |
 | `LARGE_RESPONSE_OFFLOAD_INCLUDE_FILE_PATH` | Include local file path in offload metadata | `false` |
-| `LARGE_RESPONSE_MAX_READ_BYTES` | Max bytes returned by offload read helper tools (minimum `4`) | `50000` |
+| `LARGE_RESPONSE_MAX_READ_BYTES` | Max raw bytes requested by offload read helper tools (minimum `4`) | `50000` |
 | `MCP_SERVER_NAME` | Server name | `worksection` |
 | `MCP_SERVER_HOST` | HTTP bind host (`127.0.0.1` local only, `0.0.0.0` LAN) | `127.0.0.1` |
 | `MCP_SERVER_PORT` | Server port | `8000` |
@@ -652,6 +652,8 @@ Most Worksection API endpoints return complete datasets without pagination:
 - The default 50 KB offload threshold and 50 KB read limit leave room for JSON
   envelope and escaping overhead in MCP clients with strict inline response
   limits.
+- Chunk reads may return fewer raw bytes than requested when JSON escaping would
+  otherwise make the serialized helper-tool response too large.
 - Offloaded files are cleaned on startup and before due future offloads, using
   `LARGE_RESPONSE_OFFLOAD_RETENTION_HOURS` and `LARGE_RESPONSE_OFFLOAD_MAX_FILES`.
 - Deployments whose MCP clients accept larger inline responses can raise

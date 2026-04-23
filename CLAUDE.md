@@ -114,8 +114,9 @@ small preview for an offloaded tool response. Full content is read via `read_off
 - `LargeResponseStore` — writes/reads/cleans offloaded files under `./data/offload/`
 - `LargePayloadToolRegistrar` — wraps `ToolRegistrar`; intercepts responses above threshold
 - Default threshold and read limit: **50,000 bytes**; read limit must be at least 4 bytes
+- Chunk reads can return fewer raw bytes than requested to keep JSON-escaped tool responses safe
 - Local `file_path` metadata is hidden by default; prefer `resource_uri` and helper tools
-- Cleanup runs on startup and before due future offloads for long-running servers
+- Cleanup runs on startup, before due future offloads, and after writes for max-file enforcement
 - Helper tools (`get_offloaded_response_info`, `read_offloaded_response_text`) are registered on
   raw `mcp` — never offload-wrapped — to prevent recursive offloading
 

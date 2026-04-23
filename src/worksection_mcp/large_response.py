@@ -50,6 +50,7 @@ RESOURCE_PREVIEW_BYTES = 1024
 MIN_TEXT_READ_BYTES = 4
 CLEANUP_INTERVAL_SECONDS = 300
 HASH_CHUNK_BYTES = 65_536
+READ_RESPONSE_OVERHEAD_BYTES = 1024
 JSON_SERIALIZATION_ERRORS = (TypeError, ValueError)
 
 
@@ -171,6 +172,7 @@ class LargeResponseStore:
                     "hint": OFFLOAD_HINT,
                 }
             )
+            self.enforce_max_files(protected_path=final_path)
             return metadata
         except OSError:
             logger.exception("Could not offload oversized MCP response")
@@ -213,17 +215,7 @@ class LargeResponseStore:
             except OSError:
                 logger.warning("Could not clean large response file %s", path, exc_info=True)
 
-        if len(payload_files) <= self.max_files:
-            return
-
-        payload_files.sort(key=lambda item: item[1])
-        for path, _mtime in payload_files[: len(payload_files) - self.max_files]:
-            try:
-                path.unlink()
-            except OSError:
-                logger.warning(
-                    "Could not remove excess large response file %s", path, exc_info=True
-                )
+        self._delete_excess_payload_files(payload_files)
 
     def cleanup_if_due(self, *, now: float | None = None) -> None:
         """Run cleanup at most once per interval for long-running processes."""
@@ -231,6 +223,29 @@ class LargeResponseStore:
         if current_time - self._last_cleanup_at < CLEANUP_INTERVAL_SECONDS:
             return
         self.cleanup()
+
+    def enforce_max_files(self, *, protected_path: Path | None = None) -> None:
+        """Enforce max file count immediately without waiting for cleanup interval."""
+        try:
+            self.offload_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            logger.warning("Could not create large response offload directory", exc_info=True)
+            return
+
+        payload_files: list[tuple[Path, float]] = []
+        for path in self.offload_dir.iterdir():
+            if not path.is_file() or not PAYLOAD_FILE_RE.fullmatch(path.name):
+                continue
+            try:
+                payload_files.append((path, path.stat().st_mtime))
+            except OSError:
+                logger.warning(
+                    "Could not inspect large response file %s for count enforcement",
+                    path,
+                    exc_info=True,
+                )
+
+        self._delete_excess_payload_files(payload_files, protected_path=protected_path)
 
     def get_payload_path(self, response_id: str) -> Path | None:
         """Return the stored payload path for an ID, if valid and present."""
@@ -307,16 +322,13 @@ class LargeResponseStore:
         # The final chunk reads exactly what remains, so it needs no trimming.
         has_more_raw = offset + len(raw) < total_size
         chunk = _trim_to_utf8_boundary(raw) if has_more_raw else raw
-        returned_bytes = len(chunk)
-        return {
-            "response_id": response_id,
-            "offset": offset,
-            "requested_bytes": max_bytes,
-            "returned_bytes": returned_bytes,
-            "content": chunk.decode("utf-8", errors="replace"),
-            "has_more": offset + returned_bytes < total_size,
-            "total_size_bytes": total_size,
-        }
+        return self._fit_text_slice_response(
+            response_id=response_id,
+            offset=offset,
+            requested_bytes=max_bytes,
+            chunk=chunk,
+            total_size=total_size,
+        )
 
     def get_resource_preview(self, response_id: str) -> dict[str, Any]:
         """Return a small MCP resource-safe preview for an offloaded response."""
@@ -357,6 +369,7 @@ class LargeResponseStore:
         if mime_type == "application/octet-stream":
             resource["blob"] = base64.b64encode(preview).decode("ascii")
         else:
+            preview = _trim_to_utf8_boundary(preview)
             resource["text"] = preview.decode("utf-8", errors="replace")
 
         return resource
@@ -416,6 +429,119 @@ class LargeResponseStore:
             for chunk in iter(lambda: f.read(HASH_CHUNK_BYTES), b""):
                 sha256_hash.update(chunk)
         return sha256_hash.hexdigest()
+
+    def _fit_text_slice_response(
+        self,
+        *,
+        response_id: str,
+        offset: int,
+        requested_bytes: int,
+        chunk: bytes,
+        total_size: int,
+    ) -> dict[str, Any]:
+        response = self._text_slice_response(
+            response_id=response_id,
+            offset=offset,
+            requested_bytes=requested_bytes,
+            chunk=chunk,
+            total_size=total_size,
+        )
+        if self._serialized_response_size(response) <= self._max_serialized_read_bytes:
+            return response
+
+        low = MIN_TEXT_READ_BYTES
+        high = len(chunk)
+        best: bytes | None = None
+        while low <= high:
+            mid = (low + high) // 2
+            candidate = _trim_to_utf8_boundary(chunk[:mid])
+            if len(candidate) < MIN_TEXT_READ_BYTES:
+                high = mid - 1
+                continue
+
+            candidate_response = self._text_slice_response(
+                response_id=response_id,
+                offset=offset,
+                requested_bytes=requested_bytes,
+                chunk=candidate,
+                total_size=total_size,
+            )
+            if (
+                self._serialized_response_size(candidate_response)
+                <= self._max_serialized_read_bytes
+            ):
+                best = candidate
+                low = mid + 1
+            else:
+                high = mid - 1
+
+        if best is None:
+            return {
+                "error": "max_bytes is too small for the read response envelope.",
+                "min_allowed_bytes": MIN_TEXT_READ_BYTES,
+                "max_allowed_bytes": self.max_read_bytes,
+            }
+
+        return self._text_slice_response(
+            response_id=response_id,
+            offset=offset,
+            requested_bytes=requested_bytes,
+            chunk=best,
+            total_size=total_size,
+        )
+
+    def _text_slice_response(
+        self,
+        *,
+        response_id: str,
+        offset: int,
+        requested_bytes: int,
+        chunk: bytes,
+        total_size: int,
+    ) -> dict[str, Any]:
+        returned_bytes = len(chunk)
+        return {
+            "response_id": response_id,
+            "offset": offset,
+            "requested_bytes": requested_bytes,
+            "returned_bytes": returned_bytes,
+            "content": chunk.decode("utf-8", errors="replace"),
+            "has_more": offset + returned_bytes < total_size,
+            "total_size_bytes": total_size,
+        }
+
+    @property
+    def _max_serialized_read_bytes(self) -> int:
+        return self.max_read_bytes + READ_RESPONSE_OVERHEAD_BYTES
+
+    def _serialized_response_size(self, response: dict[str, Any]) -> int:
+        return len(json.dumps(response, ensure_ascii=True, separators=(",", ":")).encode("utf-8"))
+
+    def _delete_excess_payload_files(
+        self,
+        payload_files: list[tuple[Path, float]],
+        *,
+        protected_path: Path | None = None,
+    ) -> None:
+        if len(payload_files) <= self.max_files:
+            return
+
+        protected_resolved = protected_path.resolve() if protected_path is not None else None
+        payload_files.sort(key=lambda item: item[1])
+        files_to_remove = len(payload_files) - self.max_files
+        removed = 0
+        for path, _mtime in payload_files:
+            if removed >= files_to_remove:
+                return
+            if protected_resolved is not None and path.resolve() == protected_resolved:
+                continue
+            try:
+                path.unlink()
+                removed += 1
+            except OSError:
+                logger.warning(
+                    "Could not remove excess large response file %s", path, exc_info=True
+                )
 
     def _mime_type_for_path(self, path: Path) -> str:
         return SUFFIX_MIME_TYPES.get(path.suffix, "application/octet-stream")

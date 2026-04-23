@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 import os
 import time
 from collections.abc import Awaitable, Callable
@@ -16,6 +17,7 @@ from pydantic_settings import SettingsConfigDict
 from tests.helpers import FakeMCP, build_settings
 from worksection_mcp.config import Settings
 from worksection_mcp.large_response import (
+    READ_RESPONSE_OVERHEAD_BYTES,
     LargePayloadToolRegistrar,
     LargeResponseStore,
     serialize_tool_result,
@@ -206,6 +208,23 @@ def test_cleanup_runs_before_write_when_due(tmp_path, monkeypatch):
     assert metadata["offloaded"] is True
 
 
+def test_offload_enforces_max_files_after_write_even_when_cleanup_not_due(tmp_path):
+    store = make_store(tmp_path, threshold_bytes=5, max_files=1)
+    store.offload_dir.mkdir(parents=True)
+    stale = store.offload_dir / ("ws_response_" + "a" * 32 + ".json")
+    stale.write_text("old")
+    old_time = time.time() - 60
+    os.utime(stale, (old_time, old_time))
+    store._last_cleanup_at = time.time()
+
+    metadata = store.offload_if_needed("x" * 20)
+
+    assert metadata["offloaded"] is True
+    assert not stale.exists()
+    assert Path(metadata["file_path"]).exists()
+    assert len(list(store.offload_dir.glob("ws_response_*.*"))) == 1
+
+
 @pytest.mark.asyncio
 async def test_registrar_preserves_signature_and_wraps_result(tmp_path):
     fake = FakeMCP()
@@ -364,6 +383,22 @@ def test_read_text_slice_trims_four_byte_utf8_boundary(tmp_path):
     assert result["has_more"] is True
 
 
+def test_read_text_slice_shrinks_chunk_to_fit_serialized_response_budget(tmp_path):
+    store = make_store(tmp_path, threshold_bytes=5, max_read_bytes=200)
+    metadata = store.offload_if_needed("\x00" * 500)
+    response_id = metadata["id"]
+
+    result = store.read_text_slice(response_id, offset=0, max_bytes=200)
+    serialized_size = len(
+        json.dumps(result, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    )
+
+    assert result["requested_bytes"] == 200
+    assert 0 < result["returned_bytes"] < 200
+    assert result["has_more"] is True
+    assert serialized_size <= store.max_read_bytes + READ_RESPONSE_OVERHEAD_BYTES
+
+
 @pytest.mark.asyncio
 async def test_offload_tools_reject_binary_reads(tmp_path):
     fake = FakeMCP()
@@ -421,6 +456,17 @@ def test_resource_preview_for_binary_payload_returns_base64_preview(tmp_path):
     assert "text" not in result
     assert "preview_base64" not in result
     assert result["blob"]
+
+
+def test_resource_preview_trims_text_to_utf8_boundary(tmp_path):
+    store = make_store(tmp_path, threshold_bytes=5)
+    text = ("x" * (1024 - 2)) + "🙂" + "tail"
+    metadata = store.offload_if_needed(text)
+
+    result = store.get_resource_preview(metadata["id"])
+
+    assert result["text"] == "x" * (1024 - 2)
+    assert "\ufffd" not in result["text"]
 
 
 def test_read_text_slice_returns_error_when_file_disappears(tmp_path, monkeypatch):
