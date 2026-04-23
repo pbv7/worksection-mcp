@@ -2,7 +2,23 @@
 
 ## Quick Start
 
-Test all MCP tools with one command:
+Run the normal automated repository checks with Makefile targets:
+
+```bash
+# Fast local test pass
+make test-fast
+
+# Coverage report
+make test
+
+# Full CI-like verification: format, lint, docs lint, typecheck, tests
+make check
+```
+
+`uv run pytest` and `make test-fast` intentionally run without coverage. Use
+`make test` or `make check` when you need coverage output.
+
+Test all MCP tools against a real Worksection account with one command:
 
 ```bash
 # Use first available project
@@ -22,14 +38,28 @@ TEST_RICH_TASK="12345678" uv run python tests/test_all_mcp_tools.py
 uv run python tests/test_all_mcp_tools.py --project "My Project" --rich-task "12345678" -v
 ```
 
+Verify large-response offloading against a real Worksection account:
+
+```bash
+uv run python tests/live_large_response_offload_roundtrip.py -v
+```
+
 ## What It Does
 
-The test script:
+The comprehensive MCP tool test script:
 
 1. **Authenticates** - Uses your OAuth2 credentials from `.env`
 2. **Extracts test data** - Finds IDs from specified project (or first available)
 3. **Tests all tools** - Runs every MCP tool with appropriate parameters
 4. **Shows results** - Clear pass/fail output with summary
+
+The large-response offload E2E script:
+
+1. **Authenticates** - Uses the same `.env` OAuth2 credentials
+2. **Registers tools with the offload wrapper** - Uses a low threshold to force offloading
+3. **Triggers an oversized response** - Tries known large read-only tools in order
+4. **Validates the offload envelope** - Checks ID, size, checksum, resource URI, and file path
+5. **Reads the response back in chunks** - Verifies SHA-256 round-trip and JSON validity
 
 For client-facing interpretation of expected platform limits (for example why
 some scenarios are valid `PARTIAL` in ws-test reruns), see
@@ -96,6 +126,10 @@ some tools may return empty results (which still pass basic validation but don't
 - Production Worksection account with data
 - Python 3.14+ with dependencies installed (`uv sync`)
 
+The large-response offload E2E test also needs at least one trigger tool to return
+more than `OFFLOAD_THRESHOLD` bytes. The current trigger order is
+`get_task_tags`, `get_all_tasks`, then `get_projects`.
+
 ## Test Data
 
 The script automatically extracts:
@@ -148,6 +182,28 @@ Success rate: 100.0%
 
 Completed at: 2026-01-28 02:35:00
 ```
+
+## Large Response Offload E2E
+
+Use `tests/live_large_response_offload_roundtrip.py` when changing response-size handling,
+offload storage, helper tools, or container volume behavior.
+
+```bash
+uv run python tests/live_large_response_offload_roundtrip.py -v
+```
+
+The script creates a temporary offload directory, sets a 1 KB threshold, calls a
+real read-only Worksection tool, and expects an offload envelope. It then calls
+`get_offloaded_response_info` and `read_offloaded_response_text`, reassembles the
+payload in 50 KB chunks, compares the SHA-256 hash, and parses JSON payloads to
+confirm the stored content is intact. Chunk reads are UTF-8-boundary safe and
+must be at least 4 bytes. The 50 KB read size mirrors the project default;
+the helper can return fewer raw bytes when JSON escaping would otherwise make
+the serialized MCP response too large for strict clients.
+
+This script is intentionally separate from pytest, `make test`, and `make check`
+because it requires live credentials and production Worksection data. Keeping it
+as a CLI-only script avoids permanent expected skips in normal test output.
 
 ## Tool Categories
 

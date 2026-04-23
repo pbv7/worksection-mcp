@@ -9,6 +9,9 @@ from urllib.parse import urlparse
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEFAULT_LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES = 50_000
+DEFAULT_LARGE_RESPONSE_MAX_READ_BYTES = 50_000
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -96,6 +99,36 @@ class Settings(BaseSettings):
     max_file_size_mb: int = Field(
         default=10,
         description="Maximum file size to cache (MB)",
+    )
+
+    # Large Response Handling
+    large_response_offload_enabled: bool = Field(
+        default=True,
+        description="Enable automatic offloading of oversized MCP tool responses.",
+    )
+    large_response_offload_path: Path = Field(
+        default=Path("./data/offload"),
+        description="Directory for oversized MCP tool response files.",
+    )
+    large_response_offload_threshold_bytes: int = Field(
+        default=DEFAULT_LARGE_RESPONSE_OFFLOAD_THRESHOLD_BYTES,
+        description="Serialized response size in bytes above which responses are offloaded. 0 disables offloading.",
+    )
+    large_response_offload_retention_hours: int = Field(
+        default=24,
+        description="How long to keep offloaded response files.",
+    )
+    large_response_offload_max_files: int = Field(
+        default=100,
+        description="Maximum number of offloaded response files to retain.",
+    )
+    large_response_offload_include_file_path: bool = Field(
+        default=False,
+        description="Include local file_path in offload metadata.",
+    )
+    large_response_max_read_bytes: int = Field(
+        default=DEFAULT_LARGE_RESPONSE_MAX_READ_BYTES,
+        description="Maximum bytes returned by offloaded response read helper tools.",
     )
 
     # MCP Server Configuration
@@ -193,6 +226,7 @@ class Settings(BaseSettings):
     @field_validator(
         "token_storage_path",
         "file_cache_path",
+        "large_response_offload_path",
         "oauth_ssl_cert_path",
         "oauth_ssl_key_path",
         mode="before",
@@ -262,6 +296,33 @@ class Settings(BaseSettings):
         """Validate positive integers."""
         if v <= 0:
             raise ValueError(f"{info.field_name} must be greater than 0. Current: {v}")
+        return v
+
+    @field_validator(
+        "large_response_offload_retention_hours",
+        "large_response_offload_max_files",
+    )
+    @classmethod
+    def validate_large_response_positive(cls, v: int, info) -> int:
+        """Validate positive large-response settings."""
+        if v <= 0:
+            raise ValueError(f"{info.field_name} must be greater than 0. Current: {v}")
+        return v
+
+    @field_validator("large_response_max_read_bytes")
+    @classmethod
+    def validate_large_response_max_read_bytes(cls, v: int, info) -> int:
+        """Validate read chunks can always advance across UTF-8 characters."""
+        if v < 4:
+            raise ValueError(f"{info.field_name} must be greater than or equal to 4. Current: {v}")
+        return v
+
+    @field_validator("large_response_offload_threshold_bytes")
+    @classmethod
+    def validate_large_response_threshold(cls, v: int, info) -> int:
+        """Validate non-negative large-response threshold."""
+        if v < 0:
+            raise ValueError(f"{info.field_name} must be greater than or equal to 0. Current: {v}")
         return v
 
     @field_validator("worksection_scopes")
@@ -341,6 +402,8 @@ class Settings(BaseSettings):
         """Create required directories if they don't exist."""
         self.token_storage_path.mkdir(parents=True, exist_ok=True)
         self.file_cache_path.mkdir(parents=True, exist_ok=True)
+        if self.large_response_offload_enabled:
+            self.large_response_offload_path.mkdir(parents=True, exist_ok=True)
         # Create SSL certificates directory
         self.oauth_ssl_cert_path.parent.mkdir(parents=True, exist_ok=True)
 

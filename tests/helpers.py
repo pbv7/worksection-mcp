@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from worksection_mcp.config import Settings
 
@@ -17,12 +17,16 @@ class FakeMCP:
         self.resources: dict[str, Callable[..., Awaitable[Any]]] = {}
         self.resource_patterns: dict[str, str] = {}
 
-    def tool(self) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
-        """Decorator that registers a tool by function name."""
+    def tool(self, *args: Any, **kwargs: Any) -> Any:
+        """Register a tool directly or return a registration decorator."""
 
         def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
-            self.tools[func.__name__] = func
+            name = kwargs.get("name") or func.__name__
+            self.tools[name] = func
             return func
+
+        if args and callable(args[0]):
+            return decorator(cast(Callable[..., Awaitable[Any]], args[0]))
 
         return decorator
 

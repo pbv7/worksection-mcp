@@ -61,6 +61,8 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     file_cache = SimpleNamespace(close=AsyncMock())
     register_tools = MagicMock()
     register_resources = MagicMock()
+    register_offload_tools = MagicMock()
+    register_large_response_resources = MagicMock()
 
     monkeypatch.setattr(server_module, "FastMCP", FakeFastMCP)
     monkeypatch.setattr(server_module, "OAuth2Manager", lambda _settings: oauth)
@@ -68,6 +70,12 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     monkeypatch.setattr(server_module, "FileCache", lambda **_kwargs: file_cache)
     monkeypatch.setattr(server_module, "register_all_tools", register_tools)
     monkeypatch.setattr(server_module, "register_file_resources", register_resources)
+    monkeypatch.setattr(server_module, "register_offload_tools", register_offload_tools)
+    monkeypatch.setattr(
+        server_module,
+        "register_large_response_resources",
+        register_large_response_resources,
+    )
 
     server, _log_config = server_module.create_server(settings)
     mcp = cast(FakeFastMCP, server)
@@ -76,7 +84,9 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
     assert mcp.instructions is not None
     assert "Worksection MCP Server" in mcp.instructions
     register_tools.assert_called_once()
+    register_offload_tools.assert_called_once()
     register_resources.assert_called_once()
+    register_large_response_resources.assert_called_once()
 
     async with mcp.lifespan(mcp):
         oauth.ensure_authenticated.assert_awaited_once()
@@ -84,6 +94,44 @@ async def test_create_server_wires_dependencies_and_lifecycle(monkeypatch, tmp_p
 
     client.close.assert_awaited_once()
     file_cache.close.assert_awaited_once()
+
+
+def test_create_server_skips_large_response_cleanup_when_disabled(monkeypatch, tmp_path):
+    """Disabled response offloading should not touch the offload directory at startup."""
+    settings = build_settings(tmp_path, large_response_offload_enabled=False)
+    cleanup = MagicMock()
+
+    class FakeLargeResponseStore:
+        def __init__(self) -> None:
+            self.cleanup = cleanup
+
+        @classmethod
+        def from_settings(cls, _settings):
+            return cls()
+
+    monkeypatch.setattr(server_module.Settings, "ensure_directories", lambda _self: None)
+    monkeypatch.setattr(
+        server_module.Settings,
+        "validate_external_resources",
+        lambda _self: {"dns_resolution": "✓ ok"},
+    )
+    monkeypatch.setattr(server_module, "FastMCP", FakeFastMCP)
+    monkeypatch.setattr(server_module, "OAuth2Manager", lambda _settings: SimpleNamespace())
+    monkeypatch.setattr(
+        server_module,
+        "WorksectionClient",
+        lambda _oauth, _settings: SimpleNamespace(settings=settings),
+    )
+    monkeypatch.setattr(server_module, "FileCache", lambda **_kwargs: SimpleNamespace())
+    monkeypatch.setattr(server_module, "LargeResponseStore", FakeLargeResponseStore)
+    monkeypatch.setattr(server_module, "register_all_tools", MagicMock())
+    monkeypatch.setattr(server_module, "register_file_resources", MagicMock())
+    monkeypatch.setattr(server_module, "register_offload_tools", MagicMock())
+    monkeypatch.setattr(server_module, "register_large_response_resources", MagicMock())
+
+    server_module.create_server(settings)
+
+    cleanup.assert_not_called()
 
 
 def test_get_mcp_is_lazy_and_cached(monkeypatch):

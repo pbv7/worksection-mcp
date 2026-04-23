@@ -12,8 +12,8 @@ from typing import Any, Protocol
 class ToolRegistrar(Protocol):
     """Minimal protocol for objects that can register MCP tools."""
 
-    def tool(self) -> Callable[[Callable[..., Awaitable[Any]]], Any]:
-        """Return a decorator that registers an async tool function."""
+    def tool(self, *args: Any, **kwargs: Any) -> Any:
+        """Register a tool directly or return a tool registration decorator."""
         ...
 
 

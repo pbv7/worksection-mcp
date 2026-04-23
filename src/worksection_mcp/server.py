@@ -12,12 +12,14 @@ from worksection_mcp.auth import OAuth2Manager
 from worksection_mcp.cache import FileCache
 from worksection_mcp.client import WorksectionClient
 from worksection_mcp.config import Settings, get_settings
+from worksection_mcp.large_response import LargePayloadToolRegistrar, LargeResponseStore
 from worksection_mcp.logging_config import (
     configure_logging,
     is_access_log_enabled,
 )
-from worksection_mcp.resources import register_file_resources
+from worksection_mcp.resources import register_file_resources, register_large_response_resources
 from worksection_mcp.tools import register_all_tools
+from worksection_mcp.tools.offload import register_offload_tools
 
 logger = logging.getLogger(__name__)
 
@@ -165,11 +167,24 @@ Rate limited to 1 request/second per Worksection API limits.
     if _oauth is None or _client is None or _file_cache is None:
         raise RuntimeError("Server dependencies are not initialized")
 
+    large_response_store = LargeResponseStore.from_settings(settings)
+    if settings.large_response_offload_enabled:
+        large_response_store.cleanup()
+    registrar = (
+        LargePayloadToolRegistrar(mcp, large_response_store)
+        if settings.large_response_offload_enabled
+        else mcp
+    )
+
     # Register all tools
-    register_all_tools(mcp, _client, _oauth, _file_cache)
+    register_all_tools(registrar, _client, _oauth, _file_cache)
+
+    # Register large-response helper tools on raw MCP to avoid recursive offloading
+    register_offload_tools(mcp, large_response_store)
 
     # Register file resources
     register_file_resources(mcp, _client, _file_cache)
+    register_large_response_resources(mcp, large_response_store)
 
     return mcp, log_config
 

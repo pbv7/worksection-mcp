@@ -40,6 +40,8 @@ def _patch_server_deps(monkeypatch, *, oauth=None, client=None, file_cache=None)
     monkeypatch.setattr(server_module, "FileCache", lambda **_kw: file_cache)
     monkeypatch.setattr(server_module, "register_all_tools", MagicMock())
     monkeypatch.setattr(server_module, "register_file_resources", MagicMock())
+    monkeypatch.setattr(server_module, "register_offload_tools", MagicMock())
+    monkeypatch.setattr(server_module, "register_large_response_resources", MagicMock())
 
     return oauth, client, file_cache
 

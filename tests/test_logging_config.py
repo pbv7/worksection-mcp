@@ -59,8 +59,9 @@ def test_request_log_mode_controls_uvicorn_access_and_httpx_levels(
     assert is_access_log_enabled(settings.request_log_mode) is expected_access_enabled
 
 
-def test_log_use_colors_is_tty_safe(tmp_path):
+def test_log_use_colors_is_tty_safe(tmp_path, monkeypatch):
     """Color output should require both LOG_USE_COLORS and a TTY stream."""
+    monkeypatch.delenv("NO_COLOR", raising=False)
     settings = build_settings(tmp_path, log_use_colors=True)
     color_on_config = build_logging_dict(settings, stderr_isatty=True)
     color_off_notty_config = build_logging_dict(settings, stderr_isatty=False)
