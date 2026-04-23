@@ -1,5 +1,7 @@
 """MCP resources for large response offload previews."""
 
+import asyncio
+
 from worksection_mcp.large_response import LargeResponseStore
 from worksection_mcp.mcp_protocols import ResourceRegistrar
 
@@ -18,4 +20,4 @@ def register_large_response_resources(
     @mcp.resource("worksection://offload/{response_id}")
     async def get_offloaded_response(response_id: str) -> dict:
         """Get metadata and a small preview for an offloaded tool response."""
-        return store.get_resource_preview(response_id)
+        return await asyncio.to_thread(store.get_resource_preview, response_id)

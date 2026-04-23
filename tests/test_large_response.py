@@ -419,8 +419,53 @@ def test_resource_preview_for_binary_payload_returns_base64_preview(tmp_path):
     assert result["mimeType"] == "application/octet-stream"
     assert result["metadata"]["id"] == metadata["id"]
     assert "text" not in result
-    assert "blob" not in result
-    assert result["preview_base64"]
+    assert "preview_base64" not in result
+    assert result["blob"]
+
+
+def test_read_text_slice_returns_error_when_file_disappears(tmp_path, monkeypatch):
+    store = make_store(tmp_path, threshold_bytes=5)
+    missing_path = store.offload_dir / f"ws_response_{'a' * 32}.json"
+    monkeypatch.setattr(store, "get_payload_path", lambda _response_id: missing_path)
+
+    result = store.read_text_slice("a" * 32, offset=0, max_bytes=10)
+
+    assert result == {
+        "error": "Offloaded response file could not be read.",
+        "response_id": "a" * 32,
+    }
+
+
+def test_get_payload_metadata_returns_not_found_when_file_disappears(tmp_path, monkeypatch):
+    store = make_store(tmp_path, threshold_bytes=5)
+    missing_path = store.offload_dir / f"ws_response_{'a' * 32}.json"
+    monkeypatch.setattr(store, "get_payload_path", lambda _response_id: missing_path)
+
+    result = store.get_payload_metadata("a" * 32)
+
+    assert result == {"error": "Offloaded response not found.", "response_id": "a" * 32}
+
+
+def test_get_resource_preview_returns_error_when_preview_file_disappears(tmp_path, monkeypatch):
+    store = make_store(tmp_path, threshold_bytes=5)
+    metadata = store.offload_if_needed("x" * 20)
+    response_id = metadata["id"]
+    path = store.get_payload_path(response_id)
+    assert path is not None
+
+    def remove_before_preview(_response_id):
+        path.unlink(missing_ok=True)
+        return path
+
+    monkeypatch.setattr(store, "get_payload_path", remove_before_preview)
+
+    result = store.get_resource_preview(response_id)
+
+    assert result == {
+        "uri": f"worksection://offload/{response_id}",
+        "mimeType": "application/json",
+        "metadata": {"error": "Offloaded response not found.", "response_id": response_id},
+    }
 
 
 def test_get_payload_metadata_streams_existing_file_hash(tmp_path, monkeypatch):

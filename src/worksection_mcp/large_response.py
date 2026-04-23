@@ -7,6 +7,7 @@ local storage and replaced with compact metadata.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import functools
 import hashlib
@@ -252,7 +253,13 @@ class LargeResponseStore:
         if path is None:
             return {"error": "Offloaded response not found.", "response_id": response_id}
 
-        return self._metadata_for_path(response_id=response_id, path=path)
+        try:
+            return self._metadata_for_path(response_id=response_id, path=path)
+        except OSError:
+            logger.warning(
+                "Could not read large response metadata for %s", response_id, exc_info=True
+            )
+            return {"error": "Offloaded response not found.", "response_id": response_id}
 
     def read_text_slice(self, response_id: str, offset: int, max_bytes: int) -> dict[str, Any]:
         """Read a bounded UTF-8 text slice from an offloaded JSON/text response."""
@@ -284,10 +291,17 @@ class LargeResponseStore:
                 "mime_type": mime_type,
             }
 
-        total_size = path.stat().st_size
-        with path.open("rb") as f:
-            f.seek(offset)
-            raw = f.read(max_bytes)
+        try:
+            total_size = path.stat().st_size
+            with path.open("rb") as f:
+                f.seek(offset)
+                raw = f.read(max_bytes)
+        except OSError:
+            logger.warning("Could not read large response file %s", path, exc_info=True)
+            return {
+                "error": "Offloaded response file could not be read.",
+                "response_id": response_id,
+            }
 
         # Trim to the last complete UTF-8 character when more content follows.
         # The final chunk reads exactly what remains, so it needs no trimming.
@@ -323,8 +337,16 @@ class LargeResponseStore:
             }
 
         mime_type = self._mime_type_for_path(path)
-        with path.open("rb") as f:
-            preview = f.read(RESOURCE_PREVIEW_BYTES)
+        try:
+            with path.open("rb") as f:
+                preview = f.read(RESOURCE_PREVIEW_BYTES)
+        except OSError:
+            logger.warning("Could not read large response preview %s", path, exc_info=True)
+            return {
+                "uri": f"worksection://offload/{response_id}",
+                "mimeType": "application/json",
+                "metadata": {"error": "Offloaded response not found.", "response_id": response_id},
+            }
 
         resource: dict[str, Any] = {
             "uri": f"worksection://offload/{response_id}",
@@ -333,7 +355,7 @@ class LargeResponseStore:
         }
 
         if mime_type == "application/octet-stream":
-            resource["preview_base64"] = base64.b64encode(preview).decode("ascii")
+            resource["blob"] = base64.b64encode(preview).decode("ascii")
         else:
             resource["text"] = preview.decode("utf-8", errors="replace")
 
@@ -420,7 +442,7 @@ class LargePayloadToolRegistrar:
         @functools.wraps(func)
         async def wrapper(*fn_args: Any, **fn_kwargs: Any) -> Any:
             result = await func(*fn_args, **fn_kwargs)
-            return self._store.offload_if_needed(result)
+            return await asyncio.to_thread(self._store.offload_if_needed, result)
 
         return wrapper
 

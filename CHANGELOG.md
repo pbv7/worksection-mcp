@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Offload helper tools, offload resource previews, and automatic tool-response
+  offloading now run local store/file operations in a worker thread to avoid
+  blocking the async MCP server loop
+- Binary offload resource previews now use the MCP resource `blob` key for the
+  capped base64 preview, matching existing file resource conventions
+
+### Fixed
+
+- Offloaded response reads, metadata lookups, and resource previews now return
+  compact error payloads if cleanup or another process removes the file between
+  ID lookup and file access
+
 ## [0.6.0] - 2026-04-22
 
 ### Added

@@ -1,5 +1,7 @@
 """MCP helper tools for offloaded large responses."""
 
+import asyncio
+
 from worksection_mcp.large_response import LargeResponseStore
 from worksection_mcp.mcp_protocols import ToolRegistrar
 
@@ -17,7 +19,7 @@ def register_offload_tools(mcp: ToolRegistrar, store: LargeResponseStore) -> Non
         Returns:
             Metadata including size, hash, MIME type, creation time, and resource URI.
         """
-        return store.get_payload_metadata(response_id)
+        return await asyncio.to_thread(store.get_payload_metadata, response_id)
 
     @mcp.tool()
     async def read_offloaded_response_text(
@@ -35,7 +37,8 @@ def register_offload_tools(mcp: ToolRegistrar, store: LargeResponseStore) -> Non
         Returns:
             Text content slice and pagination metadata, or a compact error.
         """
-        return store.read_text_slice(
+        return await asyncio.to_thread(
+            store.read_text_slice,
             response_id=response_id,
             offset=offset,
             max_bytes=store.max_read_bytes if max_bytes is None else max_bytes,
