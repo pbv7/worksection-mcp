@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-04-23
+
 ### Changed
 
 - Offload helper tools, offload resource previews, and automatic tool-response
@@ -26,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   writing, even when full cleanup is throttled
 - Text offload resource previews now trim to a complete UTF-8 boundary before
   decoding
+
+### Security
+
+- lxml 6.0.4 → 6.1.0 (HIGH: XXE via default `iterparse()` / `ETCompatXMLParser()`)
+- authlib 1.6.10 → 1.6.11 (MEDIUM: CSRF when using cache)
 
 ## [0.6.0] - 2026-04-22
 
@@ -180,6 +187,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker support with multi-stage production build
 - Full test coverage with pytest
 
+[0.6.1]: https://github.com/pbv7/worksection-mcp/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pbv7/worksection-mcp/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/pbv7/worksection-mcp/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/pbv7/worksection-mcp/compare/v0.3.1...v0.4.0

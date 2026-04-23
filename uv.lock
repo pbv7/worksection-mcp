@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.14"
 
 [options]
-exclude-newer = "2026-04-16T08:04:37.463014Z"
+exclude-newer = "2026-04-16T08:08:14.537394Z"
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
@@ -1396,7 +1396,7 @@ wheels = [
 
 [[package]]
 name = "worksection-mcp"
-version = "0.6.0"
+version = "0.6.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
