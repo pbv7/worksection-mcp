@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `MAINTAINERS.md` — maintainer playbook covering dependency updates,
+  the P7D supply-chain quarantine gotcha, the full release procedure,
+  CHANGELOG conventions, and how to roll back a bad release. The
+  `Release Flow` and `CHANGELOG Convention` sections were moved out of
+  `CLAUDE.md` (which now points at `MAINTAINERS.md`).
+
 ### Changed
 
 - Documentation now clearly states this is an **unofficial, community-built**

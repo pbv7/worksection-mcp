@@ -150,37 +150,22 @@ The `pyproject.toml` `addopts` adds `-v` only. Use `make test` or `make check` f
 - **Claude Code MCP config** goes in `~/.claude.json` (under `mcpServers`), NOT `~/.claude/settings.json`.
   The MCP dialog (`/mcp`) shows which file it reads — confirm there if tools are missing from a session.
 
-- **Never manually edit `uv.lock`**, including the `[options]` block at the top. The
-  `exclude-newer` and `exclude-newer-span = "P7D"` fields are machine-generated supply-chain
-  security controls: they prevent uv from resolving packages released less than 7 days before the
-  lock was generated (quarantine window against malicious new releases). uv recalculates them
-  automatically on every `uv lock` run. Use `uv lock` to regenerate and `uv sync --frozen` to
-  install — never touch the file by hand.
+- **Never manually edit `uv.lock`** (including the `[options]` block). uv manages the file and
+  the P7D supply-chain quarantine inside it. See
+  [MAINTAINERS.md → The P7D Supply-Chain Quarantine](MAINTAINERS.md#the-p7d-supply-chain-quarantine)
+  for the full mechanics and what to do when a CVE patch lands inside the quarantine window.
 
-## CHANGELOG Convention
+## Maintainer Workflows
 
-All changes — features, fixes, deps, docs — go under `## [Unreleased]` as they are committed,
-regardless of whether they are part of a planned release. Do **not** write to a versioned section
-(e.g. `[0.6.0]`) until the `chore(release)` commit. The release commit is the single moment that
-promotes `[Unreleased]` to a versioned entry.
+Release procedure, CHANGELOG conventions, dependency updates, and rollback procedure live in
+[MAINTAINERS.md](MAINTAINERS.md). When working on a release, a dep bump, or a rollback in this
+repo, read that file first:
 
-## Release Flow
-
-Releases are fully manual on `main`. CI (`release.yml`) triggers on a pushed `v*` tag, builds the
-package with `uv build`, and creates a GitHub Release with auto-generated notes and `dist/*`
-assets attached. There is no PyPI publish step.
-
-To cut a release after merging to `main`:
-
-1. **`pyproject.toml`** — bump `version = "x.y.z"`
-2. **`uv.lock`** — run `uv lock` to regenerate, commit the lockfile
-3. **`CHANGELOG.md`** — rename `[Unreleased]` → `[x.y.z] - YYYY-MM-DD`; add comparison link at bottom
-4. **`SECURITY.md`** — update Supported Versions table on minor/major bumps (e.g. `0.5.x` → `0.6.x`)
-5. Commit: `chore(release): bump to vx.y.z`
-6. Tag and push: `git tag vx.y.z && git push origin vx.y.z`
-   — pushing the tag triggers `release.yml` automatically
-
-Pushing the tag triggers `release.yml` which builds the package and creates a GitHub Release with auto-generated notes and `dist/*` assets attached.
+- [Dependency Updates](MAINTAINERS.md#dependency-updates)
+- [The P7D Supply-Chain Quarantine](MAINTAINERS.md#the-p7d-supply-chain-quarantine)
+- [Release Procedure](MAINTAINERS.md#release-procedure)
+- [CHANGELOG Convention](MAINTAINERS.md#changelog-convention)
+- [Rolling Back a Release](MAINTAINERS.md#rolling-back-a-release)
 
 ## CI Workflows
 
