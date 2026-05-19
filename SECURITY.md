@@ -1,5 +1,9 @@
 # Security Policy
 
+> **Unofficial project.** This is an independent, community-built integration.
+> It is not affiliated with, endorsed by, or supported by Worksection. Report
+> vulnerabilities in **this MCP server** here; do not contact Worksection.
+
 ## Supported Versions
 
 | Version | Supported |

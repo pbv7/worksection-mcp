@@ -1,7 +1,7 @@
 [project]
 name = "worksection-mcp"
 version = "0.6.1"
-description = "Multi-tenant MCP server for Worksection with comprehensive read-only tools for data access and reporting"
+description = "Unofficial multi-tenant MCP server for the Worksection API with comprehensive read-only tools for data access and reporting (not affiliated with Worksection)"
 readme = "README.md"
 authors = [
     { name = "Bohdan Potishuk", email = "dragon@noctilucence.io" }

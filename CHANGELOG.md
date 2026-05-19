@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Documentation now clearly states this is an **unofficial, community-built**
+  integration not affiliated with, endorsed by, or supported by Worksection.
+  Added prominent disclaimer to `README.md` (top callout + `Disclaimer`
+  section), updated package description in `pyproject.toml`, and added an
+  unofficial-project notice to `SECURITY.md`.
+
 ## [0.6.1] - 2026-04-23
 
 ### Changed

@@ -3,7 +3,11 @@
 [![CI](https://github.com/pbv7/worksection-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/pbv7/worksection-mcp/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/pbv7/worksection-mcp/graph/badge.svg)](https://codecov.io/gh/pbv7/worksection-mcp)
 
-A multi-tenant MCP (Model Context Protocol) server for
+> ⚠️ **Unofficial project.** Not affiliated with, endorsed by, or supported by
+> Worksection. "Worksection" is used solely to identify the third-party API
+> this project integrates with. See [Disclaimer](#disclaimer) for details.
+
+A multi-tenant MCP (Model Context Protocol) server for the
 [Worksection](https://worksection.com) project management platform,
 built with [FastMCP](https://github.com/jlowin/fastmcp).
 
@@ -715,3 +719,19 @@ Contributions are welcome! Please read our contributing guidelines and submit pu
 - [GitHub Issues](https://github.com/pbv7/worksection-mcp/issues)
 - [Worksection API Docs](https://worksection.com/en/faq/api-start.html)
 - [MCP Documentation](https://modelcontextprotocol.io/)
+
+## Disclaimer
+
+This is an **independent, community-built integration** with the Worksection API.
+It is **not affiliated with, endorsed by, or supported by** Worksection or its
+parent company.
+
+- The author is not a Worksection employee.
+- "Worksection" and any associated logos are trademarks of their respective
+  owner; this project uses the name solely to identify the third-party API it
+  integrates with, under nominative fair use.
+- For issues with this MCP server, open a ticket on
+  [GitHub](https://github.com/pbv7/worksection-mcp/issues) — **not** with
+  Worksection support.
+- For issues with the Worksection product or API itself, contact
+  [Worksection](https://worksection.com) directly.
