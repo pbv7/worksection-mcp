@@ -8,8 +8,8 @@
 
 | Version | Supported |
 | --- | --- |
-| 0.5.x (latest) | ✅ |
-| < 0.5 | ❌ |
+| 0.6.x (latest) | ✅ |
+| < 0.6 | ❌ |
 
 Only the latest release receives security fixes.
 

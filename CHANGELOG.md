@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-05-20
+
+### Security
+
+- python-multipart 0.0.26 → 0.0.28
+  (HIGH: CVE-2026-42561 / GHSA-pp6c-gr5w-3c5g — Denial of Service via unbounded multipart part headers; patched in 0.0.27)
+- authlib 1.6.11 → 1.7.2
+  (MEDIUM: CVE-2026-44681 / GHSA-r95x-qfjj-fjj2 — OIDC implicit/hybrid flow open redirect; patched in 1.6.12)
+- idna 3.11 → 3.15
+  (MEDIUM: CVE-2026-45409 / GHSA-65pc-fj4g-8rjx — bypass of CVE-2024-3651 IDNA fix; patched in 3.15)
+
 ### Added
 
 - `MAINTAINERS.md` — maintainer playbook covering dependency updates,
@@ -22,6 +33,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Added prominent disclaimer to `README.md` (top callout + `Disclaimer`
   section), updated package description in `pyproject.toml`, and added an
   unofficial-project notice to `SECURITY.md`.
+- Dependency refresh (no API changes; all tests pass against new majors):
+  - cryptography 46.0.7 → 48.0.0 (major; Fernet token encryption)
+  - starlette 0.52.1 → 1.0.0 (major; transport via FastMCP)
+  - pydantic 2.12.5 → 2.13.4
+  - pydantic-settings 2.13.1 → 2.14.1
+  - mcp 1.26.0 → 1.27.1
+  - uvicorn 0.41.0 → 0.46.0
+  - pypdf 6.10.2 → 6.11.0
+  - sse-starlette 3.2.0 → 3.4.4
+  - attrs 25.4.0 → 26.1.0 (major; transitive)
+  - more-itertools 10.8.0 → 11.0.2 (major; transitive)
+  - rich 14.3.3 → 15.0.0 (major; CLI output)
+- Dev tooling: mypy 1.19.1 → 2.1.0 (major), pyright 1.1.408 → 1.1.409,
+  ruff 0.15.2 → 0.15.12, pytest-cov 7.0.0 → 7.1.0, respx 0.22.0 → 0.23.1,
+  coverage 7.13.4 → 7.14.0
+
+### Fixed
+
+- `SECURITY.md` Supported Versions table refreshed to reflect the current
+  `0.6.x` line (previously still listed `0.5.x`)
 
 ## [0.6.1] - 2026-04-23
 
@@ -203,6 +234,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker support with multi-stage production build
 - Full test coverage with pytest
 
+[0.6.2]: https://github.com/pbv7/worksection-mcp/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/pbv7/worksection-mcp/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/pbv7/worksection-mcp/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/pbv7/worksection-mcp/compare/v0.4.0...v0.5.0
