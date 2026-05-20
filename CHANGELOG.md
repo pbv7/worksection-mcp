@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retroactively to all previously-released GitHub Releases (v0.3.1, v0.4.0,
   v0.5.0, v0.6.0, v0.6.1).
 
+### Fixed
+
+- `release.yml` no longer uploads `dist/.gitignore` (the uv-managed
+  `dist/` placeholder ignore file) as a `default.gitignore` GitHub Release
+  asset. The upload pattern is now explicit: `dist/*.whl` + `dist/*.tar.gz`.
+  The stray asset was also removed from v0.6.2.
+
 ## [0.6.2] - 2026-05-20
 
 ### Security
