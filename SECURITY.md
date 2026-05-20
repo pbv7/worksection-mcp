@@ -8,10 +8,10 @@
 
 | Version | Supported |
 | --- | --- |
-| 0.6.x (latest) | ✅ |
-| < 0.6 | ❌ |
+| Latest release | ✅ |
+| Anything older | ❌ |
 
-Only the latest release receives security fixes.
+Only the latest release receives support and security fixes.
 
 ## Reporting a Vulnerability
 

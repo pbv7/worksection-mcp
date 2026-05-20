@@ -128,10 +128,8 @@ To cut a release after merging changes to `main`:
 2. **`uv.lock`** — run `uv lock` to record the new project version.
 3. **`CHANGELOG.md`** — promote `[Unreleased]` → `[x.y.z] - YYYY-MM-DD`; add the
    comparison link at the bottom (`[x.y.z]: https://github.com/pbv7/worksection-mcp/compare/vA.B.C...vx.y.z`).
-4. **`SECURITY.md`** — update the Supported Versions table only on minor/major bumps
-   (e.g. `0.5.x` → `0.6.x`). Patch releases don't change support scope.
-5. Commit: `chore(release): bump to vx.y.z`. Push to `main`.
-6. Tag and push the tag:
+4. Commit: `chore(release): bump to vx.y.z`. Push to `main`.
+5. Tag and push the tag:
 
    ```bash
    git tag vx.y.z
@@ -147,6 +145,25 @@ Verify after the workflow completes:
 gh run list --workflow=release.yml --limit 1   # green
 gh release view vx.y.z --json tagName,assets   # 3 assets attached
 ```
+
+`SECURITY.md` does not need updating per release — the Supported Versions table
+is evergreen ("Latest release / Anything older").
+
+### Annotate the prior release as outdated
+
+After every successful release, prepend a deprecation banner to the previous
+release's notes so users browsing the Releases page see it's no longer supported:
+
+```bash
+PREV=v<previous-tag>
+BANNER='> ⚠️ **Outdated release.** Only the latest release is supported. Please
+> upgrade to the [latest release](https://github.com/pbv7/worksection-mcp/releases/latest).'
+body=$(gh release view "$PREV" --json body --jq .body)
+gh release edit "$PREV" --notes "$(printf '%s\n\n%s' "$BANNER" "$body")"
+```
+
+The banner is non-destructive (the original notes are preserved below it) and
+reversible (`gh release edit --notes` can replace the body again).
 
 ## CHANGELOG Convention
 

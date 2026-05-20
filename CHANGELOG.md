@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Support policy clarified: only the latest release is supported. `SECURITY.md`
+  Supported Versions table is now evergreen (`Latest release ✅ / Anything
+  older ❌`) and no longer needs updating per release.
+- `MAINTAINERS.md` release procedure: dropped the per-release SECURITY.md
+  update step; added a new step covering how to annotate the prior release
+  with a deprecation banner via `gh release edit`. Banners applied
+  retroactively to all previously-released GitHub Releases (v0.3.1, v0.4.0,
+  v0.5.0, v0.6.0, v0.6.1).
+
 ## [0.6.2] - 2026-05-20
 
 ### Security
